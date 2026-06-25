@@ -76,7 +76,7 @@ const SITE_STRUCTURE = {
     ],
   },
   f: {
-    name: '次期中央給電指令所システム',
+    name: '中央給電指令所システム',
     folder: 'f-dispatch-system',
     summary: 'A〜Eの知識を統合し、実際の給電指令システムがどう動くかを俯瞰する。',
     units: [
