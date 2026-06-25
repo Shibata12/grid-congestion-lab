@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D-01: PTDFと感度分析 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="d" data-unit="d-01">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">D: 混雑演算のアルゴリズム</a> &gt;
+      <span>PTDFと感度分析</span>
+    </nav>
+
+    <article>
+      <h1>D-01: PTDFと感度分析</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        このユニットを終えると、<strong>PTDF</strong>（ある母線の注入変化が、ある送電線の潮流に与える変化の割合）を説明でき、
+        <a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02: 潮流計算の基礎</a> のリアクタンス分配からPTDFを求められ、
+        <a href="../b-congestion/01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a> で検出した混雑に対し、
+        どの発電機を動かせば潮流が減るかを<strong>感度分析</strong>で見積もれるようになります。
+      </p>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. PTDFとは</a></li>
+          <li><a href="#section-2">2. リアクタンス分配からPTDFを求める</a></li>
+          <li><a href="#section-3">3. 感度分析と混雑への活用</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. PTDFとは</h2>
+        <p>
+          <a href="../b-congestion/01-congestion-and-n1.html">B-01</a> では、潮流が送電容量を超えると混雑（過負荷）になることを学びました。
+          すると次に知りたいのは、「<strong>どの発電機の出力を変えれば、その混雑線路の潮流を減らせるか</strong>」です。
+          これに答えるのが<strong>感度</strong>、すなわち「注入の変化が各送電線の潮流をどれだけ動かすか」という情報です。
+        </p>
+        <p>
+          その代表的な指標が <span class="term">PTDF<span class="term-tooltip">Power Transfer Distribution Factor。ある母線の注入を1単位変えたとき、ある送電線の潮流が変化する割合。</span></span>
+          （Power Transfer Distribution Factor、潮流分布係数）です。PTDFは、ある母線 k の注入を1単位だけ増やしたとき、
+          ある送電線 ℓ の潮流がどれだけ変化するかの割合として定義されます。
+        </p>
+        <div class="math-block"
+             data-tex="\text{PTDF}_{\ell,k} = \dfrac{\Delta P_\ell}{\Delta P_k}"
+             data-fallback="PTDF(ℓ,k) = ΔP_line / ΔP_inj"></div>
+        <p>
+          ここで1つ注意があります。電力は保存するので、ある母線で注入を1単位増やしたら、
+          どこか別の母線で1単位減らす必要があります。この「差分を吸収する基準の母線」を
+          <span class="term">スラックバス<span class="term-tooltip">注入の過不足を吸収する基準の母線。参照母線ともいう。PTDFは「ある母線からスラックバスへ1単位送電したとき」の感度として定義される。</span></span>（参照母線）と呼びます。
+          PTDFは「母線 k からスラックバスへ1単位送電したとき」の線路潮流変化、と考えると分かりやすいでしょう。
+        </p>
+        <p>
+          なお、ここで扱うPTDFは潮流を線形化（DC潮流近似・損失無視）して求める一定の係数です。
+          A-02のリアクタンス分配も同じ線形の世界の話なので、両者はそのままつながります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 170" role="img"
+               aria-label="母線kで+1の注入、スラックバスで−1、その結果として送電線ℓの潮流がPTDF分だけ変化することを示す概念図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="d1-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 母線k -->
+            <line x1="60" y1="40" x2="60" y2="110" stroke="#1a1a2e" stroke-width="4"></line>
+            <text x="60" y="30" font-size="12" text-anchor="middle" fill="#1a1a2e">母線 k</text>
+            <text x="60" y="130" font-size="11" text-anchor="middle" fill="#16a34a">注入 +1</text>
+            <!-- スラックバス -->
+            <line x1="380" y1="40" x2="380" y2="110" stroke="#1a1a2e" stroke-width="4"></line>
+            <text x="380" y="30" font-size="12" text-anchor="middle" fill="#1a1a2e">スラックバス</text>
+            <text x="380" y="130" font-size="11" text-anchor="middle" fill="#dc2626">−1（吸収）</text>
+            <!-- 送電線ℓ -->
+            <line x1="64" y1="75" x2="376" y2="75" stroke="#f59e0b" stroke-width="3" marker-end="url(#d1-ah)"></line>
+            <text x="220" y="66" font-size="12" text-anchor="middle" fill="#b45309">送電線 ℓ：潮流が PTDF 分だけ変化</text>
+          </svg>
+          <figcaption>図1: 母線 k → スラックバスへ1単位送電したときの、送電線 ℓ の潮流変化が PTDF</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. リアクタンス分配からPTDFを求める</h2>
+        <p>
+          実はPTDFは、<a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02: 潮流計算の基礎</a> で学んだ
+          <strong>リアクタンス分配そのもの</strong>です。A-02の例を思い出しましょう。
+          母線Xから母線Yへ送電する経路が2つあり、経路1のリアクタンスが X₁ = 2、経路2が X₂ = 4 でした。
+          このとき、Xから1単位を送ると、潮流はリアクタンスに反比例して次のように分かれます。
+        </p>
+        <div class="math-block"
+             data-tex="\text{PTDF}_{\text{経路1}} = \dfrac{X_2}{X_1+X_2} = \dfrac{4}{6} \approx 0.67"
+             data-fallback="PTDF(経路1) = X2/(X1+X2) = 4/6 ≈ 0.67"></div>
+        <p>
+          同様に経路2のPTDFは X₁/(X₁+X₂) = 2/6 ≈ 0.33 です。
+          つまり「母線X（→Yスラック）の注入に対する各経路のPTDF」は、経路1が 0.67、経路2が 0.33 となり、
+          合計すると 1.0（注入した1単位が、過不足なく2経路に分かれる）になります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 180" role="img"
+               aria-label="母線Xから母線Yへの2経路。経路1のPTDFは0.67、経路2のPTDFは0.33で、合計1.0になる図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="d1-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <line x1="50" y1="55" x2="50" y2="125" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="390" y1="55" x2="390" y2="125" stroke="#1a1a2e" stroke-width="4"></line>
+            <text x="50" y="45" font-size="12" text-anchor="middle" fill="#1a1a2e">母線X</text>
+            <text x="390" y="45" font-size="12" text-anchor="middle" fill="#1a1a2e">母線Y</text>
+            <text x="36" y="150" font-size="11" fill="#16a34a">注入 +1</text>
+            <!-- 経路1 -->
+            <path d="M54,70 Q220,22 386,70" fill="none" stroke="#f59e0b" stroke-width="3" marker-end="url(#d1-ah2)"></path>
+            <text x="220" y="32" font-size="11" text-anchor="middle" fill="#b45309">経路1: X₁=2 → PTDF 0.67</text>
+            <!-- 経路2 -->
+            <path d="M54,110 Q220,162 386,110" fill="none" stroke="#fbbf24" stroke-width="2" marker-end="url(#d1-ah2)"></path>
+            <text x="220" y="160" font-size="11" text-anchor="middle" fill="#92400e">経路2: X₂=4 → PTDF 0.33</text>
+          </svg>
+          <figcaption>図2: リアクタンス分配率がそのままPTDF（0.67 + 0.33 = 1.0）</figcaption>
+        </figure>
+        <p>
+          母線の数が増えると、PTDFは系統全体のリアクタンス（アドミタンス行列）から計算されますが、
+          「注入が、流れやすい（リアクタンスの小さい）経路に多く分配される」という考え方は同じです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 感度分析と混雑への活用</h2>
+        <p>
+          PTDFが分かると、発電機の出力変更が混雑線路の潮流をどれだけ動かすかを、かけ算で見積もれます。
+          母線 k の出力を ΔP_k 変えたときの、送電線 ℓ の潮流変化 ΔP_ℓ は次式です。
+        </p>
+        <div class="math-block"
+             data-tex="\Delta P_\ell = \text{PTDF}_{\ell,k} \times \Delta P_k"
+             data-fallback="ΔP_line = PTDF × ΔP_gen"></div>
+        <p>
+          例えば、ある混雑線路 L に対して、発電機AのPTDFが 0.6、発電機BのPTDFが 0.2 だとします。
+          それぞれ出力を 10 MW 下げると、線路Lの潮流は次のように変化します。
+        </p>
+        <ul>
+          <li>発電機A: ΔP_L = 0.6 ×(−10) = <strong>−6 MW</strong>（6 MW減る）</li>
+          <li>発電機B: ΔP_L = 0.2 ×(−10) = <strong>−2 MW</strong>（2 MW減る）</li>
+        </ul>
+        <p>
+          同じ 10 MW を動かしても、<strong>PTDFの大きい発電機Aの方が3倍も効きます</strong>。
+          これが感度分析です。混雑を効率よく解消するには、PTDFの大きい発電機を選んで動かすのが有利、と分かります。
+        </p>
+        <p>
+          このようにPTDFを使って、過負荷を解消するのに必要な出力変更量を決める操作が
+          <span class="term">再給電<span class="term-tooltip">混雑を解消するために発電機の出力を計画から変更すること。リディスパッチともいう。</span></span>（リディスパッチ）です。
+          実際には、ある発電機を下げたら需給を保つために別の母線で同量を上げる、というペアで行います。
+          再給電を最適に決める具体的な手法は、後続のユニットで扱います。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（PTDFによる潮流変化） -->
+        <div class="exercise" data-exercise-id="d-01-ex01" data-type="numeric">
+          <h3>演習 1: 出力変更による潮流変化</h3>
+          <div class="exercise-problem">
+            <p>
+              ある混雑線路 L に対して、発電機AのPTDFは 0.6 である。
+              発電機Aの出力を 15 MW <strong>増やした</strong>とき、線路Lの潮流は何 MW 変化するか
+              （増加を正として符号付きで答えよ）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              線路Lの潮流変化:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-01-ex01",
+          "type": "numeric",
+          "correct": 9,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "ΔP_L = PTDF × ΔP_gen = 0.6 × (+15) = +9 MW。出力を増やすと、PTDFが正の線路の潮流も同じ向きに増えます。混雑している線路では、逆に出力を下げて潮流を減らすことを考えます。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（混雑解消の逆算） -->
+        <div class="exercise" data-exercise-id="d-01-ex02" data-type="numeric">
+          <h3>演習 2: 混雑解消に必要な出力変更</h3>
+          <div class="exercise-problem">
+            <p>
+              混雑線路 L の潮流を 12 MW 減らしたい。発電機AのPTDFが 0.4 のとき、
+              発電機Aの出力を何 MW 変更すればよいか（変更量の大きさ[MW]を答えよ）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              出力変更量:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-01-ex02",
+          "type": "numeric",
+          "correct": 30,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "ΔP_L = PTDF × ΔP_gen より、必要な出力変更 = ΔP_L ÷ PTDF = 12 ÷ 0.4 = 30 MW。発電機Aを30 MW下げると線路Lの潮流が12 MW減ります。PTDFが小さいほど、同じ効果を得るのに大きく動かす必要があります。なお実際は需給維持のため、別の母線で同量(30 MW)を上げる再給電をペアで行います。"
+        }
+        </script>
+
+        <!-- 演習3: matrix（PTDF行列の穴埋め） -->
+        <div class="exercise" data-exercise-id="d-01-ex03" data-type="matrix">
+          <h3>演習 3: PTDF行列を求める</h3>
+          <div class="exercise-problem">
+            <p>
+              母線Xから母線Yへ向かう並列2経路があり、経路1のリアクタンスは X₁ = 2、経路2は X₂ = 4 である。
+              母線X（→Yをスラックとする）の注入に対する、各経路のPTDFを求めて表を埋めよ（小数第2位まで）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <table class="matrix-input">
+              <thead>
+                <tr><th></th><th>経路1</th><th>経路2</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>母線Xの注入</th>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="0" data-col="0"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="0" data-col="1"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-01-ex03",
+          "type": "matrix",
+          "correct": [[0.67, 0.33]],
+          "tolerance": 0.01,
+          "explanation": "PTDFはリアクタンス分配率に等しくなります。経路1 = X2/(X1+X2) = 4/6 ≈ 0.67、経路2 = X1/(X1+X2) = 2/6 ≈ 0.33。2つを足すと 1.0 になり、注入した1単位が過不足なく2経路に分かれることを表します。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="#" class="unit-nav-prev is-disabled" aria-hidden="true" tabindex="-1">&larr;</a>
+      <a href="02-redispatch.html" class="unit-nav-next">次のユニット: 再給電（リディスパッチ） &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

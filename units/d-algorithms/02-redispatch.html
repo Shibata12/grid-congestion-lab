@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D-02: 再給電（リディスパッチ） - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="d" data-unit="d-02">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">D: 混雑演算のアルゴリズム</a> &gt;
+      <span>再給電（リディスパッチ）</span>
+    </nav>
+
+    <article>
+      <h1>D-02: 再給電（リディスパッチ）</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        このユニットを終えると、再給電（リディスパッチ）の目的を説明でき、
+        <a href="01-ptdf-sensitivity.html">D-01: PTDFと感度分析</a> で学んだPTDFを使って、
+        発電機2台のペアで混雑を解消するのに必要な再給電量を計算できるようになります。
+        ポイントは、<strong>需給バランスを保ちながら</strong>潮流を容量内に収めることです。
+      </p>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 再給電とは</a></li>
+          <li><a href="#section-2">2. 2台ペアの再給電量を求める</a></li>
+          <li><a href="#section-3">3. ペアの選び方とコスト</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 再給電とは</h2>
+        <p>
+          <a href="../b-congestion/01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a> で混雑（過負荷）を検出し、
+          <a href="01-ptdf-sensitivity.html">D-01: PTDFと感度分析</a> で各発電機のPTDF（混雑線路への効き）を把握しました。
+          いよいよ、実際に混雑を解消します。
+        </p>
+        <p>
+          <span class="term">再給電<span class="term-tooltip">混雑を解消するために発電機の出力を計画から変更すること。リディスパッチともいう。</span></span>（リディスパッチ）とは、
+          <a href="../e-market/01-bg-and-generation-plan.html">E-01: BGと発電計画値</a> で決まった発電計画値を、系統運用側が一部変更して、
+          混雑線路の潮流を送電容量内に収める操作です。
+        </p>
+        <p>
+          ここで絶対に守るべき制約があります。<strong>需給バランス（同時同量）</strong>です。
+          電力は需要と供給が常に一致していなければならないので、総発電量を勝手に増減できません。
+          したがって、<strong>ある発電機を下げたら、別の発電機を同じ量だけ上げる</strong>──
+          この「下げ＝上げ」のペアで行うのが再給電の基本です。
+        </p>
+        <div class="math-block"
+             data-tex="\sum_{k} \Delta P_k = 0 \quad (\text{総発電量は変えない})"
+             data-fallback="ΣΔP_k = 0（総発電量は変えない）"></div>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 180" role="img"
+               aria-label="混雑線路に対し、寄与の大きい発電機Aを下げ、寄与の小さい発電機Bを同量上げることで、需給を保ちつつ線路潮流を減らす概念図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="d2-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 発電機A（下げ） -->
+            <circle cx="60" cy="55" r="20" fill="#fff" stroke="#dc2626" stroke-width="2"></circle>
+            <text x="60" y="60" font-size="14" font-weight="700" text-anchor="middle" fill="#dc2626">A</text>
+            <text x="60" y="92" font-size="11" text-anchor="middle" fill="#dc2626">出力を下げる</text>
+            <text x="60" y="106" font-size="10" text-anchor="middle" fill="#4a5568">(PTDF 大)</text>
+            <!-- 発電機B（上げ） -->
+            <circle cx="60" cy="140" r="20" fill="#fff" stroke="#16a34a" stroke-width="2"></circle>
+            <text x="60" y="145" font-size="14" font-weight="700" text-anchor="middle" fill="#16a34a">B</text>
+            <text x="60" y="172" font-size="11" text-anchor="middle" fill="#16a34a">同量を上げる</text>
+            <!-- 混雑線路 -->
+            <line x1="200" y1="35" x2="200" y2="155" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="380" y1="35" x2="380" y2="155" stroke="#1a1a2e" stroke-width="4"></line>
+            <path d="M204,95 L376,95" fill="none" stroke="#f59e0b" stroke-width="3" marker-end="url(#d2-ah)"></path>
+            <text x="290" y="86" font-size="12" text-anchor="middle" fill="#b45309">混雑線路 L</text>
+            <text x="290" y="115" font-size="11" text-anchor="middle" fill="#16a34a">潮流が下がる</text>
+            <!-- 接続線 -->
+            <line x1="80" y1="55" x2="196" y2="80" stroke="#cbd5e1" stroke-width="1.5"></line>
+            <line x1="80" y1="140" x2="196" y2="110" stroke="#cbd5e1" stroke-width="1.5"></line>
+          </svg>
+          <figcaption>図1: 寄与の大きいAを下げ、同量をBで上げる。需給を保ったまま混雑線路の潮流を下げる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 2台ペアの再給電量を求める</h2>
+        <p>
+          もっとも基本の単位は、発電機2台のペアです。混雑線路 L への寄与（PTDF）が大きい発電機Aを Δ だけ下げ、
+          寄与の小さい発電機Bを同じ Δ だけ上げます。このとき、L の潮流変化は D-01 の感度の式を足し合わせて、
+        </p>
+        <div class="math-block"
+             data-tex="\Delta P_L = \text{PTDF}_A(-\Delta) + \text{PTDF}_B(+\Delta) = (\text{PTDF}_B - \text{PTDF}_A)\,\Delta"
+             data-fallback="ΔP_L = PTDF_A×(−Δ) + PTDF_B×(+Δ) = (PTDF_B − PTDF_A)×Δ"></div>
+        <p>
+          となります。PTDF_A &gt; PTDF_B なら係数は負、つまり再給電によって潮流は減ります。
+        </p>
+        <p>
+          次に「どれだけ減らせばよいか」を決めます。容量を超えている分を
+          <strong>過負荷量</strong>（＝ 現在の潮流 − 送電容量、正の値）とすると、
+          混雑をちょうど解消するには、線路 L の潮流をこの過負荷量だけ<strong>減らせ</strong>ばよい、
+          ということになります。減らす向きはマイナスなので、目標は次のように書けます。
+        </p>
+        <div class="math-block"
+             data-tex="\Delta P_L = -\,(\text{過負荷量})"
+             data-fallback="ΔP_L = −（過負荷量）"></div>
+        <p>
+          この目標を、先ほどの ΔP_L の式に代入すると、
+        </p>
+        <div class="math-block"
+             data-tex="(\text{PTDF}_B - \text{PTDF}_A)\,\Delta = -\,(\text{過負荷量})"
+             data-fallback="(PTDF_B − PTDF_A)×Δ = −（過負荷量）"></div>
+        <p>
+          となります。ここで PTDF_A &gt; PTDF_B なので、左辺の係数 (PTDF_B − PTDF_A) は負です。
+          両辺を −1 倍して符号をそろえると (PTDF_A − PTDF_B)·Δ = 過負荷量 となり、
+          これを Δ について解くと次式が得られます。
+          （この −1 倍が、分母が PTDF_B − PTDF_A ではなく <strong>PTDF_A − PTDF_B</strong> になる理由です。
+          分母が正の値になり、Δ も正の「下げ量」として求まります。）
+        </p>
+        <div class="math-block"
+             data-tex="\Delta = \dfrac{\text{過負荷量}}{\text{PTDF}_A - \text{PTDF}_B}"
+             data-fallback="Δ = 過負荷量 ÷ (PTDF_A − PTDF_B)"></div>
+        <p>
+          例えば、混雑線路 L の送電容量が 100 MW、いまの潮流が 130 MW（30 MW の過負荷）だとします。
+          発電機AのPTDFが 0.6、発電機BのPTDFが 0.2 のとき、必要な再給電量は
+          Δ = 30 ÷ (0.6 − 0.2) = <strong>75 MW</strong> です。
+          Aを 75 MW 下げ、Bを 75 MW 上げると、L の潮流は 130 → 100 MW となり容量内に収まります。
+          総発電量は ±75 MW で相殺され、需給バランスも保たれます。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 420 170" role="img"
+               aria-label="混雑線路の潮流130MWが、Aを75MW下げBを75MW上げる再給電により容量100MWまで下がる様子を示す棒グラフ"
+               xmlns="http://www.w3.org/2000/svg">
+            <line x1="60" y1="20" x2="60" y2="140" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="60" y1="140" x2="400" y2="140" stroke="#cbd5e1" stroke-width="1"></line>
+            <!-- 容量線 100MW (y=60) -->
+            <line x1="60" y1="60" x2="400" y2="60" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 4"></line>
+            <text x="64" y="54" font-size="11" fill="#dc2626">送電容量 100 MW</text>
+            <!-- 再給電前 130MW (過負荷, y=20 h=120) -->
+            <rect x="110" y="20" width="70" height="120" fill="#fecaca" stroke="#dc2626"></rect>
+            <text x="145" y="158" font-size="11" text-anchor="middle" fill="#1a1a2e">再給電前 130</text>
+            <text x="145" y="14" font-size="10" text-anchor="middle" fill="#dc2626">過負荷</text>
+            <!-- 矢印 -->
+            <text x="225" y="100" font-size="18" fill="#4a5568">⇒</text>
+            <text x="225" y="120" font-size="10" text-anchor="middle" fill="#4a5568">A−75 / B+75</text>
+            <!-- 再給電後 100MW (y=60 h=80) -->
+            <rect x="270" y="60" width="70" height="80" fill="#bbf7d0" stroke="#16a34a"></rect>
+            <text x="305" y="158" font-size="11" text-anchor="middle" fill="#1a1a2e">再給電後 100</text>
+            <text x="305" y="54" font-size="10" text-anchor="middle" fill="#16a34a">容量内</text>
+          </svg>
+          <figcaption>図2: 75 MWの再給電（A−75・B+75）で潮流が130→100 MWになり混雑解消</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. ペアの選び方とコスト</h2>
+        <p>
+          再給電量 Δ は <strong>PTDFの差</strong>で決まります。差が大きいペアほど少ない Δ で混雑を解消でき、
+          差が小さいペアでは大量の再給電が必要になります（演習2で実感します）。
+          ですから、まずは<strong>PTDF差の大きいペアを選ぶ</strong>のが効率的です。
+        </p>
+        <p>
+          一方で、再給電にはコストが伴います。出力を上げる電源には燃料費などの発電コストがかかるため、
+          コストを抑えるには、<strong>上げる電源は安い順、下げる電源は高い順</strong>に選ぶのが基本です。
+          これは、コストの安い電源から順に使うという
+          <span class="term">メリットオーダー<span class="term-tooltip">発電コストの安い電源から順に使う考え方。再給電のコストを抑える基本原則。</span></span>の考え方に沿ったものです。
+        </p>
+        <p>
+          実際には「効き（PTDF差）」と「コスト」の両方を考える必要があり、発電機が3台以上になると、
+          どの電源をどれだけ上げ下げするかは組み合わせの問題になります。
+          例えば下げ候補A・上げ候補B/Cの3台なら、BとCにどう配分するかでコストも効きも変わります。
+          こうした配分を系統的に最適化するのが線形計画（最適な再給電の計算）であり、
+          その具体的な手法は後続のユニットで扱います。本ユニットでは、まず2台ペアの基本をしっかり押さえましょう。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（必要再給電量） -->
+        <div class="exercise" data-exercise-id="d-02-ex01" data-type="numeric">
+          <h3>演習 1: 必要な再給電量</h3>
+          <div class="exercise-problem">
+            <p>
+              混雑線路 L の送電容量は 100 MW、いまの潮流は 130 MW（30 MW の過負荷）である。
+              発電機AのPTDFは 0.6、発電機BのPTDFは 0.2。Aを下げ、同量だけBを上げる再給電で混雑を解消したい。
+              必要な再給電量 Δ は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              再給電量 Δ:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-02-ex01",
+          "type": "numeric",
+          "correct": 75,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "Aを下げBを上げると、Lの潮流変化は (PTDF_B − PTDF_A)×Δ = (0.2 − 0.6)×Δ = −0.4×Δ。30 MWの過負荷を消すには Δ = 30 ÷ (0.6 − 0.2) = 75 MW。Aを75 MW下げ、Bを75 MW上げると、Lは130→100 MWで容量内に収まり、総発電量は変わらず需給も保たれます。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（PTDF差が小さいペア） -->
+        <div class="exercise" data-exercise-id="d-02-ex02" data-type="numeric">
+          <h3>演習 2: PTDF差が小さいと？</h3>
+          <div class="exercise-problem">
+            <p>
+              同じ 30 MW の過負荷を、別のペアで解消することを考える。発電機CのPTDFは 0.5、発電機DのPTDFは 0.4 である。
+              Cを下げ、同量だけDを上げて解消するとき、必要な再給電量 Δ は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              再給電量 Δ:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-02-ex02",
+          "type": "numeric",
+          "correct": 300,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "Δ = 過負荷量 ÷ (PTDF_C − PTDF_D) = 30 ÷ (0.5 − 0.4) = 300 MW。PTDF差が 0.1 しかないため、同じ30 MWを解消するのに300 MWもの再給電が必要です。演習1のペア（差0.4）では75 MWで済みました。PTDF差が大きいペアほど、少ない再給電量で効率よく混雑を解消できることが分かります。"
+        }
+        </script>
+
+        <!-- 演習3: ordering（再給電の手順） -->
+        <div class="exercise" data-exercise-id="d-02-ex03" data-type="ordering">
+          <h3>演習 3: 再給電の手順</h3>
+          <div class="exercise-problem">
+            <p>
+              再給電で混雑を解消する一般的な手順になるよう、次の項目を上から正しい順に並べ替えよ。
+              （ドラッグ、または ▲▼ ボタンで操作できます）
+            </p>
+          </div>
+          <div class="exercise-input">
+            <ul class="ordering-list" aria-label="手順の並べ替え">
+              <li class="ordering-item" data-item-id="c">PTDF差の大きいペアを選び、必要な再給電量を計算する</li>
+              <li class="ordering-item" data-item-id="a">潮流が容量を超え、混雑していることを検出する</li>
+              <li class="ordering-item" data-item-id="e">潮流が容量内に収まったか再確認する</li>
+              <li class="ordering-item" data-item-id="b">各発電機のPTDF（混雑線路への感度）を把握する</li>
+              <li class="ordering-item" data-item-id="d">需給を保ちつつ（下げ＝上げ）発電機の出力を変更する</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-02-ex03",
+          "type": "ordering",
+          "correct": ["a", "b", "c", "d", "e"],
+          "explanation": "まず混雑を検出し(a)、各発電機のPTDF(感度)を把握して(b)、効率の良いペアと必要量を決め(c)、需給を保って出力を変更し(d)、最後に潮流が収まったか再確認します(e)。需給バランスを崩さないよう、下げと上げを同量にするのが要点です。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="01-ptdf-sensitivity.html" class="unit-nav-prev">&larr; PTDFと感度分析</a>
+      <a href="../e-market/index.html" class="unit-nav-next">次の領域へ: E 電力市場 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

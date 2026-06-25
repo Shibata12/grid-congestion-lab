@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>用語集 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-page="glossary">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="glossary-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../index.html">トップ</a> &gt;
+      <span>用語集</span>
+    </nav>
+
+    <h1>用語集</h1>
+    <p>全領域を横断する用語の辞典です。キーワード検索と領域での絞り込みができます。</p>
+
+    <!-- 絞り込み -->
+    <div class="glossary-filter">
+      <input type="text" id="glossary-search"
+             placeholder="用語を検索..." aria-label="用語検索">
+      <div class="glossary-domain-filter" role="group" aria-label="領域で絞り込み">
+        <button type="button" data-filter="all" class="active">すべて</button>
+        <button type="button" data-filter="a">A</button>
+        <button type="button" data-filter="b">B</button>
+        <button type="button" data-filter="c">C</button>
+        <button type="button" data-filter="d">D</button>
+        <button type="button" data-filter="e">E</button>
+        <button type="button" data-filter="f">F</button>
+      </div>
+    </div>
+
+    <!-- 用語リスト（五十音順）。ユニット追加時に項目を追記する。 -->
+    <dl class="glossary-list">
+
+      <div class="glossary-entry" data-domain="b,e" id="term-available-capacity">
+        <dt>空き容量</dt>
+        <dd>
+          <p>送電線にまだ流せる余裕。従来は、接続済み電源が最大出力で同時に発電すると想定して計算されるため保守的になりがちで、実際には多くの時間帯で空きがある。ノンファーム型接続は、この空きを活用する仕組み。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-imbalance">
+        <dt>インバランス</dt>
+        <dd>
+          <p>計画値と実績の差。本サイトでは「実績 − 計画」で定義する。BG単位で算定され、不足・余剰が生じた分は一般送配電事業者の調整力で埋められ、インバランス料金として精算される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b,d" id="term-n-1">
+        <dt>N-1基準</dt>
+        <dd>
+          <p>N個の設備のうち任意の1つが停止しても（N−1個になっても）、残りの設備が過負荷にならず系統運用を維持できるように運用する考え方。単一設備故障基準。想定故障を1つずつ仮定して評価する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-overload">
+        <dt>過負荷</dt>
+        <dd>
+          <p>送電線などの設備に、その送電容量を超える潮流が流れる状態。系統混雑が顕在化した状態であり、設備の損傷や連鎖故障を避けるため解消が必要。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d" id="term-sensitivity">
+        <dt>感度（感度分析）</dt>
+        <dd>
+          <p>ある入力の変化が出力に与える影響の度合い。系統では、注入の変化が各送電線の潮流をどれだけ動かすか（PTDF）を指す。混雑解消では、どの発電機を動かすと効くかを感度で見積もる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-keikakuchi-doujidouryou">
+        <dt>計画値同時同量</dt>
+        <dd>
+          <p>2016年4月の小売全面自由化にあわせて導入された制度。各事業者（BG）が30分コマごとに発電・需要の計画値を提出し、実需給でその達成を目指す。計画と実績の差はインバランスとして精算される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b,d" id="term-congestion">
+        <dt>系統混雑</dt>
+        <dd>
+          <p>送電線の送電容量の制約により、計画どおりに電力を流しきれない、あるいは流すと容量を超えてしまう状態。潮流が容量を超える（超えそうな）ときに生じる。本サイト全体の主題。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f,b,d" id="term-congestion-management">
+        <dt>系統混雑管理</dt>
+        <dd>
+          <p>混雑を検出し、解消するための一連の運用。発電計画値をもとに潮流計算を行い、混雑（容量超過・N-1違反）を判定し、必要なら再給電で解消する、という流れを繰り返す。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/01-congestion-management-overview.html">F-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-gate-close">
+        <dt>ゲートクローズ</dt>
+        <dd>
+          <p>計画値を変更・更新できる最終時刻。現行ルールでは実需給の1時間前。これ以降、発電計画値などは変更できず、系統運用の基礎データとして確定する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-connect-manage">
+        <dt>コネクト&マネージ</dt>
+        <dd>
+          <p>既存の送変電設備を最大限活用して、送電線への接続可能量を増やす日本版の取組。「想定潮流の合理化」「N-1電制」「ノンファーム型接続」の3つの対策からなる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d" id="term-redispatch">
+        <dt>再給電（リディスパッチ）</dt>
+        <dd>
+          <p>混雑を解消するために、発電機の出力を計画から変更すること。PTDFを使って必要な変更量を見積もり、需給を保つため、ある母線で下げた分を別の母線で上げるペアで行う。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-variable-re">
+        <dt>自然変動電源</dt>
+        <dd>
+          <p>太陽光・風力など、天候によって出力が変動する電源。燃料費はかからないが、出力を任意に増やせない。優先給電ルールでは、火力等の抑制・広域融通の後に出力制御の対象となる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/04-priority-dispatch.html">E-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,e" id="term-frequency">
+        <dt>周波数（系統周波数）</dt>
+        <dd>
+          <p>交流の1秒あたりの波の数（東日本50Hz・西日本60Hz）。発電と消費のバランスを映す指標で、供給過剰で上昇・不足で低下する。規定値から外れると設備停止・停電につながるため、同時同量で一定に保つ。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/02-simultaneous-balancing.html">E-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-output-control">
+        <dt>出力制御（出力抑制）</dt>
+        <dd>
+          <p>電源の出力を下げて需給を調整すること。特に再生可能エネルギーの出力抑制を指すことが多い。供給過剰や系統制約のときに、優先給電ルールの順序に従って行われる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/04-priority-dispatch.html">E-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-real-balancing">
+        <dt>実同時同量</dt>
+        <dd>
+          <p>計画値同時同量の前に行われていた、リアルタイムで発電を調整して需給を一致させる方式。地域独占下で一般電気事業者が担っていた。小売全面自由化により計画値同時同量へ移行した。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/02-simultaneous-balancing.html">E-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-balancing-market">
+        <dt>需給調整市場</dt>
+        <dd>
+          <p>一般送配電事業者が、需給バランス・周波数維持に必要な調整力を市場を通じて広域的に調達する仕組み。発電事業者やデマンドレスポンス（DR）などが調整力を提供する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/03-balancing-market.html">E-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d" id="term-slack-bus">
+        <dt>スラックバス（参照母線）</dt>
+        <dd>
+          <p>注入の過不足を吸収する基準の母線。電力は保存するため、ある母線で注入を増やすとどこかで減らす必要があり、その基準として置く。PTDFは「ある母線からスラックバスへ1単位送電したとき」の感度として定義される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b,d" id="term-contingency">
+        <dt>想定故障（コンティンジェンシー）</dt>
+        <dd>
+          <p>系統の健全性を評価するために仮定する設備故障のケース。N-1基準では、送電線や変圧器などが1つ停止する想定故障を1つずつ仮定し、各ケースで過負荷が生じないか確認する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-line-capacity">
+        <dt>送電容量</dt>
+        <dd>
+          <p>送電線に流せる潮流の上限。熱的制約・安定度・電圧などで決まる（実務では運用容量・熱容量などの区別がある）。潮流がこれを超えると過負荷（混雑）となる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f" id="term-control-center">
+        <dt>中央給電指令所（中給）</dt>
+        <dd>
+          <p>電力系統全体の需給と潮流を集中的に監視・制御する拠点。系統混雑管理の演算（潮流計算・N-1評価・PTDF・再給電量の算出）も、ここに置かれるシステムが自動化・高速化して支援する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/01-congestion-management-overview.html">F-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,d" id="term-injection">
+        <dt>注入（母線注入）</dt>
+        <dd>
+          <p>ある母線に正味で注ぎ込まれる電力。発電は＋、負荷は−として扱う（注入 = 発電 − 負荷）。各母線の注入は発電計画値・需要計画値から決まり、潮流計算の入力になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-baseload-fixed">
+        <dt>長期固定電源</dt>
+        <dd>
+          <p>水力（流れ込み式）・原子力・地熱など、出力が一定で調整が難しい電源。優先給電ルールでは出力制御の対象として最後に回される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/04-priority-dispatch.html">E-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-balancing-reserve">
+        <dt>調整力</dt>
+        <dd>
+          <p>需給の差（インバランス）を埋めるために一般送配電事業者が確保する供給力（上げ・下げ）。計画値同時同量のもとで、系統全体の同時同量を最終的に担保する役割を担う。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/02-simultaneous-balancing.html">E-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-balancing-products">
+        <dt>調整力の商品区分（一次・二次・三次調整力）</dt>
+        <dd>
+          <p>調整力を応動速度・継続時間で分類したもの（概略）。速い順に一次・二次・三次で、継続時間は逆に三次が長い。瞬時の変動から数十分の予測誤差まで、時間スケールに応じて使い分ける。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/03-balancing-market.html">E-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,d" id="term-power-flow">
+        <dt>潮流</dt>
+        <dd>
+          <p>送電線を流れる電力（の流れ）。各母線の注入が決まると、KCL・KVL・オームの法則によって各送電線の潮流が定まる。混雑は、この潮流が送電容量を超えそうかどうかで判断される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,d" id="term-power-flow-calc">
+        <dt>潮流計算</dt>
+        <dd>
+          <p>与えられた注入（発電計画値・需要計画値）から、各送電線の潮流と各母線の電圧を求める計算。母線数が増えると手計算は困難になり、計算機で連立方程式を解く。混雑演算の出発点となる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-dr">
+        <dt>デマンドレスポンス（DR）</dt>
+        <dd>
+          <p>需要を増やしたり減らしたりして需給調整に活用すること。発電だけでなく需要側も調整力の提供者になりうる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/03-balancing-market.html">E-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-non-firm">
+        <dt>ノンファーム型接続</dt>
+        <dd>
+          <p>送電線に空き容量がなくても、混雑時に出力制御されることを条件に接続を認める方式。コネクト&マネージの柱の一つ。平常時は送電でき、送電線の増強を待たずに再エネ等を接続できる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e,d" id="term-generation-plan">
+        <dt>発電計画値</dt>
+        <dd>
+          <p>発電BG（発電契約者）が各30分コマについて「これだけ発電する」と申告する電力量。ゲートクローズまで更新でき、確定後は系統全体の潮流・混雑を見通す入力データ（領域D）になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-bg">
+        <dt>バランシンググループ（BG）</dt>
+        <dd>
+          <p>需給の計画・実績を取りまとめる単位。複数の事業者がまとまって構成でき、需要側を需要BG、発電側を発電BGと呼ぶ。代表契約者がBG全体の計画値を提出する。グループ内で過不足を相殺できるため、インバランスを小さくしやすい。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,d" id="term-ptdf">
+        <dt>PTDF（Power Transfer Distribution Factor）</dt>
+        <dd>
+          <p>ある母線の注入を1単位変えたとき、ある送電線の潮流が変化する割合（潮流分布係数）。線形近似（DC潮流）に基づき、リアクタンス分配率に等しい。混雑解消の感度分析や再給電の計算に使う。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-firm">
+        <dt>ファーム型接続</dt>
+        <dd>
+          <p>送電線に空き容量があることを前提に接続を認める従来方式。接続後は混雑による出力制御を前提としない（確定的＝firm）。空き容量がないと接続できない点が、ノンファーム型接続との違い。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a" id="term-radial">
+        <dt>放射状系統</dt>
+        <dd>
+          <p>ループ（閉路）を持たない樹状の系統。潮流の経路が一意に決まり、各送電線の潮流は下流の負荷合計として求まる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d,e" id="term-merit-order">
+        <dt>メリットオーダー</dt>
+        <dd>
+          <p>発電コストの安い電源から順に使う考え方。再給電では、コストを抑えるため、上げる電源は安い順・下げる電源は高い順に選ぶのが基本となる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/02-redispatch.html">D-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-priority-dispatch">
+        <dt>優先給電ルール</dt>
+        <dd>
+          <p>供給過剰や系統制約で出力抑制が必要なとき、どの電源から抑制するかの順序を定めた公開ルール。大枠は、火力等の抑制・調整 → 広域融通 → バイオマス → 自然変動電源 → 長期固定電源の順。再給電・調整力運用で下げる電源を選ぶ基準になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/04-priority-dispatch.html">E-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a" id="term-reactance">
+        <dt>リアクタンス</dt>
+        <dd>
+          <p>交流における電流の流れにくさ（誘導性）。潮流分配では“電気的な距離”として働き、ループ系統の潮流はリアクタンスに反比例して分配される。厳密な交流理論はA領域の後続ユニットで扱う。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a" id="term-loop">
+        <dt>ループ系統（環状系統）</dt>
+        <dd>
+          <p>閉ループ（環状の経路）を含む系統。ある地点から別の地点への送電が複数経路に分配される。各経路の潮流はリアクタンスに反比例して決まる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+    </dl>
+    <p class="glossary-empty" hidden>該当する用語がありません。</p>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../js/common.js"></script>
+</body>
+</html>

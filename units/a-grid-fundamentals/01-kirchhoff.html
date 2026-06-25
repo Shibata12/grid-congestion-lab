@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A-01: キルヒホッフの法則 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="a" data-unit="a-01">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">A: 系統の基礎</a> &gt;
+      <span>キルヒホッフの法則</span>
+    </nav>
+
+    <article>
+      <h1>A-01: キルヒホッフの法則</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        このユニットを終えると、キルヒホッフの電流則（KCL）と電圧則（KVL）を説明でき、
+        節点での電流の収支を計算できるようになります。これらは系統解析のすべての出発点です。
+      </p>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 2つの法則の全体像</a></li>
+          <li><a href="#section-2">2. 電流則（KCL）と節点の収支</a></li>
+          <li><a href="#section-3">3. 電圧則（KVL）と閉ループ</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 2つの法則の全体像</h2>
+        <p>
+          電力系統は、無数の発電機・負荷・送電線が網の目のようにつながった巨大な電気回路です。
+          その回路のどこにどれだけの電流（潮流）が流れるかを決める、もっとも基本的な規則が
+          <span class="term">キルヒホッフの法則<span class="term-tooltip">回路網における電流と電圧の保存則。電流則（KCL）と電圧則（KVL）の2つからなる。</span></span>です。
+        </p>
+        <p>キルヒホッフの法則は、次の2つの法則からなります。</p>
+        <ul>
+          <li><strong>電流則（KCL: Kirchhoff's Current Law）</strong> ― 第一法則。電荷の保存を表す。</li>
+          <li><strong>電圧則（KVL: Kirchhoff's Voltage Law）</strong> ― 第二法則。エネルギー（電位）の保存を表す。</li>
+        </ul>
+        <p>
+          つまり「<strong>キルヒホッフの法則</strong>」は、この電流則（KCL）と電圧則（KVL）の2つを<strong>まとめた総称</strong>です。
+          このユニットのタイトル「キルヒホッフの法則」もその総称を指しており、本文や演習で「キルヒホッフの電流則（KCL）」とあるときは、
+          そのうちの電流則だけを取り出して呼んでいる、という関係になります。
+        </p>
+        <p>
+          オームの法則が「1つの素子」についての関係（<code>V = R · I</code>）であるのに対し、
+          キルヒホッフの法則は「回路全体のつながり方」についての関係を与えます。
+          系統のように多数の経路が絡み合う回路では、この2法則が解析の土台になります。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 電流則（KCL）と節点の収支</h2>
+        <p>
+          電流則は「回路の任意の<span class="term">節点<span class="term-tooltip">複数の導線（枝）が接続する点。系統では母線（バス）に相当する。</span></span>において、流入する電流の総和と流出する電流の総和は等しい」というものです。
+          電荷はどこかに溜まったり消えたりしないため、節点に入った分はかならず出ていきます。
+        </p>
+        <div class="math-block"
+             data-tex="\sum I_{\text{in}} = \sum I_{\text{out}}"
+             data-fallback="ΣI_in = ΣI_out"></div>
+        <p>
+          たとえば下図の節点 P を考えます。導線①から <strong>8 A</strong>、導線②から <strong>5 A</strong> が流入し、
+          導線③へ <strong>4 A</strong> が流出しているとき、残りの導線④に流れる電流はいくつでしょうか。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 360 200" role="img"
+               aria-label="節点Pに4本の導線が接続し、①8A流入、②5A流入、③4A流出、④が未知の図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#1a1a2e"></path>
+              </marker>
+            </defs>
+            <!-- 節点 P -->
+            <circle cx="180" cy="100" r="6" fill="#1a1a2e"></circle>
+            <text x="192" y="96" font-size="13" font-weight="700" fill="#1a1a2e">P</text>
+            <!-- ① 流入（左上→P） -->
+            <line x1="40" y1="40" x2="174" y2="96" stroke="#3b82f6" stroke-width="2" marker-end="url(#ah)"></line>
+            <text x="60" y="34" font-size="12" fill="#3b82f6">① 8 A 流入</text>
+            <!-- ② 流入（左下→P） -->
+            <line x1="40" y1="160" x2="174" y2="104" stroke="#3b82f6" stroke-width="2" marker-end="url(#ah)"></line>
+            <text x="60" y="178" font-size="12" fill="#3b82f6">② 5 A 流入</text>
+            <!-- ③ 流出（P→右上） -->
+            <line x1="186" y1="96" x2="320" y2="40" stroke="#ef4444" stroke-width="2" marker-end="url(#ah)"></line>
+            <text x="250" y="34" font-size="12" fill="#ef4444">③ 4 A 流出</text>
+            <!-- ④ 未知（P→右下） -->
+            <line x1="186" y1="104" x2="320" y2="160" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ah)"></line>
+            <text x="250" y="178" font-size="12" fill="#4a5568">④ I₄ = ?</text>
+          </svg>
+          <figcaption>図1: 節点Pにおける電流の流入・流出</figcaption>
+        </figure>
+
+        <p>
+          流入の合計は 8 + 5 = 13 A、すでに分かっている流出は 4 A です。
+          KCL より流入と流出は等しいので、導線④には <strong>13 − 4 = 9 A</strong> が流出します。
+        </p>
+        <p>
+          系統では、この節点が「母線」に、電流が「潮流」に対応します。
+          発電機からの注入と負荷への引き出し、送電線への分配が母線上でつねに釣り合う、という
+          電力収支の考え方は、このKCLがそのまま基礎になっています。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 電圧則（KVL）と閉ループ</h2>
+        <p>
+          電圧則は「回路の任意の<span class="term">閉ループ<span class="term-tooltip">回路をたどって元の点に戻る経路。閉路ともいう。</span></span>（閉路）に沿って一周したとき、電圧（起電力と電圧降下）の総和はゼロになる」というものです。
+          一周して元の電位に戻る以上、上がった分と下がった分は打ち消し合う、という意味です。
+        </p>
+        <div class="math-block"
+             data-tex="\sum_{\text{loop}} V = 0"
+             data-fallback="Σ(閉路の電圧) = 0"></div>
+        <p>
+          たとえば起電力 10 V の電源に、2 Ω と 3 Ω の抵抗が直列につながった1つの閉ループでは、
+          電流を <code>I</code> とすると KVL は次のようになります。
+        </p>
+        <div class="math-block"
+             data-tex="10 = 2I + 3I = 5I \quad\Rightarrow\quad I = 2\,\text{A}"
+             data-fallback="10 = 2I + 3I = 5I  →  I = 2 A"></div>
+        <p>
+          系統では、複数の経路（ループ）がある場合に、潮流が各経路へどう分かれるかを
+          KVLが決めます。インピーダンスの小さい経路ほど多くの潮流が流れる、という性質は、
+          このKVLとオームの法則の組み合わせから導かれます（詳しくは後続ユニットで扱います）。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice -->
+        <div class="exercise" data-exercise-id="a-01-ex01" data-type="choice">
+          <h3>演習 1: キルヒホッフの電流則</h3>
+          <div class="exercise-problem">
+            <p>キルヒホッフの電流則（KCL）の正しい記述はどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-01-ex01" value="1">
+              <span>回路の任意の閉路において、電圧の総和はゼロである</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-01-ex01" value="2">
+              <span>任意の節点において、流入する電流の総和と流出する電流の総和は等しい</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-01-ex01" value="3">
+              <span>導体の抵抗は長さに比例し、断面積に反比例する</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-01-ex01",
+          "type": "choice",
+          "correct": "2",
+          "explanation": "KCLは節点における電流（電荷）の保存則です。選択肢1はKVL（電圧則）、選択肢3はオームの法則の変形（抵抗と導体形状の関係）であり、いずれもKCLではありません。"
+        }
+        </script>
+
+        <!-- 演習2: numeric -->
+        <div class="exercise" data-exercise-id="a-01-ex02" data-type="numeric">
+          <h3>演習 2: 節点の電流収支</h3>
+          <div class="exercise-problem">
+            <p>
+              ある節点に4本の導線が接続している。導線①から 8 A、導線②から 5 A が流入し、
+              導線③へ 4 A が流出している。残る導線④に流れる電流（流出方向）は何 A か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              導線④の電流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> A
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-01-ex02",
+          "type": "numeric",
+          "correct": 9,
+          "tolerance": 0,
+          "unit": "A",
+          "explanation": "KCLより、流入の総和(8 + 5 = 13 A)が流出の総和に等しくなります。すでに流出が4 Aなので、導線④には 13 − 4 = 9 A が流出します。"
+        }
+        </script>
+
+        <!-- 演習3: multi-choice -->
+        <div class="exercise" data-exercise-id="a-01-ex03" data-type="multi-choice">
+          <h3>演習 3: 正しい記述をすべて選ぶ</h3>
+          <div class="exercise-problem">
+            <p>キルヒホッフの法則に関して、正しい記述を<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="a-01-ex03" value="1">
+              <span>節点に流入する電流の総和は、流出する電流の総和に等しい</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-01-ex03" value="2">
+              <span>閉ループに沿って一周したとき、電圧の総和はゼロである</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-01-ex03" value="3">
+              <span>抵抗を流れる電流は、両端の電圧に反比例する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-01-ex03" value="4">
+              <span>直列に接続された素子には、同じ大きさの電流が流れる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-01-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "4"],
+          "explanation": "1はKCL、2はKVLそのものです。4は分岐のない直列経路では電流が一定になるというKCLの帰結で正しい。3は誤りで、オームの法則より電流は電圧に「比例」します(I = V / R)。"
+        }
+        </script>
+
+        <!-- 演習4: ordering -->
+        <div class="exercise" data-exercise-id="a-01-ex04" data-type="ordering">
+          <h3>演習 4: 回路を解く手順</h3>
+          <div class="exercise-problem">
+            <p>
+              キルヒホッフの法則を使って未知の電流を求めるときの一般的な手順になるよう、
+              次の項目を上から正しい順に並べ替えよ。（ドラッグ、または ▲▼ ボタンで操作できます）
+            </p>
+          </div>
+          <div class="exercise-input">
+            <ul class="ordering-list" aria-label="手順の並べ替え">
+              <li class="ordering-item" data-item-id="c">各閉ループでKVL（電圧則）の式を立てる</li>
+              <li class="ordering-item" data-item-id="a">各枝に電流の向きを仮定し、変数を割り当てる</li>
+              <li class="ordering-item" data-item-id="d">連立方程式を解いて各電流を求める</li>
+              <li class="ordering-item" data-item-id="b">各節点でKCL（電流則）の式を立てる</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-01-ex04",
+          "type": "ordering",
+          "correct": ["a", "b", "c", "d"],
+          "explanation": "まず未知数(各枝の電流)を変数として置き(a)、節点でKCL(b)、閉ループでKVL(c)の式を立てて方程式を用意し、最後に連立して解きます(d)。変数を置く前に式は立てられないため、aが先頭になります。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="#" class="unit-nav-prev is-disabled" aria-hidden="true" tabindex="-1">&larr;</a>
+      <a href="02-power-flow-basics.html" class="unit-nav-next">次のユニット: 潮流計算の基礎 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

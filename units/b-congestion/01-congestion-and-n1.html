@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B-01: 混雑の判定とN-1基準 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="b" data-unit="b-01">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">B: 系統混雑</a> &gt;
+      <span>混雑の判定とN-1基準</span>
+    </nav>
+
+    <article>
+      <h1>B-01: 混雑の判定とN-1基準</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        このユニットを終えると、送電線の<span class="term">送電容量<span class="term-tooltip">送電線に流せる潮流の上限。熱的制約・安定度・電圧などで決まる。</span></span>と潮流から混雑（過負荷）を判定でき、
+        <strong>N-1基準</strong>（設備が1つ止まっても残りが過負荷にならないように運用する考え方）を説明できるようになります。
+        <a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02: 潮流計算の基礎</a> で求めた潮流が、ここで容量と比較されます。
+      </p>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 送電容量と混雑の判定</a></li>
+          <li><a href="#section-2">2. N-1基準とは</a></li>
+          <li><a href="#section-3">3. N-1の典型例：並列2回線</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 送電容量と混雑の判定</h2>
+        <p>
+          送電線には、流せる電力に上限があります。これを<strong>送電容量</strong>と呼びます。
+          送電容量は、電線が発熱で傷まない限界（熱的制約）や、系統の安定度・電圧などから決まります
+          （実務では「運用容量」「熱容量」などの区別がありますが、本ユニットでは「送電容量」と総称します）。
+        </p>
+        <p>
+          <a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02: 潮流計算の基礎</a> で求めた潮流が、この送電容量を超える、あるいは超えそうになる状態が
+          <span class="term">系統混雑<span class="term-tooltip">送電容量の制約により、計画どおりに電力を流しきれない（流すと容量を超える）状態。</span></span>です。判定はシンプルで、次のように考えます。
+        </p>
+        <ul>
+          <li>潮流 ≤ 送電容量 → 健全（流せる）</li>
+          <li>潮流 &gt; 送電容量 → <span class="term">過負荷<span class="term-tooltip">送電容量を超える潮流が流れる状態。設備の損傷や連鎖故障を避けるため解消が必要。</span></span>（混雑）</li>
+        </ul>
+        <p>
+          どれだけ容量に近づいているかは<strong>利用率</strong>で表します。
+        </p>
+        <div class="math-block"
+             data-tex="\text{利用率} = \dfrac{P_{\text{潮流}}}{P_{\text{容量}}} \times 100\,\%"
+             data-fallback="利用率 = 潮流 ÷ 容量 × 100%"></div>
+        <p>
+          例えば送電容量 200 MW の送電線に潮流 160 MW が流れていれば、利用率は 160 ÷ 200 × 100 = <strong>80 %</strong> で健全です。
+          もし潮流が 240 MW なら利用率 120 % となり、容量を超えた<strong>過負荷</strong>＝混雑の状態です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 420 170" role="img"
+               aria-label="送電容量200MWの上限線に対し、潮流160MWは容量内（健全）、潮流240MWは容量超過（過負荷）であることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 軸 -->
+            <line x1="60" y1="20" x2="60" y2="140" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="60" y1="140" x2="400" y2="140" stroke="#cbd5e1" stroke-width="1"></line>
+            <!-- 容量の上限線（200MW = y 40） -->
+            <line x1="60" y1="40" x2="400" y2="40" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 4"></line>
+            <text x="64" y="33" font-size="11" fill="#dc2626">送電容量 200 MW（上限）</text>
+            <!-- 健全バー: 160MW (y=72, 高さ68) -->
+            <rect x="120" y="72" width="70" height="68" fill="#bbf7d0" stroke="#16a34a"></rect>
+            <text x="155" y="158" font-size="11" text-anchor="middle" fill="#1a1a2e">潮流 160</text>
+            <text x="155" y="66" font-size="11" text-anchor="middle" fill="#16a34a">80% 健全</text>
+            <!-- 過負荷バー: 240MW (上限超過, y=20, 高さ120) -->
+            <rect x="260" y="20" width="70" height="120" fill="#fecaca" stroke="#dc2626"></rect>
+            <text x="295" y="158" font-size="11" text-anchor="middle" fill="#1a1a2e">潮流 240</text>
+            <text x="295" y="14" font-size="11" text-anchor="middle" fill="#dc2626">120% 過負荷</text>
+          </svg>
+          <figcaption>図1: 潮流が送電容量（上限）を超えると過負荷＝混雑</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. N-1基準とは</h2>
+        <p>
+          平常時にすべての送電線が容量内におさまっていても、それだけでは安心できません。
+          現実の系統では、落雷・事故・点検などで設備が停止することが避けられないからです。
+          そこで系統運用では、<strong>設備が1つ止まっても大丈夫なように</strong>あらかじめ備えます。これが
+          <span class="term">N-1基準<span class="term-tooltip">N個の設備のうち任意の1つが停止しても、残りが過負荷にならず系統を維持できるように運用する考え方。単一設備故障基準。</span></span>です。
+        </p>
+        <p>
+          N-1基準とは、「N個ある設備のうち、<strong>どの1つが停止して（N−1個になって）も</strong>、
+          残りの設備が過負荷にならず、需給と系統運用を維持できるように運用する」という考え方です
+          （単一設備故障基準、N-1セキュリティとも呼びます）。
+        </p>
+        <p>
+          評価のしかたは、<span class="term">想定故障<span class="term-tooltip">健全性を評価するために仮定する設備故障のケース。コンティンジェンシーともいう。</span></span>（コンティンジェンシー）を1つずつ仮定することです。
+          「この送電線が1回線停止したら？」「あの変圧器が停止したら？」というケースを順番に想定し、
+          <strong>それぞれのケースで、残りの設備に過負荷が生じないか</strong>を確認します。
+          1つの故障がきっかけで過負荷が連鎖し、大停電に至るのを防ぐための、信頼度の基本的なものさしです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. N-1の典型例：並列2回線</h2>
+        <p>
+          もっとも分かりやすい例が、同じ2地点を結ぶ<strong>並列2回線</strong>です。
+          A-02 で学んだように、同等な2回線なら潮流は均等に分担されます。
+          いま、合計 <strong>160 MW</strong> の潮流が2回線で均等に流れ、各回線は 80 MW、
+          各回線の送電容量は 100 MW だとします。平常時は 80 MW &lt; 100 MW なので、両回線とも健全です。
+        </p>
+        <p>
+          ところが、ここで<strong>1回線が停止</strong>するとどうなるでしょうか。
+          停止した回線が運んでいた潮流は消えてなくならず、<strong>残りの1回線へすべて転流します</strong>。
+          その結果、残り1回線には 160 MW が流れ、送電容量 100 MW を大きく超えてしまいます
+          （利用率 160 %）。これは <strong>N-1違反</strong>（ある1故障で過負荷が生じる状態）です。
+        </p>
+        <div class="math-block"
+             data-tex="P_{\text{残り回線}} = P_1 + P_2 = 80 + 80 = 160\ \text{MW} \;>\; 100\ \text{MW（容量）}"
+             data-fallback="残り回線の潮流 = 80 + 80 = 160 MW > 100 MW（容量）"></div>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="平常時は2回線で各80MW（健全）。1回線停止すると残り回線に160MWが流れ容量100MWを超過し過負荷になる図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="b1-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 平常時 -->
+            <text x="115" y="18" font-size="12" text-anchor="middle" fill="#1a1a2e">平常時</text>
+            <line x1="40" y1="35" x2="40" y2="95" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="190" y1="35" x2="190" y2="95" stroke="#1a1a2e" stroke-width="4"></line>
+            <path d="M44,52 Q115,32 186,52" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#b1-ah)"></path>
+            <path d="M44,78 Q115,98 186,78" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#b1-ah)"></path>
+            <text x="115" y="38" font-size="10" text-anchor="middle" fill="#16a34a">回線1: 80 MW</text>
+            <text x="115" y="96" font-size="10" text-anchor="middle" fill="#16a34a">回線2: 80 MW</text>
+            <!-- 矢印（→停止後） -->
+            <text x="240" y="70" font-size="20" fill="#4a5568">⇒</text>
+            <!-- 停止後 -->
+            <text x="370" y="18" font-size="12" text-anchor="middle" fill="#1a1a2e">回線2 停止後</text>
+            <line x1="290" y1="35" x2="290" y2="95" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="440" y1="35" x2="440" y2="95" stroke="#1a1a2e" stroke-width="4"></line>
+            <path d="M294,52 Q365,32 436,52" fill="none" stroke="#dc2626" stroke-width="3" marker-end="url(#b1-ah)"></path>
+            <text x="365" y="38" font-size="10" text-anchor="middle" fill="#dc2626">回線1: 160 MW</text>
+            <!-- 停止回線（×） -->
+            <path d="M294,78 Q365,98 436,78" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4 4"></path>
+            <text x="365" y="96" font-size="10" text-anchor="middle" fill="#94a3b8">回線2: 停止 ×</text>
+            <text x="365" y="120" font-size="11" text-anchor="middle" fill="#dc2626">100 MW 超過 → 過負荷</text>
+          </svg>
+          <figcaption>図2: 1回線停止で潮流が残り回線へ転流し、容量を超過（N-1違反）</figcaption>
+        </figure>
+
+        <p>
+          では、この系統を <strong>N-1基準を満たすように</strong>運用するにはどうすればよいでしょうか。
+          1回線停止後に残り回線が容量内（100 MW以下）におさまる必要があるので、
+          <strong>平常時の合計潮流を 100 MW 以下に抑えておく</strong>（各回線 50 MW以下にする）ことになります。
+          つまり、N-1基準を守るために、平常時は送電容量を100%まで使わず<strong>余裕（マージン）を残す</strong>のです。
+        </p>
+        <p>
+          これは混雑が生まれる大きな理由の1つです。設備の容量そのものに余裕があっても、
+          N-1基準を満たすために平常時の潮流が制限され、結果として「流したいだけ流せない」混雑が生じます。
+          領域D（混雑演算のアルゴリズム）では、このN-1制約のもとで潮流を管理し、混雑を解消する方法を扱います。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（利用率） -->
+        <div class="exercise" data-exercise-id="b-01-ex01" data-type="numeric">
+          <h3>演習 1: 利用率の計算</h3>
+          <div class="exercise-problem">
+            <p>
+              ある送電線の送電容量は 200 MW、流れている潮流は 150 MW である。
+              この送電線の利用率は何 % か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              利用率:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> %
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-01-ex01",
+          "type": "numeric",
+          "correct": 75,
+          "tolerance": 0,
+          "unit": "%",
+          "explanation": "利用率 = 潮流 ÷ 容量 × 100 = 150 ÷ 200 × 100 = 75 %。100 %以下なので過負荷ではなく健全です。容量に対してまだ 25 %（50 MW）の余裕があります。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（N-1: 停止後潮流） -->
+        <div class="exercise" data-exercise-id="b-01-ex02" data-type="numeric">
+          <h3>演習 2: 1回線停止後の潮流</h3>
+          <div class="exercise-problem">
+            <p>
+              同じ2地点を結ぶ並列2回線がある。平常時、合計 160 MW の潮流を2回線で均等に分担している。
+              各回線の送電容量は 100 MW である。いま<strong>1回線が停止</strong>したとき、残り1回線に流れる潮流は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              残り回線の潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-01-ex02",
+          "type": "numeric",
+          "correct": 160,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "平常時は各回線 80 MW（160 ÷ 2）で容量100 MW内です。1回線が停止すると、その潮流は残り1回線へすべて転流するため、残り回線には 160 MW が流れます。これは送電容量 100 MW を超える過負荷（利用率160 %）であり、N-1違反です。N-1基準を満たすには、平常時の合計潮流を 100 MW以下に抑える必要があります。"
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（N-1基準の理解） -->
+        <div class="exercise" data-exercise-id="b-01-ex03" data-type="multi-choice">
+          <h3>演習 3: N-1基準の理解</h3>
+          <div class="exercise-problem">
+            <p>N-1基準に関する記述として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="b-01-ex03" value="1">
+              <span>設備が1つ停止しても、残りの設備が過負荷にならないように運用する考え方である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-01-ex03" value="2">
+              <span>平常時に潮流が容量以内であれば、設備故障時の状態は考慮しなくてよい</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-01-ex03" value="3">
+              <span>想定故障（コンティンジェンシー）を1つずつ仮定し、各ケースで過負荷が生じないか確認する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-01-ex03" value="4">
+              <span>N-1基準を満たすため、平常時の潮流に余裕（マージン）を持たせることがある</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-01-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "3", "4"],
+          "explanation": "1はN-1基準の定義そのもの、3は評価方法（想定故障を1つずつ仮定）、4はN-1を満たすために平常時に余裕を残す運用で、いずれも正しい。2は誤りで、N-1基準はまさに『平常時に容量内でも、1故障で過負荷にならないか』を問うものです。平常時の健全性だけでは不十分です。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="#" class="unit-nav-prev is-disabled" aria-hidden="true" tabindex="-1">&larr;</a>
+      <a href="../c-grid-model/index.html" class="unit-nav-next">次の領域へ: C 系統モデル &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

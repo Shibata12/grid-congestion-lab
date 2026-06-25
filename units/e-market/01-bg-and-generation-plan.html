@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-01: BGと発電計画値 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-01">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>BGと発電計画値</span>
+    </nav>
+
+    <article>
+      <h1>E-01: BGと発電計画値</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        このユニットを終えると、計画値同時同量制度における
+        <span class="term">バランシンググループ（BG）<span class="term-tooltip">需給の計画・実績を取りまとめる単位。複数の事業者がまとまって構成できる。</span></span>
+        の役割を説明でき、発電計画値が系統運用（領域Dの混雑演算）の入力になる流れを理解し、
+        BG単位のインバランスを計算できるようになります。
+      </p>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 計画値同時同量制度とBG</a></li>
+          <li><a href="#section-2">2. 発電計画値とは</a></li>
+          <li><a href="#section-3">3. 計画と実績の差「インバランス」</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 計画値同時同量制度とBG</h2>
+        <p>
+          電力は大量に貯めておくことが難しいため、需要（消費）と供給（発電）を
+          常に一致させ続ける必要があります。これを<strong>同時同量</strong>といいます。
+          2016年4月の小売全面自由化にあわせて、この同時同量を「計画」を軸に運用する
+          <span class="term">計画値同時同量<span class="term-tooltip">30分コマごとに提出した計画値の達成を各事業者（BG）が担い、計画と実績の差はインバランスとして精算する制度。</span></span>制度が導入されました（この制度や電力システム改革の枠組みは資源エネルギー庁等が公開しています。末尾の<a href="#references">参考資料</a>を参照）。
+        </p>
+        <p>
+          この制度では、各事業者は <strong>30分を1コマ</strong> として、発電量・需要量の
+          「計画値」をあらかじめ提出します。実需給ではその計画どおりになるよう運用し、
+          計画を達成する責任を負います。
+        </p>
+        <p>
+          ただし、1事業者だけでは需要や発電の変動が大きく、計画を当てるのは簡単ではありません。
+          そこで、複数の事業者がまとまって需給を調整する単位として
+          <strong>バランシンググループ（BG）</strong> を構成できます。
+          需要側をまとめたものを需要BG、発電側をまとめたものを発電BGと呼びます。
+          各BGには代表となる契約者（代表契約者）がいて、BG全体の計画値を
+          一般送配電事業者へ提出します。グループ内で過不足を融通・相殺できるため、
+          計画と実績のズレを小さくしやすくなります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 480 220" role="img"
+               aria-label="発電事業者A・B・Cがまとまって発電BGを構成し、代表契約者が計画値を一般送配電事業者へ提出する図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="e-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 発電事業者 -->
+            <g font-size="12" text-anchor="middle" fill="#1a1a2e">
+              <rect x="20" y="20" width="96" height="34" rx="6" fill="#fff" stroke="#10b981" stroke-width="1.5"></rect>
+              <text x="68" y="41">発電事業者A</text>
+              <rect x="20" y="78" width="96" height="34" rx="6" fill="#fff" stroke="#10b981" stroke-width="1.5"></rect>
+              <text x="68" y="99">発電事業者B</text>
+              <rect x="20" y="136" width="96" height="34" rx="6" fill="#fff" stroke="#10b981" stroke-width="1.5"></rect>
+              <text x="68" y="157">発電事業者C</text>
+            </g>
+            <!-- 発電BG -->
+            <rect x="180" y="55" width="120" height="80" rx="8" fill="#ecfdf5" stroke="#10b981" stroke-width="2"></rect>
+            <text x="240" y="88" font-size="13" font-weight="700" text-anchor="middle" fill="#047857">発電BG</text>
+            <text x="240" y="110" font-size="11" text-anchor="middle" fill="#4a5568">（代表契約者）</text>
+            <!-- 一般送配電 -->
+            <rect x="360" y="70" width="100" height="50" rx="8" fill="#fff" stroke="#4a5568" stroke-width="2"></rect>
+            <text x="410" y="90" font-size="11" text-anchor="middle" fill="#1a1a2e">一般送配電</text>
+            <text x="410" y="106" font-size="11" text-anchor="middle" fill="#1a1a2e">事業者</text>
+            <!-- 矢印: 事業者→BG -->
+            <g fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#e-ah)">
+              <path d="M116,37 L176,80"></path>
+              <path d="M116,95 L176,95"></path>
+              <path d="M116,153 L176,110"></path>
+              <!-- BG→送配電（計画値提出） -->
+              <path d="M300,95 L356,95"></path>
+            </g>
+            <text x="328" y="86" font-size="10" text-anchor="middle" fill="#047857">計画値</text>
+          </svg>
+          <figcaption>図1: 発電事業者がまとまって発電BGを構成し、代表契約者が計画値を提出する</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 発電計画値とは</h2>
+        <p>
+          <strong>発電計画値</strong>とは、発電BG（発電契約者）が各30分コマについて
+          「これだけ発電する」と申告する電力量（kWh／MWh）です。
+          提出後も、実需給が近づいて見通しの精度が上がるにつれ、より正確な計画へ更新できます。
+        </p>
+        <p>
+          更新の最終締切が <span class="term">ゲートクローズ<span class="term-tooltip">計画値を変更できる最終時刻。現行ルールでは実需給の1時間前。</span></span> で、
+          現行ルールでは <strong>実需給の1時間前</strong> です。これ以降は計画を変更できません。
+        </p>
+        <p>
+          ゲートクローズ後に確定した発電計画値は、一般送配電事業者が系統全体の需給と潮流を
+          見通すための基礎データになります。<strong>どの地点でどれだけ発電・消費されるか</strong>が
+          決まれば、各送電線にどれだけ潮流が流れるか（領域D）を計算できます。
+          つまり、<strong>市場で決まった計画値が、混雑演算の入力になる</strong>という関係です。
+          ここが領域E（電力市場）と領域D（混雑演算のアルゴリズム）のつながりです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 計画と実績の差「インバランス」</h2>
+        <p>
+          どれだけ精度を上げても、実績が計画と完全に一致することはまずありません。
+          この差を <span class="term">インバランス<span class="term-tooltip">計画値と実績の差。BG単位で算定され、一般送配電事業者の調整力で埋められ、インバランス料金で精算される。</span></span> と呼びます。
+          本ユニットでは、符号の向きを次のように定義します。
+        </p>
+        <div class="math-block"
+             data-tex="\text{インバランス} = \text{実績発電量} - \text{発電計画値}"
+             data-fallback="インバランス = 実績発電量 − 発電計画値"></div>
+        <p>
+          実績が計画を上回れば正（発電の余剰）、下回れば負（発電の不足）になります。
+          インバランスは <strong>BG単位</strong> で算定されるため、BG内で個々の発電機のズレが
+          打ち消し合い、グループ全体ではインバランスが小さくなりやすくなります。
+          これがBGを組む大きな利点の1つです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 360 200" role="img"
+               aria-label="発電BGの計画50MWhに対し実績49MWhで、差し引きインバランスがマイナス1MWhであることを示す棒グラフ"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 軸 -->
+            <line x1="50" y1="20" x2="50" y2="160" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="50" y1="160" x2="330" y2="160" stroke="#cbd5e1" stroke-width="1"></line>
+            <!-- 計画バー（50） -->
+            <rect x="90" y="40" width="60" height="120" fill="#a7f3d0" stroke="#10b981"></rect>
+            <text x="120" y="178" font-size="12" text-anchor="middle" fill="#1a1a2e">計画 50</text>
+            <text x="120" y="34" font-size="11" text-anchor="middle" fill="#047857">50 MWh</text>
+            <!-- 実績バー（49 ≒ わずかに低い） -->
+            <rect x="210" y="42.4" width="60" height="117.6" fill="#34d399" stroke="#047857"></rect>
+            <text x="240" y="178" font-size="12" text-anchor="middle" fill="#1a1a2e">実績 49</text>
+            <text x="240" y="36" font-size="11" text-anchor="middle" fill="#047857">49 MWh</text>
+            <!-- 差分注記 -->
+            <text x="300" y="100" font-size="12" fill="#dc2626">−1 MWh</text>
+            <text x="300" y="118" font-size="10" fill="#4a5568">（不足）</text>
+          </svg>
+          <figcaption>図2: 計画50 MWhに対し実績49 MWh → インバランスは −1 MWh（不足）</figcaption>
+        </figure>
+
+        <p>
+          インバランス分の需給ギャップは、最終的に一般送配電事業者が調整力で埋め、
+          その費用はインバランス料金として事業者と精算されます。
+          系統運用の視点では、<strong>計画値は混雑演算の入力</strong>、
+          <strong>インバランスは実時間の需給・潮流調整</strong>に関わり、
+          いずれも領域D（混雑演算のアルゴリズム）や領域F（実システム）へとつながっていきます。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice -->
+        <div class="exercise" data-exercise-id="e-01-ex01" data-type="choice">
+          <h3>演習 1: 計画値同時同量制度とBG</h3>
+          <div class="exercise-problem">
+            <p>計画値同時同量制度およびBGに関する説明として、正しいものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-01-ex01" value="1">
+              <span>事業者は計画を提出せず、実需給で1分ごとに発電と需要を完全一致させる義務を負う</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-01-ex01" value="2">
+              <span>各事業者（BG）は30分コマごとに発電・需要の計画値を提出し、実需給で計画の達成を目指す</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-01-ex01" value="3">
+              <span>計画と実績の差（インバランス）は精算の対象とならず、各事業者が放置してよい</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-01-ex01",
+          "type": "choice",
+          "correct": "2",
+          "explanation": "計画値同時同量制度では、各事業者（BG）が30分コマ単位で計画値を提出し、実需給でその達成を目指します。選択肢1は旧来の実同時同量に近い誤った記述、選択肢3はインバランスがインバランス料金で精算される点に反するため誤りです。"
+        }
+        </script>
+
+        <!-- 演習2: numeric -->
+        <div class="exercise" data-exercise-id="e-01-ex02" data-type="numeric">
+          <h3>演習 2: BG全体のインバランス</h3>
+          <div class="exercise-problem">
+            <p>
+              ある発電BGに発電機A・Bが所属している。あるコマ（30分）の計画値と実績が次のとおりとする。
+            </p>
+            <ul>
+              <li>発電機A: 発電計画値 30 MWh、実績 32 MWh</li>
+              <li>発電機B: 発電計画値 20 MWh、実績 17 MWh</li>
+            </ul>
+            <p>
+              「インバランス = 実績 − 計画」と定義するとき、この発電BG <strong>全体</strong> のインバランス[MWh]を
+              符号付きで答えよ。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              BG全体のインバランス:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MWh
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-01-ex02",
+          "type": "numeric",
+          "correct": -1,
+          "tolerance": 0,
+          "unit": "MWh",
+          "explanation": "BG全体の計画は 30 + 20 = 50 MWh、実績は 32 + 17 = 49 MWh。インバランス = 実績 − 計画 = 49 − 50 = −1 MWh（1 MWhの不足）。個別ではAが +2、Bが −3 ですが、BGでまとめると相殺され −1 に縮小します。これがBGを組む利点です。"
+        }
+        </script>
+
+        <!-- 演習3: fill-in -->
+        <div class="exercise" data-exercise-id="e-01-ex03" data-type="fill-in">
+          <h3>演習 3: 計画提出の流れ（穴埋め）</h3>
+          <div class="exercise-problem">
+            <p>次の文の空欄に、適切な語を入れよ。</p>
+          </div>
+          <div class="exercise-input">
+            <p class="fill-in-sentence">
+              発電契約者は
+              <input type="text" class="fill-in-input" data-answer-key="1" placeholder="___" aria-label="空欄1">
+              に所属し、実需給の1時間前である
+              <input type="text" class="fill-in-input" data-answer-key="2" placeholder="___" aria-label="空欄2">
+              までに
+              <input type="text" class="fill-in-input" data-answer-key="3" placeholder="___" aria-label="空欄3">
+              を提出・更新する。
+            </p>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-01-ex03",
+          "type": "fill-in",
+          "correct": {
+            "1": ["BG", "バランシンググループ", "発電BG"],
+            "2": ["ゲートクローズ", "ゲートクローズ時刻"],
+            "3": ["発電計画値", "発電計画"]
+          },
+          "explanation": "発電契約者はBG（バランシンググループ／発電BG）に所属し、実需給の1時間前であるゲートクローズまでに発電計画値を提出・更新します。ゲートクローズ後は計画を変更できません。"
+        }
+        </script>
+
+      </section>
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/category/electricity_and_gas/electric/system_reform.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「電力システム改革について」</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/about/special/tokushu/denryokugaskaikaku/denryokujiyuka.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「電力小売全面自由化で、何が変わったのか？」</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="#" class="unit-nav-prev is-disabled" aria-hidden="true" tabindex="-1">&larr;</a>
+      <a href="02-simultaneous-balancing.html" class="unit-nav-next">次のユニット: 計画値同時同量 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

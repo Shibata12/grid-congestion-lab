@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A-02: 潮流計算の基礎 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="a" data-unit="a-02">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">A: 系統の基礎</a> &gt;
+      <span>潮流計算の基礎</span>
+    </nav>
+
+    <article>
+      <h1>A-02: 潮流計算の基礎</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        このユニットを終えると、母線への<span class="term">注入<span class="term-tooltip">その母線に正味で注ぎ込まれる電力。発電は＋、負荷は−。</span></span>の考え方を説明でき、
+        放射状系統で送電線の潮流を計算でき、ループ系統で潮流がリアクタンスに反比例して分配されることを理解できます。
+        <strong><a href="../e-market/01-bg-and-generation-plan.html">E-01: BGと発電計画値</a> で学んだ発電計画値が、ここで潮流計算の入力（注入）になります。</strong>
+      </p>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 母線への注入と電力収支</a></li>
+          <li><a href="#section-2">2. 放射状系統の潮流</a></li>
+          <li><a href="#section-3">3. ループ系統の潮流分配</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 母線への注入と電力収支</h2>
+        <p>
+          系統では、発電機・負荷・送電線が <span class="term">母線<span class="term-tooltip">複数の設備が接続する接続点。回路でいう節点（ノード）に相当する。バスともいう。</span></span>（バス）に集まって接続します。
+          ある母線について、そこに正味でどれだけ電力が注ぎ込まれているかを<strong>注入</strong>と呼びます。
+          発電は電力を送り込むので＋（プラス）、負荷は引き出すので−（マイナス）として扱い、母線の注入は次のように書けます。
+        </p>
+        <div class="math-block"
+             data-tex="P_{\text{inj}} = P_{\text{gen}} - P_{\text{load}}"
+             data-fallback="P_inj = P_gen − P_load"></div>
+        <p>
+          A-01 のキルヒホッフの電流則（KCL）を電力に当てはめると、
+          <strong>母線への注入は、その母線から送電線へ流れ出す潮流の合計に等しい</strong>と言えます。
+          つまり、各母線の注入が決まれば、送電線をどれだけの電力（＝<span class="term">潮流<span class="term-tooltip">送電線を流れる電力（の流れ）。</span></span>）が流れるかが物理法則によって定まります。
+        </p>
+        <p>
+          ここで重要なのが <a href="../e-market/01-bg-and-generation-plan.html">E-01: BGと発電計画値</a> とのつながりです。各母線の注入は、
+          <strong>発電側は発電計画値、需要側は需要計画値から決まります</strong>。
+          市場・計画の世界（領域E）で確定した計画値が、そのまま系統の物理計算（潮流計算）の入力になるのです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 420 180" role="img"
+               aria-label="母線に発電機が＋注入、負荷が−注入し、差し引きの注入が送電線へ潮流として流れ出す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="a2-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 母線（太い縦線） -->
+            <line x1="200" y1="30" x2="200" y2="150" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="208" y="26" font-size="12" fill="#1a1a2e">母線</text>
+            <!-- 発電機 G（左上）→ ＋注入 -->
+            <circle cx="60" cy="55" r="18" fill="#fff" stroke="#3b82f6" stroke-width="2"></circle>
+            <text x="60" y="60" font-size="14" font-weight="700" text-anchor="middle" fill="#3b82f6">G</text>
+            <line x1="80" y1="55" x2="196" y2="55" stroke="#3b82f6" stroke-width="2" marker-end="url(#a2-ah)"></line>
+            <text x="120" y="48" font-size="11" fill="#3b82f6">発電 +Pgen</text>
+            <!-- 負荷（左下）← −注入 -->
+            <line x1="196" y1="120" x2="84" y2="120" stroke="#ef4444" stroke-width="2" marker-end="url(#a2-ah)"></line>
+            <text x="40" y="124" font-size="12" fill="#ef4444">負荷</text>
+            <text x="120" y="113" font-size="11" fill="#ef4444">−Pload</text>
+            <!-- 送電線へ（右）潮流 -->
+            <line x1="204" y1="90" x2="400" y2="90" stroke="#4a5568" stroke-width="2" marker-end="url(#a2-ah)"></line>
+            <text x="300" y="83" font-size="11" text-anchor="middle" fill="#4a5568">送電線へ（潮流）</text>
+            <text x="300" y="105" font-size="11" text-anchor="middle" fill="#1a1a2e">= Pinj = Pgen − Pload</text>
+          </svg>
+          <figcaption>図1: 母線の注入（発電＋・負荷−）が、送電線へ流れ出す潮流になる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 放射状系統の潮流</h2>
+        <p>
+          まずもっとも単純な、ループ（閉路）を持たない系統を考えます。これを
+          <span class="term">放射状系統<span class="term-tooltip">ループを持たない樹状の系統。各送電線の潮流経路が一意に決まる。</span></span>といいます。
+          放射状系統では潮流の通り道が枝分かれするだけで一意に決まるため、各送電線の潮流は
+          <strong>その線路が供給する下流の負荷を合計するだけ</strong>で求まります（ここでは送電損失は無視します）。
+        </p>
+        <p>
+          次の例で考えます。母線1に発電計画値 <strong>150 MW</strong> の発電があり、
+          母線2に負荷 <strong>60 MW</strong>、母線3に負荷 <strong>90 MW</strong> が接続しています。
+          母線は 1 ─ 2 ─ 3 の順に直列につながっています。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 150" role="img"
+               aria-label="母線1（発電150MW）、母線2（負荷60MW）、母線3（負荷90MW）が直列。線路Aの潮流150MW、線路Bの潮流90MW"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="a2-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 母線 -->
+            <g stroke="#1a1a2e" stroke-width="4">
+              <line x1="50" y1="50" x2="50" y2="100"></line>
+              <line x1="230" y1="50" x2="230" y2="100"></line>
+              <line x1="410" y1="50" x2="410" y2="100"></line>
+            </g>
+            <g font-size="12" text-anchor="middle" fill="#1a1a2e">
+              <text x="50" y="40">母線1</text>
+              <text x="230" y="40">母線2</text>
+              <text x="410" y="40">母線3</text>
+            </g>
+            <!-- 線路A: 1→2 -->
+            <line x1="54" y1="75" x2="226" y2="75" stroke="#4a5568" stroke-width="2" marker-end="url(#a2-ah2)"></line>
+            <text x="140" y="67" font-size="11" text-anchor="middle" fill="#4a5568">線路A: 150 MW</text>
+            <!-- 線路B: 2→3 -->
+            <line x1="234" y1="75" x2="406" y2="75" stroke="#4a5568" stroke-width="2" marker-end="url(#a2-ah2)"></line>
+            <text x="320" y="67" font-size="11" text-anchor="middle" fill="#4a5568">線路B: 90 MW</text>
+            <!-- 注入注記 -->
+            <text x="50" y="120" font-size="11" text-anchor="middle" fill="#3b82f6">発電 +150</text>
+            <text x="230" y="120" font-size="11" text-anchor="middle" fill="#ef4444">負荷 −60</text>
+            <text x="410" y="120" font-size="11" text-anchor="middle" fill="#ef4444">負荷 −90</text>
+          </svg>
+          <figcaption>図2: 放射状系統の潮流。各線路の潮流＝下流の負荷合計</figcaption>
+        </figure>
+
+        <p>
+          線路B（母線2→母線3）の下流には母線3の負荷 90 MW だけがあるので、潮流は <strong>90 MW</strong> です。
+          線路A（母線1→母線2）の下流には母線2と母線3の負荷があるので、潮流は 60 + 90 = <strong>150 MW</strong> になります。
+          これは母線1の発電計画値そのものです。損失を無視すれば <strong>発電の合計＝負荷の合計</strong> になることが確認できます。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. ループ系統の潮流分配</h2>
+        <p>
+          系統に<span class="term">ループ系統<span class="term-tooltip">閉ループ（環状の経路）を含む系統。送電が複数経路に分配される。</span></span>（閉ループ）が含まれると、ある地点から別の地点へ送る電力は
+          <strong>複数の経路に分かれて流れます</strong>。このとき、各経路にどれだけ流れるかは自由ではなく、
+          A-01 の電圧則（KVL）とオームの法則によって決まります。
+        </p>
+        <p>
+          交流系統では、経路の「流れにくさ」は主に <span class="term">リアクタンス<span class="term-tooltip">交流における電流の流れにくさ（誘導性）。本ユニットでは“電気的な距離”として扱う。厳密な交流理論は後続ユニットで扱う。</span></span> X で決まります。
+          ここでは X を<strong>「電気的な距離」</strong>と捉えてください（リアクタンスの厳密な意味は、A領域の後続ユニットで改めて扱います）。
+          2つの経路に分かれる場合、潮流は<strong>リアクタンスに反比例</strong>して分配され、経路1の潮流は次式で表せます。
+        </p>
+        <div class="math-block"
+             data-tex="P_1 = P \cdot \dfrac{X_2}{X_1 + X_2}"
+             data-fallback="P1 = P × X2 / (X1 + X2)"></div>
+        <p>
+          例えば、母線Xから母線Yへ <strong>120 MW</strong> を送るとき、経路1のリアクタンスが X₁ = 2、
+          経路2が X₂ = 4 だとします。すると経路1の潮流は 120 × 4 / (2 + 4) = <strong>80 MW</strong>、
+          経路2は 120 × 2 / 6 = <strong>40 MW</strong> となり、<strong>リアクタンスの小さい経路1に多くの潮流が流れます</strong>。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 180" role="img"
+               aria-label="母線Xから母線Yへ120MW。経路1（リアクタンス2）に80MW、経路2（リアクタンス4）に40MWが分配される図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="a2-ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 母線X / Y -->
+            <line x1="50" y1="55" x2="50" y2="125" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="390" y1="55" x2="390" y2="125" stroke="#1a1a2e" stroke-width="4"></line>
+            <text x="50" y="45" font-size="12" text-anchor="middle" fill="#1a1a2e">母線X</text>
+            <text x="390" y="45" font-size="12" text-anchor="middle" fill="#1a1a2e">母線Y</text>
+            <text x="36" y="150" font-size="11" fill="#3b82f6">+120</text>
+            <text x="372" y="150" font-size="11" fill="#ef4444">−120</text>
+            <!-- 経路1（上, X1=2 → 80MW） -->
+            <path d="M54,70 Q220,20 386,70" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#a2-ah3)"></path>
+            <text x="220" y="32" font-size="11" text-anchor="middle" fill="#047857">経路1: X₁=2 → 80 MW</text>
+            <!-- 経路2（下, X2=4 → 40MW） -->
+            <path d="M54,110 Q220,160 386,110" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#a2-ah3)"></path>
+            <text x="220" y="158" font-size="11" text-anchor="middle" fill="#4a5568">経路2: X₂=4 → 40 MW</text>
+          </svg>
+          <figcaption>図3: ループ系統では潮流がリアクタンスに反比例して分配される</figcaption>
+        </figure>
+
+        <p>
+          母線の数が増え、経路が複雑に絡み合うと、この分配を手計算で追うのは現実的ではなくなります。
+          そこで、すべての母線の注入（＝発電計画値・需要計画値）を入力として、
+          KCL・KVL・オームの法則を連立して各送電線の潮流と各母線の電圧を求める計算を、計算機で行います。
+          これが<span class="term">潮流計算<span class="term-tooltip">与えられた注入（発電計画値・需要計画値）から、各送電線の潮流と各母線の電圧を求める計算。</span></span>です。
+          そして、混雑（領域B・D）は「ある送電線の潮流がその容量を超えそうかどうか」で判断されるため、
+          潮流計算はその出発点になります。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（放射状） -->
+        <div class="exercise" data-exercise-id="a-02-ex01" data-type="numeric">
+          <h3>演習 1: 放射状系統の潮流</h3>
+          <div class="exercise-problem">
+            <p>
+              母線 1 ─ 2 ─ 3 が直列につながった放射状系統がある。母線1の発電計画値は 150 MW、
+              母線2の負荷は 60 MW、母線3の負荷は 90 MW である（送電損失は無視する）。
+              このとき、線路A（母線1→母線2）の潮流は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              線路Aの潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-02-ex01",
+          "type": "numeric",
+          "correct": 150,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "放射状系統では、各線路の潮流は下流の負荷合計に等しくなります。線路Aの下流には母線2(60 MW)と母線3(90 MW)があるので、潮流は 60 + 90 = 150 MW。これは母線1の発電計画値そのものであり、損失を無視すれば発電合計＝負荷合計となります。E-01「BGと発電計画値」で学んだ発電計画値が、ここで注入として潮流を決めています。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（ループ分配） -->
+        <div class="exercise" data-exercise-id="a-02-ex02" data-type="numeric">
+          <h3>演習 2: ループ系統の潮流分配</h3>
+          <div class="exercise-problem">
+            <p>
+              母線Xから母線Yへ 120 MW を送電する。XとYの間には2つの経路があり、
+              経路1のリアクタンスは X₁ = 2、経路2のリアクタンスは X₂ = 4 である。
+              潮流はリアクタンスに反比例して分配されるとき、<strong>経路1</strong>の潮流は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              経路1の潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-02-ex02",
+          "type": "numeric",
+          "correct": 80,
+          "tolerance": 0.5,
+          "unit": "MW",
+          "explanation": "潮流はリアクタンスに反比例して分配されます。経路1の潮流は P1 = P × X2 / (X1 + X2) = 120 × 4 / (2 + 4) = 80 MW。残りの 40 MW が経路2に流れます。リアクタンス（電気的な距離）が小さい経路1に、より多くの潮流が流れる点がポイントです。"
+        }
+        </script>
+
+        <!-- 演習3: choice（潮流計算の入力） -->
+        <div class="exercise" data-exercise-id="a-02-ex03" data-type="choice">
+          <h3>演習 3: 潮流計算の入力</h3>
+          <div class="exercise-problem">
+            <p>系統の潮流計算を行うとき、入力（あらかじめ与える既知の量）として最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-02-ex03" value="1">
+              <span>各送電線にあらかじめ流したい潮流の目標値</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-02-ex03" value="2">
+              <span>各母線の注入（発電計画値と需要計画値）</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-02-ex03" value="3">
+              <span>各送電線で発生する故障の有無</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-02-ex03",
+          "type": "choice",
+          "correct": "2",
+          "explanation": "潮流計算は、各母線の注入（発電計画値・需要計画値）を入力として、物理法則（KCL・KVL・オームの法則）から各送電線の潮流と各母線の電圧を求める計算です。線路の潮流は計算の「出力」であって入力ではないため選択肢1は逆です。E-01「BGと発電計画値」で確定した発電計画値が、ここで注入として潮流計算に入ります。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="01-kirchhoff.html" class="unit-nav-prev">&larr; キルヒホッフの法則</a>
+      <a href="../b-congestion/index.html" class="unit-nav-next">次の領域へ: B 系統混雑 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

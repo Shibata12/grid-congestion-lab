@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>系統混雑ラボ - Grid Congestion Lab</title>
+  <meta name="description" content="電力系統の系統混雑を、ブラウザ内で完結する形で学ぶ学習サイト。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-page="top">
+  <header class="site-header">
+    <!-- common.js が生成 -->
+  </header>
+
+  <main class="top-page">
+
+    <!-- サイト紹介 -->
+    <section class="site-intro">
+      <h1>系統混雑ラボ</h1>
+      <p class="lead">電力系統の「系統混雑」を、読んで理解し、その場で解いて確かめる学習サイトです。</p>
+      <p>
+        知識の解説と演習を一体化し、外部ツールやAPIに依存せずブラウザ内だけで学習が完結します。
+        系統の物理法則から、混雑の発生、系統モデル化、混雑演算アルゴリズム、電力市場、
+        そして実システムまでを、6つの領域で体系的に扱います。
+      </p>
+      <p>
+        対象は電力系統の業務に関わるシステムエンジニアです。
+        前提知識は高校物理レベルの電気の基礎（オームの法則、キルヒホッフの法則の概念的理解）のみとし、
+        交流回路特有の概念は領域Aから解説します。
+      </p>
+    </section>
+
+    <!-- 領域一覧カード（common.js が生成） -->
+    <section class="domain-overview">
+      <h2>学習領域</h2>
+      <div class="domain-cards">
+        <!-- common.js が SITE_STRUCTURE をもとにカードを生成する -->
+      </div>
+    </section>
+
+    <!-- 依存関係の図 -->
+    <section class="dependency-map">
+      <h2>領域間の関係</h2>
+      <figure class="dep-figure">
+        <svg viewBox="0 0 600 340" role="img"
+             aria-label="領域間の依存関係。AはBとCの前提。B・C・EはDの前提。A〜EすべてがFの前提。"
+             xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+            </marker>
+            <marker id="arrow-light" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"></path>
+            </marker>
+          </defs>
+
+          <!-- 主依存（実線） -->
+          <g fill="none" stroke="#4a5568" stroke-width="2" marker-end="url(#arrow)">
+            <path d="M124,75 L216,52"></path>   <!-- A→B -->
+            <path d="M124,92 L216,140"></path>  <!-- A→C -->
+            <path d="M306,52 L396,88"></path>   <!-- B→D -->
+            <path d="M306,142 L396,104"></path> <!-- C→D -->
+            <path d="M126,200 Q280,220 396,120"></path> <!-- E→D -->
+          </g>
+
+          <!-- F への依存（A〜E すべて、淡い破線） -->
+          <g fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#arrow-light)">
+            <path d="M82,106 Q180,250 196,266"></path>   <!-- A→F -->
+            <path d="M262,76 Q400,150 320,266"></path>   <!-- B→F -->
+            <path d="M262,166 Q280,220 300,266"></path>  <!-- C→F -->
+            <path d="M442,121 Q440,230 372,266"></path>  <!-- D→F -->
+            <path d="M82,224 Q120,260 175,278"></path>   <!-- E→F -->
+          </g>
+
+          <!-- ノード -->
+          <g font-family="var(--font-body)" font-size="13" text-anchor="middle">
+            <!-- A -->
+            <rect x="40" y="60" width="84" height="44" rx="8" fill="#fff" stroke="#3b82f6" stroke-width="2"></rect>
+            <text x="82" y="78" font-weight="700" fill="#3b82f6">A</text>
+            <text x="82" y="95" fill="#1a1a2e" font-size="11">系統の基礎</text>
+            <!-- B -->
+            <rect x="220" y="30" width="86" height="44" rx="8" fill="#fff" stroke="#ef4444" stroke-width="2"></rect>
+            <text x="263" y="48" font-weight="700" fill="#ef4444">B</text>
+            <text x="263" y="65" fill="#1a1a2e" font-size="11">系統混雑</text>
+            <!-- C -->
+            <rect x="220" y="120" width="86" height="44" rx="8" fill="#fff" stroke="#8b5cf6" stroke-width="2"></rect>
+            <text x="263" y="138" font-weight="700" fill="#8b5cf6">C</text>
+            <text x="263" y="155" fill="#1a1a2e" font-size="11">系統モデル</text>
+            <!-- D -->
+            <rect x="400" y="75" width="92" height="48" rx="8" fill="#fff" stroke="#f59e0b" stroke-width="2"></rect>
+            <text x="446" y="94" font-weight="700" fill="#f59e0b">D</text>
+            <text x="446" y="111" fill="#1a1a2e" font-size="10">混雑演算ｱﾙｺﾞﾘｽﾞﾑ</text>
+            <!-- E -->
+            <rect x="40" y="180" width="86" height="44" rx="8" fill="#fff" stroke="#10b981" stroke-width="2"></rect>
+            <text x="83" y="198" font-weight="700" fill="#10b981">E</text>
+            <text x="83" y="215" fill="#1a1a2e" font-size="11">電力市場</text>
+            <!-- F -->
+            <rect x="180" y="270" width="240" height="46" rx="8" fill="#fff" stroke="#6366f1" stroke-width="2"></rect>
+            <text x="300" y="289" font-weight="700" fill="#6366f1">F</text>
+            <text x="300" y="306" fill="#1a1a2e" font-size="11">次期中央給電指令所システム（A〜Eを統合）</text>
+          </g>
+        </svg>
+        <figcaption>
+          図: 領域間の前提関係。実線は主要な前提（A→B・C、B・C・E→D）、
+          破線はFがA〜Eすべてを前提とすることを示す。学習順序は推奨であり、ロックはありません。
+        </figcaption>
+      </figure>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="progress-reset">
+      <button type="button" class="btn-reset">学習進捗をリセット</button>
+    </div>
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="js/common.js"></script>
+</body>
+</html>

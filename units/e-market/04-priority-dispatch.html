@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-04: 優先給電ルールと出力制御の優先順位 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-04">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>優先給電ルールと出力制御の優先順位</span>
+    </nav>
+
+    <article>
+      <h1>E-04: 優先給電ルールと出力制御の優先順位</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        供給が需要を上回ったり、系統の制約に達したときには、どこかの電源の出力を抑える必要があります。
+        そのとき<strong>どの電源から・どの順序で抑制するか</strong>を定めたのが<strong>優先給電ルール</strong>です。
+        <a href="../d-algorithms/02-redispatch.html">D-02: 再給電（リディスパッチ）</a> で学んだ「出力を調整して混雑を解消する」の、実運用上の順序ルールにあたります。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          資源エネルギー庁・OCCTOが公開している優先給電ルールの<strong>大枠</strong>を扱います。
+          細目（電源Ⅰ/Ⅱの区分、バイオマスの種類別の扱いなど）や各事業者の運用実績には踏み込まず、概略として示します。
+          出力抑制の順序は制度改定で変わり得ます（最新は末尾の参考資料をご確認ください）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. なぜ優先順位が要るのか</a></li>
+          <li><a href="#section-2">2. 抑制の優先順位</a></li>
+          <li><a href="#section-3">3. 再給電・混雑との関係</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. なぜ優先順位が要るのか</h2>
+        <p>
+          電力は <a href="02-simultaneous-balancing.html">E-02</a> で学んだとおり、需要と供給を常に一致させなければなりません。
+          ところが、晴天の昼間に太陽光発電が大量に出るなど、<strong>供給が需要を上回りそうになる</strong>ことがあります。
+          また、<a href="../b-congestion/01-congestion-and-n1.html">B-01</a> で学んだ送電容量の制約により、
+          ある地域で発電を流しきれない（混雑）こともあります。こうしたとき、需給を合わせ系統を守るために、
+          どこかの電源の出力を抑える「<span class="term">出力制御<span class="term-tooltip">電源の出力を下げて需給を調整すること。特に再生可能エネルギーの出力抑制を指すことが多い。</span></span>（出力抑制）」が必要になります。
+        </p>
+        <p>
+          このとき、闇雲に抑えるのではなく、<strong>どの電源から・どの順序で抑制するか</strong>をあらかじめ決めておく必要があります。
+          公平性（特定の事業者だけが損をしないように）と効率（コストや安定供給の観点）を両立させるためです。
+          この順序を定めたのが<strong>優先給電ルール</strong>です。
+          この順序は、<strong>資源エネルギー庁やOCCTO（電力広域的運営推進機関）が「優先給電ルール」として公開</strong>しています
+          （資源エネルギー庁「なるほど！グリッド」など。詳細は本ユニット末尾の<a href="#references">参考資料</a>を参照）。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 抑制の優先順位</h2>
+        <p>
+          優先給電ルールでは、電源の特性に応じて、大まかに次の順序で出力を抑制していきます（先に抑えるものから）。
+        </p>
+        <ol>
+          <li><strong>火力電源の出力制御・揚水のくみ上げ等</strong>（調整力の活用）― 燃料費がかかり、出力の調整もしやすいので、まず火力から絞り、余剰電力は揚水のくみ上げや蓄電で吸収する。</li>
+          <li><strong>ほかの地域への送電</strong>（連系線を介した広域融通）― 自エリアで余るなら、連系線を使って需要のある他エリアへ送る。</li>
+          <li><strong>バイオマス電源の出力制御</strong>― それでも余る場合に抑制する。</li>
+          <li><strong>太陽光・風力（自然変動電源）の出力制御</strong>― 火力等を抑え広域融通をしてもなお過剰な場合に抑制する。</li>
+          <li><strong>水力・原子力・地熱（長期固定電源）の出力制御</strong>― 出力が一定で抑制が難しく、最後の手段とする。</li>
+        </ol>
+        <p>
+          順序の考え方はこうです。<strong>調整がしやすく燃料費のかかる火力</strong>を先に絞り、地域をまたいで融通してもなお余るときに、
+          燃料費のかからない<span class="term">自然変動電源<span class="term-tooltip">太陽光・風力など、天候によって出力が変動する電源。</span></span>（太陽光・風力）を抑制します。
+          <span class="term">長期固定電源<span class="term-tooltip">水力（流れ込み式）・原子力・地熱など、出力が一定で調整が難しい電源。</span></span>（水力・原子力・地熱）は出力一定で抑制が難しいため、最後に回されます。
+          再生可能エネルギーをできるだけ多く活用しつつ、系統の安定を保つための順序設計です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 360 320" role="img"
+               aria-label="出力抑制の優先順位。上から火力等、広域融通、バイオマス、自然変動電源、長期固定電源の順に抑制する図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="e4-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <text x="335" y="10" font-size="10" text-anchor="end" fill="#dc2626">先に抑制</text>
+            <text x="335" y="300" font-size="10" text-anchor="end" fill="#4a5568">最後に抑制</text>
+            <line x1="20" y1="25" x2="20" y2="300" stroke="#cbd5e1" stroke-width="2" marker-end="url(#e4-ah)"></line>
+            <g font-size="11.5" text-anchor="middle">
+              <!-- ① -->
+              <rect x="40" y="20" width="300" height="40" rx="6" fill="#fef2f2" stroke="#ef4444" stroke-width="1.5"></rect>
+              <text x="190" y="38" fill="#1a1a2e">① 火力の出力制御・揚水くみ上げ等</text>
+              <text x="190" y="53" font-size="9.5" fill="#4a5568">（調整力の活用）</text>
+              <!-- ② -->
+              <rect x="40" y="76" width="300" height="36" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"></rect>
+              <text x="190" y="99" fill="#1a1a2e">② ほかの地域への送電（広域融通）</text>
+              <!-- ③ -->
+              <rect x="40" y="128" width="300" height="36" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"></rect>
+              <text x="190" y="151" fill="#1a1a2e">③ バイオマス電源の出力制御</text>
+              <!-- ④ -->
+              <rect x="40" y="180" width="300" height="40" rx="6" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5"></rect>
+              <text x="190" y="198" fill="#1a1a2e">④ 太陽光・風力の出力制御</text>
+              <text x="190" y="213" font-size="9.5" fill="#4a5568">（自然変動電源）</text>
+              <!-- ⑤ -->
+              <rect x="40" y="236" width="300" height="40" rx="6" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.5"></rect>
+              <text x="190" y="254" fill="#1a1a2e">⑤ 水力・原子力・地熱の出力制御</text>
+              <text x="190" y="269" font-size="9.5" fill="#4a5568">（長期固定電源）</text>
+            </g>
+          </svg>
+          <figcaption>図1: 出力抑制の優先順位（大枠／概略）。火力等を先に、長期固定電源を最後に抑制する</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 再給電・混雑との関係</h2>
+        <p>
+          優先給電ルールは、<a href="../d-algorithms/02-redispatch.html">D-02: 再給電（リディスパッチ）</a> や
+          <a href="03-balancing-market.html">E-03: 需給調整市場</a> の調整力運用と深く関わります。
+          再給電も調整力も「発電機の出力を上げ下げする」操作でしたが、<strong>実際に「どの電源を下げるか」を選ぶときの順序が、この優先給電ルール</strong>です。
+        </p>
+        <p>
+          ただし、局所的な<strong>系統混雑</strong>（特定の送電線の容量超過）を解消したい場合には、注意が必要です。
+          <a href="../d-algorithms/01-ptdf-sensitivity.html">D-01: PTDFと感度分析</a> で学んだように、
+          その混雑線路に効く（PTDFの大きい）電源でなければ、いくら抑制しても潮流は十分に下がりません。
+          つまり実運用では、<strong>優先給電ルールの順序を踏まえつつ、混雑に効く場所の電源を選ぶ</strong>という、
+          「順序」と「場所（PTDF）」の両方を考えることになります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 160" role="img"
+               aria-label="どの電源を下げるかを、優先給電ルールの順序とPTDFによる混雑への効きの両面から決めることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="e4-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 中央: どの電源を下げるか -->
+            <rect x="150" y="70" width="140" height="40" rx="8" fill="#f5f7fa" stroke="#4a5568" stroke-width="1.5"></rect>
+            <text x="220" y="94" font-size="12" text-anchor="middle" fill="#1a1a2e">どの電源を下げる？</text>
+            <!-- 左: 優先給電ルール -->
+            <rect x="10" y="20" width="150" height="40" rx="8" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"></rect>
+            <text x="85" y="38" font-size="11" text-anchor="middle" fill="#047857">優先給電ルール</text>
+            <text x="85" y="52" font-size="10" text-anchor="middle" fill="#4a5568">抑制する「順序」</text>
+            <line x1="120" y1="60" x2="150" y2="82" stroke="#4a5568" stroke-width="1.5" marker-end="url(#e4-ah2)"></line>
+            <!-- 右: PTDF -->
+            <rect x="280" y="20" width="150" height="40" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5"></rect>
+            <text x="355" y="38" font-size="11" text-anchor="middle" fill="#b45309">PTDF（D-01）</text>
+            <text x="355" y="52" font-size="10" text-anchor="middle" fill="#4a5568">混雑に効く「場所」</text>
+            <line x1="320" y1="60" x2="290" y2="82" stroke="#4a5568" stroke-width="1.5" marker-end="url(#e4-ah2)"></line>
+            <!-- 下: 結論 -->
+            <text x="220" y="130" font-size="11" text-anchor="middle" fill="#1a1a2e">順序（公平・効率）と 場所（混雑への効き）の両方を考える</text>
+          </svg>
+          <figcaption>図2: 実運用では、優先給電ルールの「順序」とPTDFの「場所」の両面で下げる電源を選ぶ</figcaption>
+        </figure>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: ordering（抑制の優先順位） -->
+        <div class="exercise" data-exercise-id="e-04-ex01" data-type="ordering">
+          <h3>演習 1: 抑制の優先順位</h3>
+          <div class="exercise-problem">
+            <p>
+              優先給電ルールにおける出力抑制の順序になるよう、次の項目を<strong>先に抑制するものから</strong>順に並べ替えよ。
+              （ドラッグ、または ▲▼ ボタンで操作できます）
+            </p>
+          </div>
+          <div class="exercise-input">
+            <ul class="ordering-list" aria-label="抑制順序の並べ替え">
+              <li class="ordering-item" data-item-id="d">太陽光・風力（自然変動電源）の出力制御</li>
+              <li class="ordering-item" data-item-id="a">火力電源の出力制御・揚水のくみ上げ等（調整力の活用）</li>
+              <li class="ordering-item" data-item-id="e">水力・原子力・地熱（長期固定電源）の出力制御</li>
+              <li class="ordering-item" data-item-id="b">ほかの地域への送電（連系線を介した広域融通）</li>
+              <li class="ordering-item" data-item-id="c">バイオマス電源の出力制御</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-04-ex01",
+          "type": "ordering",
+          "correct": ["a", "b", "c", "d", "e"],
+          "explanation": "優先給電ルールでは、調整しやすく燃料費のかかる火力等をまず抑え(a)、他エリアへ広域融通し(b)、バイオマスを抑制し(c)、それでも余るなら自然変動電源(太陽光・風力)を抑制(d)、出力一定で抑制の難しい長期固定電源(水力・原子力・地熱)を最後に回します(e)。"
+        }
+        </script>
+
+        <!-- 演習2: multi-choice（順序の考え方） -->
+        <div class="exercise" data-exercise-id="e-04-ex02" data-type="multi-choice">
+          <h3>演習 2: 順序の考え方</h3>
+          <div class="exercise-problem">
+            <p>優先給電ルールの優先順位の考え方として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="e-04-ex02" value="1">
+              <span>出力の調整がしやすく燃料費のかかる火力等を、先に抑制する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-04-ex02" value="2">
+              <span>太陽光・風力などの自然変動電源は、火力等を抑え広域融通をしてもなお過剰な場合に抑制される</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-04-ex02" value="3">
+              <span>水力・原子力・地熱などの長期固定電源は、出力が一定で抑制が難しく、最後に抑制対象となる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-04-ex02" value="4">
+              <span>燃料費のかからない再生可能エネルギーを、最優先で真っ先に抑制する決まりである</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-04-ex02",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1は火力を先に抑える理由（調整容易・燃料費）、2は自然変動電源が後段で抑制されること、3は長期固定電源が最後になる理由で、いずれも正しい。4は誤りで、再生可能エネルギーはできるだけ活用するのが基本であり、火力等の抑制や広域融通を行ってもなお過剰な場合に抑制されます（真っ先に抑制するわけではありません）。"
+        }
+        </script>
+
+        <!-- 演習3: choice（再給電との関係） -->
+        <div class="exercise" data-exercise-id="e-04-ex03" data-type="choice">
+          <h3>演習 3: 再給電との関係</h3>
+          <div class="exercise-problem">
+            <p>優先給電ルールと、D-02 で学んだ再給電（出力調整による混雑解消）の関係として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-04-ex03" value="1">
+              <span>再給電や調整力の運用で「どの電源を下げるか」を決めるときの、実運用上の優先順位を定めたルールである</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-04-ex03" value="2">
+              <span>電気料金の割引順位を決めるルールで、再給電とは無関係である</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-04-ex03" value="3">
+              <span>優先給電ルールがあるので、潮流計算や混雑判定は行わなくてよい</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-04-ex03",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "優先給電ルールは、供給過剰や系統制約で出力抑制が必要なとき、どの電源から下げるかの順序を定めた公開ルールです。D-02の再給電やE-03の調整力運用で「下げる電源を選ぶ」実運用の基準になります。局所的な混雑では、PTDF(D-01)で効く電源を選びつつ、この順序に沿って抑制します。2・3は誤りです。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットは、以下の公開資料を参考にしています（いずれも外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/category/saving_and_new/saiene/grid/08_syuturyokuseigyo.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「なるほど！グリッド：出力制御について」</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/about/special/johoteikyo/qa_syuturyokuseigyo.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「エネこれ：なぜ、太陽光などの『出力制御』が必要になるのか？」</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/gyomusyokai/no2.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「再生可能エネルギー発電設備の出力抑制に関する検証」</a>
+          </li>
+        </ul>
+      </section>
+
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="03-balancing-market.html" class="unit-nav-prev">&larr; 需給調整市場</a>
+      <a href="05-non-firm-connection.html" class="unit-nav-next">次のユニット: ノンファーム型接続（コネクト&マネージ） &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

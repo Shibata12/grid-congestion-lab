@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-05: ノンファーム型接続（コネクト&マネージ） - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-05">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>ノンファーム型接続（コネクト&マネージ）</span>
+    </nav>
+
+    <article>
+      <h1>E-05: ノンファーム型接続（コネクト&マネージ）</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        新しい発電所を送電線につなぐには「空き容量」が要ります。ところが、その空き容量は実態より小さく見積もられがちで、
+        再エネの接続を待たせる一因になっていました。この問題に対し、既存の送電線を賢く使う
+        <strong>コネクト&マネージ</strong>、なかでも<strong>ノンファーム型接続</strong>という仕組みを学びます。
+        <a href="04-priority-dispatch.html">E-04: 優先給電ルール</a> で学んだ出力制御とも深く関わります。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          資源エネルギー庁・OCCTOが公開しているコネクト&マネージ／ノンファーム型接続の<strong>大枠</strong>を扱います。
+          抑制順序の細目（ファームとの優先関係、補償の有無など）や各事業者の運用には踏み込まず、概略として示します。
+          制度は改定で変わり得ます。参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 送電線の空き容量問題</a></li>
+          <li><a href="#section-2">2. ノンファーム型接続とは</a></li>
+          <li><a href="#section-3">3. 優先給電ルール・混雑管理との関係</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 送電線の空き容量問題</h2>
+        <p>
+          新しい発電所を送電線に接続するには、その送電線に流せる余裕、すなわち
+          <span class="term">空き容量<span class="term-tooltip">送電線にまだ流せる余裕。従来は、接続済み電源が最大出力で同時に発電すると想定して計算され、保守的になりがち。</span></span>が必要です。
+          従来は、この空き容量がないと接続できませんでした（これを
+          <span class="term">ファーム型接続<span class="term-tooltip">空き容量があることを前提に接続を認める従来方式。接続後は混雑による出力制御を前提としない（確定的＝firm）。</span></span>といいます）。
+        </p>
+        <p>
+          ここで問題になるのが、空き容量の数え方です。空き容量は、すでに接続している電源が
+          <strong>「最大出力で同時に発電した」と想定して</strong>計算・確保されています。安全側に立った、保守的な見積もりです。
+          しかし実際には、すべての電源が同時にフル出力することはまれで、<strong>送電線は多くの時間帯で実際には空いています</strong>。
+          つまり「空き容量ゼロ」でも、現実には流せる余地が残っていることが多いのです。
+        </p>
+        <p>
+          一方、再エネの大量導入で接続を待つ電源は増え続け、送電線の増強には時間も費用もかかります。
+          そこで、<strong>既存の送電線を最大限に賢く使って、接続できる量を増やそう</strong>という考え方が
+          <span class="term">コネクト&マネージ<span class="term-tooltip">既存の送変電設備を最大限活用して接続可能量を増やす日本版の取組。想定潮流の合理化・N-1電制・ノンファーム型接続の3つからなる。</span></span>（日本版コネクト&マネージ）です。
+          これは「想定潮流の合理化」「N-1電制」「ノンファーム型接続」の3つの対策からなります。
+          本ユニットでは、そのうちノンファーム型接続を取り上げます
+          （コネクト&マネージは資源エネルギー庁・OCCTOが公開しています。末尾の<a href="#references">参考資料</a>を参照）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 420 180" role="img"
+               aria-label="送電線の容量に対し、最大同時発電を想定した確保容量で空きがないとされる一方、実際の潮流は多くの時間帯で容量に余裕があることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 容量枠 -->
+            <line x1="60" y1="20" x2="60" y2="150" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="60" y1="150" x2="400" y2="150" stroke="#cbd5e1" stroke-width="1"></line>
+            <!-- 容量上限線 -->
+            <line x1="60" y1="35" x2="400" y2="35" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 4"></line>
+            <text x="64" y="29" font-size="11" fill="#dc2626">送電線の容量（上限）</text>
+            <!-- 左: 想定（確保容量=ほぼ満杯） -->
+            <rect x="100" y="38" width="80" height="112" fill="#fecaca" stroke="#ef4444"></rect>
+            <text x="140" y="170" font-size="11" text-anchor="middle" fill="#1a1a2e">想定（最大同時）</text>
+            <text x="140" y="100" font-size="10" text-anchor="middle" fill="#b91c1c">空き</text>
+            <text x="140" y="114" font-size="10" text-anchor="middle" fill="#b91c1c">ほぼ無し</text>
+            <!-- 右: 実際（潮流は低く、空きが多い） -->
+            <rect x="270" y="110" width="80" height="40" fill="#bbf7d0" stroke="#16a34a"></rect>
+            <text x="310" y="170" font-size="11" text-anchor="middle" fill="#1a1a2e">実際の潮流</text>
+            <text x="310" y="75" font-size="10" text-anchor="middle" fill="#15803d">実際は空きが</text>
+            <text x="310" y="89" font-size="10" text-anchor="middle" fill="#15803d">多い</text>
+          </svg>
+          <figcaption>図1: 空き容量は「最大同時発電」を想定し保守的。実際の潮流には余裕があることが多い</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. ノンファーム型接続とは</h2>
+        <p>
+          <span class="term">ノンファーム型接続<span class="term-tooltip">空き容量がなくても、混雑時に出力制御されることを条件に接続を認める方式。コネクト&マネージの柱の一つ。</span></span>は、コネクト&マネージの柱の一つです。
+          「ファーム（firm＝確定的）」ではない、という名のとおり、<strong>送電線に空き容量がなくても接続を認めます</strong>。
+          ただし条件があります。<strong>混雑して容量に余裕がなくなったときには、出力制御される</strong>ことをあらかじめ受け入れて、接続契約を結ぶのです。
+        </p>
+        <p>
+          ポイントは、<strong>平常時（送電線に余裕があるとき）は普通に送電できる</strong>ことです。
+          抑制されるのは、混雑が起きる時間帯だけ。先ほど見たように送電線は多くの時間帯で空いているので、
+          ノンファーム型接続でも、年間を通じて見れば大半の電力を送れます。
+          これにより、<strong>送電線の増強を待たずに接続でき</strong>、再エネ等の導入が加速します。
+          日本では、2021年1月から空き容量のない基幹系統で受付が始まり、2023年4月にはローカル系統にも広がりました。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 170" role="img"
+               aria-label="ファーム型接続は空き容量が必要で混雑時の制御を前提としない。ノンファーム型接続は空きがなくても接続でき混雑時に出力制御される、という対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- ファーム型 -->
+            <rect x="15" y="20" width="195" height="130" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"></rect>
+            <text x="112" y="44" font-size="13" text-anchor="middle" font-weight="700" fill="#1d4ed8">ファーム型接続</text>
+            <text x="112" y="72" font-size="11" text-anchor="middle" fill="#1a1a2e">・空き容量が必要</text>
+            <text x="112" y="95" font-size="11" text-anchor="middle" fill="#1a1a2e">・接続後は混雑による</text>
+            <text x="112" y="110" font-size="11" text-anchor="middle" fill="#1a1a2e">　出力制御を前提としない</text>
+            <text x="112" y="135" font-size="10" text-anchor="middle" fill="#4a5568">（従来方式）</text>
+            <!-- ノンファーム型 -->
+            <rect x="230" y="20" width="195" height="130" rx="8" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"></rect>
+            <text x="327" y="44" font-size="13" text-anchor="middle" font-weight="700" fill="#047857">ノンファーム型接続</text>
+            <text x="327" y="72" font-size="11" text-anchor="middle" fill="#1a1a2e">・空きがなくても接続可</text>
+            <text x="327" y="95" font-size="11" text-anchor="middle" fill="#1a1a2e">・平常時は送電できる</text>
+            <text x="327" y="110" font-size="11" text-anchor="middle" fill="#1a1a2e">・混雑時は出力制御される</text>
+            <text x="327" y="135" font-size="10" text-anchor="middle" fill="#4a5568">（条件付き接続）</text>
+          </svg>
+          <figcaption>図2: ファーム型とノンファーム型の違い。ノンファームは「混雑時の出力制御」を条件に接続する</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 優先給電ルール・混雑管理との関係</h2>
+        <p>
+          ノンファーム型接続は「混雑時に出力制御される」ことが前提でした。では、その出力制御は実際にどう行われるのでしょうか。
+          ここで <a href="04-priority-dispatch.html">E-04: 優先給電ルール</a> がつながります。
+          ノンファーム電源は、<strong>混雑時に出力制御される対象</strong>であり、その制御は優先給電ルールの枠組みの中で行われます。
+        </p>
+        <p>
+          具体的には、まず <a href="../b-congestion/01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a> で送電線の混雑（潮流が容量を超えそうか）を判定し、
+          <a href="../d-algorithms/01-ptdf-sensitivity.html">D-01: PTDFと感度分析</a> で「どの電源が混雑線路に効くか」を見て、
+          優先給電ルールの順序に沿って抑制します。ノンファーム電源は、その抑制の対象として組み込まれています。
+        </p>
+        <p>
+          整理すると、こうです。<strong>接続の段階で「混雑したら抑制される」という条件を受け入れる</strong>のがノンファーム型接続（E-05）。
+          そして<strong>実際にどの電源をどの順で抑制するか</strong>を決めるのが優先給電ルール（E-04）と混雑演算（B・D領域）です。
+          こうして、電源の<strong>接続制度</strong>と、日々の<strong>混雑管理</strong>がひとつにつながります。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（ノンファーム型接続とは） -->
+        <div class="exercise" data-exercise-id="e-05-ex01" data-type="choice">
+          <h3>演習 1: ノンファーム型接続とは</h3>
+          <div class="exercise-problem">
+            <p>ノンファーム型接続の説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-05-ex01" value="1">
+              <span>送電線に空き容量がなくても、混雑時に出力制御されることを条件に接続を認める仕組み</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-05-ex01" value="2">
+              <span>送電線に十分な空き容量があるときだけ接続を認め、接続後は混雑による制御を前提としない仕組み</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-05-ex01" value="3">
+              <span>発電所の燃料費が安い順に、送電線への接続を認めていく仕組み</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-05-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "ノンファーム型接続は、コネクト&マネージの一つで、空き容量がなくても『混雑時には出力制御される』ことを条件（前提）に接続契約を結ぶ仕組みです。平常時は送電でき、混雑する時間帯のみ抑制されます。選択肢2は従来のファーム型接続の説明です。"
+        }
+        </script>
+
+        <!-- 演習2: multi-choice（空き容量問題とノンファーム） -->
+        <div class="exercise" data-exercise-id="e-05-ex02" data-type="multi-choice">
+          <h3>演習 2: 空き容量問題とノンファーム</h3>
+          <div class="exercise-problem">
+            <p>送電線の空き容量問題とノンファーム型接続について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="e-05-ex02" value="1">
+              <span>従来の空き容量は、接続済み電源が最大出力で同時に発電すると想定して確保されており、保守的である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-05-ex02" value="2">
+              <span>実際には全電源が同時にフル出力することはまれで、送電線は多くの時間帯で空いている</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-05-ex02" value="3">
+              <span>ノンファーム型接続では、送電線の増強が完了するまでは一切接続できない</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-05-ex02" value="4">
+              <span>ノンファーム型接続により、増強を待たずに再エネ等を接続でき、導入の加速につながる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-05-ex02",
+          "type": "multi-choice",
+          "correct": ["1", "2", "4"],
+          "explanation": "1は空き容量の保守的な算定、2はその実態、4はノンファームの効果で、いずれも正しい。3は誤りで、ノンファーム型接続はまさに送電線の増強を待たずに（混雑時の出力制御を条件に）接続できる仕組みです。"
+        }
+        </script>
+
+        <!-- 演習3: fill-in（核心語の穴埋め） -->
+        <div class="exercise" data-exercise-id="e-05-ex03" data-type="fill-in">
+          <h3>演習 3: 仕組みの要点（穴埋め）</h3>
+          <div class="exercise-problem">
+            <p>次の文の空欄に、適切な語を入れよ。</p>
+          </div>
+          <div class="exercise-input">
+            <p class="fill-in-sentence">
+              従来は送電線に
+              <input type="text" class="fill-in-input" data-answer-key="1" placeholder="___" aria-label="空欄1">
+              がないと接続できなかったが、ノンファーム型接続では、
+              <input type="text" class="fill-in-input" data-answer-key="2" placeholder="___" aria-label="空欄2">
+              が発生したときに
+              <input type="text" class="fill-in-input" data-answer-key="3" placeholder="___" aria-label="空欄3">
+              されることを条件に、空きがなくても接続を認める。
+            </p>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-05-ex03",
+          "type": "fill-in",
+          "correct": {
+            "1": ["空き容量", "空容量"],
+            "2": ["混雑", "系統混雑"],
+            "3": ["出力制御", "出力抑制", "抑制"]
+          },
+          "explanation": "従来は送電線に『空き容量』がないと接続できませんでしたが、ノンファーム型接続では、『混雑（系統混雑）』が発生したときに『出力制御（出力抑制）』されることを条件に、空きがなくても接続を認めます。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/about/special/johoteikyo/non_firm.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「再エネをもっと増やすため、『系統』へのつなぎ方を変える」</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/category/saving_and_new/saiene/grid/01_setsuzoku.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「なるほど！グリッド：系統接続について」</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/grid/public/riyoukaikaku.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「電力ネットワーク利用の改革」</a>
+          </li>
+        </ul>
+      </section>
+
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="04-priority-dispatch.html" class="unit-nav-prev">&larr; 優先給電ルールと出力制御の優先順位</a>
+      <a href="../f-dispatch-system/index.html" class="unit-nav-next">次の領域へ: F 次期中央給電指令所システム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

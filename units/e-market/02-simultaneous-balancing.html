@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-02: 計画値同時同量 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-02">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>計画値同時同量</span>
+    </nav>
+
+    <article>
+      <h1>E-02: 計画値同時同量</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="01-bg-and-generation-plan.html">E-01: BGと発電計画値</a> では、BG・発電計画値・インバランスという「仕組み」を学びました。
+        このユニットでは、それらが<strong>なぜそうなっているのか</strong>を制度面から読み解きます。
+        鍵になるのは、周波数を保つ物理的な要請と、小売全面自由化という制度の変化です。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          周波数維持の物理と、計画値同時同量・小売全面自由化（2016年4月）といった
+          <strong>一般公開された制度設計の考え方</strong>を扱います。特定事業者の非公開情報は含みません。
+          参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. なぜ「同時同量」が必要か</a></li>
+          <li><a href="#section-2">2. なぜ「計画値」同時同量なのか</a></li>
+          <li><a href="#section-3">3. 各仕組みの設計理由</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. なぜ「同時同量」が必要か</h2>
+        <p>
+          E-01 で「電力は大量に貯められない」と述べました。では、貯められないと何が困るのでしょうか。
+          答えは<strong>系統周波数</strong>にあります。
+        </p>
+        <p>
+          交流の電気は1秒間に決まった回数だけ波を打っており、その回数が
+          <span class="term">周波数<span class="term-tooltip">交流の1秒あたりの波の数。東日本50Hz・西日本60Hz。需給バランスの指標で、供給過剰で上昇・不足で低下する。</span></span>です
+          （東日本は 50 Hz、西日本は 60 Hz）。この周波数は、発電と消費のバランスを映す「ものさし」になっています。
+        </p>
+        <ul>
+          <li>供給 &gt; 需要 のとき：電力が余り、発電機（回転体）が加速して<strong>周波数は上がる</strong></li>
+          <li>供給 &lt; 需要 のとき：電力が足りず、発電機が減速して<strong>周波数は下がる</strong></li>
+        </ul>
+        <p>
+          周波数が規定値から大きく外れると、発電設備が自分を守るために停止し、それが次々と連鎖して
+          大規模な停電に至るおそれがあります。これを防ぐには、発電と消費を<strong>瞬時瞬時で一致</strong>させ続けるしかありません。
+          これが「同時同量」が必要な物理的な理由です。E-01 で前提とした同時同量は、この周波数維持の要請から来ています。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 420 170" role="img"
+               aria-label="供給と需要が釣り合うと周波数は一定。供給過剰で周波数上昇、供給不足で周波数低下になることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 中央: 釣り合い -->
+            <line x1="210" y1="30" x2="210" y2="120" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="210" y="20" font-size="11" text-anchor="middle" fill="#1a1a2e">需給バランス</text>
+            <!-- 天秤バー -->
+            <line x1="150" y1="60" x2="270" y2="60" stroke="#4a5568" stroke-width="3"></line>
+            <circle cx="210" cy="60" r="4" fill="#4a5568"></circle>
+            <text x="160" y="90" font-size="11" text-anchor="middle" fill="#3b82f6">供給</text>
+            <text x="260" y="90" font-size="11" text-anchor="middle" fill="#ef4444">需要</text>
+            <text x="210" y="140" font-size="12" text-anchor="middle" fill="#16a34a">釣り合う → 周波数 一定（50/60Hz）</text>
+
+            <!-- 左: 供給過剰 -->
+            <text x="60" y="40" font-size="11" text-anchor="middle" fill="#1a1a2e">供給過剰</text>
+            <path d="M40,70 L80,70" stroke="#4a5568" stroke-width="2"></path>
+            <path d="M60,55 L60,72" stroke="#dc2626" stroke-width="2"></path>
+            <path d="M52,62 L60,52 L68,62" fill="none" stroke="#dc2626" stroke-width="2"></path>
+            <text x="60" y="100" font-size="11" text-anchor="middle" fill="#dc2626">周波数 上昇</text>
+
+            <!-- 右: 供給不足 -->
+            <text x="360" y="40" font-size="11" text-anchor="middle" fill="#1a1a2e">供給不足</text>
+            <path d="M340,70 L380,70" stroke="#4a5568" stroke-width="2"></path>
+            <path d="M360,68 L360,85" stroke="#2563eb" stroke-width="2"></path>
+            <path d="M352,78 L360,88 L368,78" fill="none" stroke="#2563eb" stroke-width="2"></path>
+            <text x="360" y="105" font-size="11" text-anchor="middle" fill="#2563eb">周波数 低下</text>
+          </svg>
+          <figcaption>図1: 周波数は需給バランスの指標。釣り合えば一定、崩れると上下する</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. なぜ「計画値」同時同量なのか</h2>
+        <p>
+          同時同量が必要だとして、それを「誰が」「どうやって」達成するのでしょうか。ここに制度の変化が関わります。
+        </p>
+        <p>
+          かつて電力は地域ごとの独占で供給されており、各地域の一般電気事業者が、自社の発電所をリアルタイムに調整して
+          需給を一致させていました。これを <span class="term">実同時同量<span class="term-tooltip">計画値同時同量の前に行われていた、リアルタイムで発電を調整して需給を一致させる方式。地域独占下で一般電気事業者が担っていた。</span></span> といいます。
+        </p>
+        <p>
+          ところが <strong>2016年4月の小売全面自由化</strong>で、多数の小売事業者・発電事業者が参入しました。
+          発電所を持たない小売事業者も含め、すべての事業者がリアルタイムに自前で需給を完全一致させるのは現実的ではありません。
+        </p>
+        <p>
+          そこで導入されたのが<strong>計画値同時同量</strong>です。各事業者（BG）は、あらかじめ30分コマごとの計画値を提出し、
+          実需給ではその計画の達成に努めます。計画と実績の差（インバランス）は、一般送配電事業者が
+          <span class="term">調整力<span class="term-tooltip">需給の差（インバランス）を埋めるために一般送配電事業者が確保する供給力（上げ・下げ）。系統全体の同時同量を最終的に担保する。</span></span>で吸収し、事後にインバランス料金で精算します。
+          つまり、<strong>各事業者は計画を立てて守る責任</strong>を負い、<strong>系統全体の同時同量は一般送配電事業者が最終的に担保する</strong>、という分担です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 170" role="img"
+               aria-label="各事業者BGが計画値を提出・遵守し、一般送配電事業者が調整力で差を吸収して系統全体の同時同量を最終担保する責任分担の図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="e2-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 各事業者(BG) -->
+            <rect x="15" y="50" width="130" height="60" rx="8" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5"></rect>
+            <text x="80" y="74" font-size="12" text-anchor="middle" fill="#1a1a2e">各事業者（BG）</text>
+            <text x="80" y="92" font-size="10" text-anchor="middle" fill="#4a5568">計画値を提出・遵守</text>
+            <!-- 矢印 -->
+            <line x1="145" y1="80" x2="195" y2="80" stroke="#4a5568" stroke-width="1.5" marker-end="url(#e2-ah)"></line>
+            <text x="170" y="72" font-size="9" text-anchor="middle" fill="#4a5568">差(ｲﾝﾊﾞﾗﾝｽ)</text>
+            <!-- 一般送配電 -->
+            <rect x="200" y="50" width="150" height="60" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"></rect>
+            <text x="275" y="74" font-size="12" text-anchor="middle" fill="#1a1a2e">一般送配電事業者</text>
+            <text x="275" y="92" font-size="10" text-anchor="middle" fill="#4a5568">調整力で差を吸収</text>
+            <!-- 矢印 -->
+            <line x1="350" y1="80" x2="400" y2="80" stroke="#4a5568" stroke-width="1.5" marker-end="url(#e2-ah)"></line>
+            <!-- 系統全体 -->
+            <text x="415" y="70" font-size="11" text-anchor="middle" fill="#16a34a">系統</text>
+            <text x="415" y="84" font-size="11" text-anchor="middle" fill="#16a34a">全体</text>
+            <text x="415" y="98" font-size="9" text-anchor="middle" fill="#16a34a">同時同量</text>
+            <text x="220" y="140" font-size="11" fill="#1a1a2e">各事業者＝計画責任／一般送配電＝最終担保</text>
+          </svg>
+          <figcaption>図2: 計画値同時同量の責任分担。事業者が計画を守り、一般送配電事業者が最終的に同時同量を担保する</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 各仕組みの設計理由</h2>
+        <p>E-01 で学んだ各仕組みは、それぞれ特定の課題を解決するために設計されています。</p>
+        <ul>
+          <li>
+            <strong>BG（バランシンググループ）</strong>：1事業者だけだと需要や発電の変動が大きく、計画を当てにくくインバランスが増えがちです。
+            複数事業者をまとめると、内部で過不足を相殺でき、計画精度を上げてインバランスを小さくできます。
+            小規模事業者も他社とBGを組めば参入しやすくなります。
+          </li>
+          <li>
+            <strong>30分コマ</strong>：計画と精算の時間粒度です。卸電力市場（スポット市場）も30分単位で取引されており、
+            <strong>市場と運用・精算の整合</strong>が取れます。細かすぎると事務負担が大きく、粗すぎると需給の山谷を捉えられないため、実務的な単位として30分が使われます。
+          </li>
+          <li>
+            <strong>ゲートクローズ（実需給の1時間前）</strong>：これ以降、一般送配電事業者は確定した計画をもとに、
+            調整力の手配など需給運用の準備を進めます。直前まで計画を変えられると運用が成り立ちません。
+            一方で締切が早すぎると予測精度が落ちます。1時間前は、<strong>予測精度と運用準備の両立</strong>を図った締切です。
+          </li>
+          <li>
+            <strong>インバランス料金</strong>：計画から逸脱した分の調整コストを、<strong>原因者（逸脱した事業者）が負担</strong>する仕組みです。
+            これにより、各事業者は計画を正確に立て・守る<strong>インセンティブ</strong>を持ちます（逸脱すると損になる）。
+          </li>
+        </ul>
+        <p>
+          このように、計画値同時同量の各仕組みは「多数の事業者が参入しても、系統全体の同時同量を保つ」という目的に向けて、
+          物理（周波数）・市場・運用・インセンティブの観点から組み立てられています。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（同時同量が必要な理由） -->
+        <div class="exercise" data-exercise-id="e-02-ex01" data-type="choice">
+          <h3>演習 1: なぜ同時同量が必要か</h3>
+          <div class="exercise-problem">
+            <p>電力系統で需要と供給を常に一致させ続ける（同時同量）必要があるのは、主になぜか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-02-ex01" value="1">
+              <span>需給の差が大きくなると系統の周波数が規定値から外れ、設備停止や大規模停電につながるおそれがあるため</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-02-ex01" value="2">
+              <span>需給が一致しないと、電気料金の計算ができなくなるため</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-02-ex01" value="3">
+              <span>法律で電力をいっさい貯蔵してはならないと定められているため</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-02-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "電力はほとんど貯められないため、発電と消費が常に一致していないと系統周波数（東日本50Hz・西日本60Hz）が乱れます。供給過剰で上昇、不足で低下し、規定値を外れると発電設備が保護のため停止し、連鎖的な停電を招きます。だから瞬時の同時同量が不可欠です。選択肢2・3は同時同量の理由ではありません。"
+        }
+        </script>
+
+        <!-- 演習2: multi-choice（制度の設計理由） -->
+        <div class="exercise" data-exercise-id="e-02-ex02" data-type="multi-choice">
+          <h3>演習 2: 制度の設計理由</h3>
+          <div class="exercise-problem">
+            <p>計画値同時同量制度やBGの設計理由として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="e-02-ex02" value="1">
+              <span>小売全面自由化で多数の事業者が参入し、全員が実時間で需給を完全一致させるのは非現実的だから</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-02-ex02" value="2">
+              <span>複数の事業者をBGにまとめると、内部で過不足を相殺でき、計画の精度を上げやすいから</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-02-ex02" value="3">
+              <span>ゲートクローズを実需給の1時間前に置くのは、一般送配電事業者が確定した計画をもとに需給運用の準備をするためだから</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-02-ex02" value="4">
+              <span>インバランス料金は、計画を守った事業者に罰則を課して計画提出をやめさせるためのものだから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-02-ex02",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1は計画値同時同量へ移行した背景、2はBGの利点（内部相殺による計画精度の向上）、3はゲートクローズの趣旨で、いずれも正しい。4は誤りで、インバランス料金は計画から「逸脱した」事業者に原因者負担を求めるもので、計画を正確に立て守るインセンティブになります。守った事業者への罰則ではありません。"
+        }
+        </script>
+
+        <!-- 演習3: fill-in（核心語の穴埋め） -->
+        <div class="exercise" data-exercise-id="e-02-ex03" data-type="fill-in">
+          <h3>演習 3: 制度の要点（穴埋め）</h3>
+          <div class="exercise-problem">
+            <p>次の文の空欄に、適切な語を入れよ。</p>
+          </div>
+          <div class="exercise-input">
+            <p class="fill-in-sentence">
+              電力はほとんど貯められないため、発電と消費を常に一致させる
+              <input type="text" class="fill-in-input" data-answer-key="1" placeholder="___" aria-label="空欄1">
+              が必要で、これは系統の
+              <input type="text" class="fill-in-input" data-answer-key="2" placeholder="___" aria-label="空欄2">
+              を一定に保つためである。多数の事業者が参入した現在は、各事業者（BG）が事前に
+              <input type="text" class="fill-in-input" data-answer-key="3" placeholder="___" aria-label="空欄3">
+              を提出する「計画値同時同量」で運用されている。
+            </p>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-02-ex03",
+          "type": "fill-in",
+          "correct": {
+            "1": ["同時同量"],
+            "2": ["周波数", "系統周波数"],
+            "3": ["計画値", "発電計画値", "計画"]
+          },
+          "explanation": "電力は貯められないため、需給を常に一致させる『同時同量』が必要で、これは系統の『周波数』を一定に保つためです。自由化後は、各事業者（BG）が事前に『計画値（発電計画値など）』を提出する計画値同時同量で運用されています。"
+        }
+        </script>
+
+      </section>
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/about/special/johoteikyo/balance_game.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「電気の安定供給のキーワード『電力需給バランス』とは？」</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/category/electricity_and_gas/electric/system_reform.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「電力システム改革について」</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="01-bg-and-generation-plan.html" class="unit-nav-prev">&larr; BGと発電計画値</a>
+      <a href="03-balancing-market.html" class="unit-nav-next">次のユニット: 需給調整市場 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>
