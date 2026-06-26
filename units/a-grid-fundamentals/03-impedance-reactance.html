@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A-03: インピーダンスとリアクタンス - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="a" data-unit="a-03">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">A: 系統の基礎</a> &gt;
+      <span>インピーダンスとリアクタンス</span>
+    </nav>
+
+    <article>
+      <h1>A-03: インピーダンスとリアクタンス</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="02-power-flow-basics.html">A-02: 潮流計算の基礎</a> では、ループ系統の潮流が
+        <strong>リアクタンス（電気的な距離）</strong>に反比例して分配されると学びました。
+        では、そのリアクタンスとは何でしょうか。本ユニットでは交流回路の視点から、
+        <strong>抵抗・リアクタンス・インピーダンス</strong>の関係を概念的に整理し、
+        なぜ送電線ではリアクタンスが主役になるのかを説明します。A-02で“預けて”あった概念を、ここで回収します。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          本ユニットは<strong>概念的な理解</strong>を重視し、複素数を使った厳密な計算には踏み込みません。
+          数式は考え方を示すために最小限だけ用います。また、送電線の潮流の流れにくさとして主に効く
+          <strong>誘導性リアクタンス（コイル）</strong>を中心に扱います。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 直流と交流：「流れにくさ」の正体</a></li>
+          <li><a href="#section-2">2. リアクタンス：変化を妨げる流れにくさ</a></li>
+          <li><a href="#section-3">3. インピーダンス：抵抗とリアクタンスの合成</a></li>
+          <li><a href="#section-4">4. なぜ送電線ではリアクタンスが支配的か</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 直流と交流：「流れにくさ」の正体</h2>
+        <p>
+          A-01・A-02では、オームの法則やキルヒホッフの法則を直流的に扱ってきました。
+          <strong>直流（DC）</strong>では、電流の向きと大きさが一定です。このとき電流の流れにくさを決めるのは、
+          <span class="term">抵抗<span class="term-tooltip">電流の流れにくさのうち、電気エネルギーを熱に変えて消費する成分。記号 R、単位はオーム（Ω）。</span></span> R だけです。
+        </p>
+        <p>
+          ところが電力系統は<strong>交流（AC）</strong>です。交流では電流の向きと大きさが周期的に変化します
+          （日本では東日本50Hz・西日本60Hz）。電流が<strong>「変化する」</strong>と、抵抗とは別の流れにくさが現れます。
+          それが<strong>リアクタンス</strong>です。A-02でループ系統の潮流分配を「リアクタンスで決まる」としたのは、
+          系統が交流だからにほかなりません。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 180" role="img"
+               aria-label="左に直流（一定の電流、流れにくさは抵抗だけ）、右に交流（周期的に変化する電流、流れにくさは抵抗とリアクタンス）の対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 直流パネル -->
+            <rect x="14" y="18" width="195" height="146" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3"></rect>
+            <text x="111" y="40" font-size="13" text-anchor="middle" font-weight="700" fill="#1a1a2e">直流（DC）</text>
+            <!-- 一定の電流線 -->
+            <line x1="34" y1="92" x2="190" y2="92" stroke="#3b82f6" stroke-width="2.5"></line>
+            <text x="111" y="82" font-size="10" text-anchor="middle" fill="#3b82f6">電流は一定（変化なし）</text>
+            <text x="111" y="124" font-size="11" text-anchor="middle" fill="#1a1a2e">流れにくさ＝</text>
+            <text x="111" y="142" font-size="11" text-anchor="middle" font-weight="700" fill="#1a1a2e">抵抗 R だけ</text>
+            <!-- 交流パネル -->
+            <rect x="231" y="18" width="195" height="146" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.3"></rect>
+            <text x="328" y="40" font-size="13" text-anchor="middle" font-weight="700" fill="#1d4ed8">交流（AC）</text>
+            <!-- 正弦波 -->
+            <path d="M251,92 q12,-26 24,0 t24,0 t24,0 t24,0 t24,0"
+                  fill="none" stroke="#3b82f6" stroke-width="2.5"></path>
+            <text x="328" y="76" font-size="10" text-anchor="middle" fill="#3b82f6">電流は周期的に変化</text>
+            <text x="328" y="124" font-size="11" text-anchor="middle" fill="#1a1a2e">流れにくさ＝</text>
+            <text x="328" y="142" font-size="11" text-anchor="middle" font-weight="700" fill="#1d4ed8">抵抗 R ＋ リアクタンス X</text>
+          </svg>
+          <figcaption>図1: 直流では流れにくさは抵抗だけ。交流では電流が変化するため、リアクタンスが加わる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. リアクタンス：変化を妨げる流れにくさ</h2>
+        <p>
+          リアクタンスの正体は、<span class="term">コイル<span class="term-tooltip">電線を巻いたもの。インダクタンス L を持ち、電流の変化を妨げる。送電線も電線が長く伸びており、インダクタンスを持つ。</span></span>（インダクタンス L）が持つ
+          <strong>「電流の変化を妨げる」</strong>性質です。コイルに流れる電流を増やそうとすると、それを打ち消す向きの起電力が生じて妨げ、
+          減らそうとすると、電流を維持しようとして妨げます（自己誘導）。
+        </p>
+        <p>
+          ここがポイントです。<strong>直流</strong>の定常状態では電流が変化しないので、コイルはただの導線で、リアクタンスは効きません。
+          ところが<strong>交流</strong>では電流が常に変化し続けるので、コイルは流れにくさとして働き続けます。これが
+          <span class="term">リアクタンス<span class="term-tooltip">交流で電流の変化を妨げる成分の流れにくさ。記号 X、単位はオーム（Ω）。コイル（インダクタンス）に生じる誘導性リアクタンスが代表。</span></span> X です。
+          そして、電流の変化が速いほど（＝周波数 f が高いほど）妨げは強くなり、リアクタンスは大きくなります。
+        </p>
+        <div class="math-block"
+             data-tex="X = 2\pi f L"
+             data-fallback="X = 2πfL （f: 周波数, L: インダクタンス）"></div>
+        <p>
+          （この式は「周波数が高いほどリアクタンスが大きい」という関係を示すためのもので、本ユニットで計算は行いません。）
+        </p>
+        <p>
+          抵抗との大切な違いも押さえておきましょう。<strong>抵抗</strong>は電気エネルギーを<strong>熱に変えて消費</strong>します。
+          一方、<strong>理想的なリアクタンス（コイル）</strong>はエネルギーを磁界としていったん蓄え、また回路へ返すので、
+          <strong>それ自体は電力を消費しません</strong>。この「消費されない電力」は<strong>無効電力</strong>と呼ばれ、A領域の後続ユニットで改めて扱います。
+          なお、コンデンサにも容量性のリアクタンスがありますが、送電線の潮流の流れにくさとして主に効くのは、ここで見た誘導性リアクタンスです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. インピーダンス：抵抗とリアクタンスの合成</h2>
+        <p>
+          交流回路全体の流れにくさを表すのが
+          <span class="term">インピーダンス<span class="term-tooltip">交流回路における電流の流れにくさの総合指標。抵抗RとリアクタンスXを直角な2成分として合成したもの。記号 Z、単位はオーム（Ω）。</span></span> Z です。
+          これは抵抗 R とリアクタンス X を合わせたものですが、<strong>単純な足し算ではありません</strong>。
+          R と X は「効き方の向き」が違うため、<strong>直角に交わる2つの成分として合成</strong>します。
+          図にすると直角三角形になり、その斜辺がインピーダンスです（インピーダンス三角形）。
+        </p>
+        <div class="math-block"
+             data-tex="Z = \sqrt{R^2 + X^2}"
+             data-fallback="Z = √(R² + X²)"></div>
+        <p>
+          たとえば抵抗 R = 3 Ω、リアクタンス X = 4 Ω のとき、インピーダンスは
+          Z = √(3² + 4²) = √25 = 5 Ω です。単純に足した 3 + 4 = 7 にはならない点が重要です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 300 230" role="img"
+               aria-label="抵抗R=3を底辺、リアクタンスX=4を縦、インピーダンスZ=5を斜辺とする直角三角形（インピーダンス三角形）"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 三角形 O(60,190) P(150,190) Q(150,70) : R=3→90px, X=4→120px, Z=5→150px -->
+            <polygon points="60,190 150,190 150,70" fill="#eef2ff" stroke="#6366f1" stroke-width="2"></polygon>
+            <!-- 底辺 R -->
+            <line x1="60" y1="190" x2="150" y2="190" stroke="#dc2626" stroke-width="3"></line>
+            <!-- 縦 X -->
+            <line x1="150" y1="190" x2="150" y2="70" stroke="#3b82f6" stroke-width="3"></line>
+            <!-- 斜辺 Z -->
+            <line x1="60" y1="190" x2="150" y2="70" stroke="#4338ca" stroke-width="3"></line>
+            <!-- 直角マーク at P(150,190) -->
+            <polyline points="138,190 138,178 150,178" fill="none" stroke="#4a5568" stroke-width="1.3"></polyline>
+            <!-- ラベル -->
+            <text x="105" y="208" font-size="13" text-anchor="middle" fill="#dc2626">抵抗 R = 3 Ω</text>
+            <text x="160" y="134" font-size="13" text-anchor="start" fill="#3b82f6">リアクタンス X = 4 Ω</text>
+            <text x="92" y="120" font-size="13" text-anchor="end" fill="#4338ca">Z = 5 Ω</text>
+          </svg>
+          <figcaption>図2: インピーダンス三角形。抵抗RとリアクタンスXは直角に合成され、斜辺がインピーダンスZ（3-4-5の例）</figcaption>
+        </figure>
+
+        <p>
+          なぜ「直角」なのかというと、交流では抵抗にかかる電圧とリアクタンスにかかる電圧とで、
+          変化の<strong>タイミング（位相）がちょうど90°ずれる</strong>ためです。
+          ここでは「向きが違うので直角に合成する」とだけ捉えておけば十分です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. なぜ送電線ではリアクタンスが支配的か</h2>
+        <p>
+          ここで本題、A-02の裏付けです。高電圧の送電線では、<strong>リアクタンス X が抵抗 R よりずっと大きい</strong>という特徴があります
+          （X ≫ R、いわゆる X/R 比が大きい）。
+        </p>
+        <p>
+          すると、さきほどのインピーダンス三角形は<strong>縦に細長く</strong>なり、斜辺 Z はほぼ縦の辺 X と同じ長さになります。
+          つまり <strong>Z ≈ X</strong>。インピーダンス（流れにくさ）は、ほとんどリアクタンスで決まってしまうのです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 300 230" role="img"
+               aria-label="送電線では抵抗Rが小さくリアクタンスXが大きいため、インピーダンス三角形が縦に細長くなり、斜辺Zが縦辺Xにほぼ等しくなる図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 細長い三角形 O(110,190) P(135,190) Q(135,40): R小→25px, X大→150px -->
+            <polygon points="110,190 135,190 135,40" fill="#eef2ff" stroke="#6366f1" stroke-width="2"></polygon>
+            <line x1="110" y1="190" x2="135" y2="190" stroke="#dc2626" stroke-width="3"></line>
+            <line x1="135" y1="190" x2="135" y2="40" stroke="#3b82f6" stroke-width="3"></line>
+            <line x1="110" y1="190" x2="135" y2="40" stroke="#4338ca" stroke-width="3"></line>
+            <polyline points="127,190 127,182 135,182" fill="none" stroke="#4a5568" stroke-width="1.2"></polyline>
+            <text x="122" y="208" font-size="12" text-anchor="middle" fill="#dc2626">R（小）</text>
+            <text x="145" y="118" font-size="13" text-anchor="start" fill="#3b82f6">X（大）</text>
+            <text x="105" y="110" font-size="13" text-anchor="end" font-weight="700" fill="#4338ca">Z ≈ X</text>
+            <text x="150" y="206" font-size="11" text-anchor="start" fill="#4a5568">送電線：X ≫ R</text>
+          </svg>
+          <figcaption>図3: 送電線ではX≫Rのため三角形が細長くなり、Z≈X。流れにくさはほぼリアクタンスで決まる</figcaption>
+        </figure>
+
+        <p>
+          だからこそ <a href="02-power-flow-basics.html">A-02: 潮流計算の基礎</a> では、経路の流れにくさを
+          <strong>「主にリアクタンスで決まる」</strong>とし、リアクタンスを<strong>「電気的な距離」</strong>とみなして、
+          <strong>潮流はリアクタンスに反比例して分配される</strong>と扱うことができました。抵抗を主役から外せたのは、送電線で X ≫ R だからです。
+        </p>
+        <p>
+          この性質は、のちの <a href="../d-algorithms/01-ptdf-sensitivity.html">D-01: PTDFと感度分析</a> でも使われます。
+          そこでは抵抗を無視し、リアクタンスだけで潮流分配を近似します（PTDFがリアクタンス分配率に等しくなるのはこのためです）。
+          まとめると、抵抗は熱損失や配電系統では効きますが、<strong>基幹系統の潮流分配の主役はリアクタンス</strong>だ、ということです。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（インピーダンスとは） -->
+        <div class="exercise" data-exercise-id="a-03-ex01" data-type="choice">
+          <h3>演習 1: インピーダンスとは</h3>
+          <div class="exercise-problem">
+            <p>交流回路における「インピーダンス」の説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-03-ex01" value="1">
+              <span>交流回路全体の流れにくさを表し、抵抗とリアクタンスを直角な2成分として合成したもの</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-03-ex01" value="2">
+              <span>直流における電流の流れにくさのことで、抵抗とまったく同じもの</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-03-ex01" value="3">
+              <span>電気エネルギーを熱に変えて消費する成分だけを取り出したもの</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-03-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "インピーダンスは交流回路全体の流れにくさで、抵抗RとリアクタンスXを直角な2成分として合成したもの（大きさは Z=√(R²+X²)）です。選択肢2は誤りで、抵抗だけでは交流のリアクタンスを含みません。選択肢3は抵抗（熱として消費する成分）の説明で、リアクタンスを含まない点が誤りです。"
+        }
+        </script>
+
+        <!-- 演習2: multi-choice（リアクタンス・交流の性質） -->
+        <div class="exercise" data-exercise-id="a-03-ex02" data-type="multi-choice">
+          <h3>演習 2: リアクタンスと交流の性質</h3>
+          <div class="exercise-problem">
+            <p>抵抗・リアクタンス・インピーダンスについて、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="a-03-ex02" value="1">
+              <span>リアクタンスは、電流の変化が速い（周波数が高い）ほど大きくなる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-03-ex02" value="2">
+              <span>抵抗は電力を熱として消費するが、理想的なリアクタンス（コイル）はそれ自体では電力を消費しない</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-03-ex02" value="3">
+              <span>高電圧の送電線では一般にリアクタンスが抵抗より大きく、潮流の流れにくさを主に決める</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-03-ex02" value="4">
+              <span>抵抗とリアクタンスは単純に足し算すればインピーダンスになる（Z = R + X）</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-03-ex02",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1はリアクタンスと周波数の関係（X=2πfL）、2は抵抗とリアクタンスのエネルギーの違い、3は送電線でX≫Rであることで、いずれも正しい。4は誤りで、抵抗とリアクタンスは向きが違う（直角な）2成分なので、単純な和ではなく Z=√(R²+X²) で合成します（例: R=3, X=4 なら Z=5 で、7ではありません）。"
+        }
+        </script>
+
+        <!-- 演習3: numeric（インピーダンスの合成） -->
+        <div class="exercise" data-exercise-id="a-03-ex03" data-type="numeric">
+          <h3>演習 3: インピーダンスの大きさ</h3>
+          <div class="exercise-problem">
+            <p>
+              ある交流回路の抵抗が R = 3 Ω、リアクタンスが X = 4 Ω であるとき、
+              インピーダンスの大きさ Z は何 Ω か。（複素数は使わず、直角三角形の合成として求めよ）
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              インピーダンス Z:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> Ω
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-03-ex03",
+          "type": "numeric",
+          "correct": 5,
+          "tolerance": 0.1,
+          "unit": "Ω",
+          "explanation": "抵抗とリアクタンスは直角な2成分なので、インピーダンスは斜辺として Z=√(R²+X²)=√(3²+4²)=√(9+16)=√25=5 Ω。単純な和 3+4=7 にはなりません。これは3-4-5の直角三角形（インピーダンス三角形）です。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="02-power-flow-basics.html" class="unit-nav-prev">&larr; 潮流計算の基礎</a>
+      <a href="../b-congestion/index.html" class="unit-nav-next">次の領域へ: B 系統混雑 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

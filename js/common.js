@@ -30,6 +30,8 @@ const SITE_STRUCTURE = {
         summary: '電流則(KCL)と電圧則(KVL)を、系統解析の出発点として理解する。' },
       { id: 'a-02', title: '潮流計算の基礎', file: '02-power-flow-basics.html', exerciseCount: 3,
         summary: '母線への注入と、放射状・ループ系統での潮流の決まり方を学ぶ。発電計画値が潮流計算の入力になる。' },
+      { id: 'a-03', title: 'インピーダンスとリアクタンス', file: '03-impedance-reactance.html', exerciseCount: 3,
+        summary: '交流回路の視点から抵抗・リアクタンス・インピーダンスの関係を概念的に整理し、なぜ送電線でリアクタンスが支配的かを学ぶ。A-02の“電気的な距離”の裏付け。' },
     ],
   },
   b: {
