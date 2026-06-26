@@ -82,6 +82,8 @@ const SITE_STRUCTURE = {
     units: [
       { id: 'f-01', title: '系統混雑管理の全体像', file: '01-congestion-management-overview.html', exerciseCount: 3,
         summary: '発電計画値→潮流計算→混雑判定→再給電という一連の流れを、運用の時間軸の中で俯瞰する。' },
+      { id: 'f-02', title: '次期中給システムの機能構成', file: '02-next-gen-dispatch-system.html', exerciseCount: 3,
+        summary: 'SCUC/SCED・混雑計算・状態推定など、次期中給システムの機能構成と、混雑計算が最適化の前処理として動く構造を公開資料に基づき概観する。' },
     ],
   },
 };

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F-02: 次期中給システムの機能構成 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="f" data-unit="f-02">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">F: 中央給電指令所システム</a> &gt;
+      <span>次期中給システムの機能構成</span>
+    </nav>
+
+    <article>
+      <h1>F-02: 次期中給システムの機能構成</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="01-congestion-management-overview.html">F-01: 系統混雑管理の全体像</a> では、
+        「発電計画値 → 潮流計算 → 混雑判定 → 再給電」という運用フローを俯瞰しました。
+        本ユニットでは、そのフローを実際に動かす器である
+        <strong>次期中央給電指令所システム（次期中給システム）</strong>が、
+        どんな機能で構成されるのかを、公開資料に基づいて概観します。
+        個々の演算（A〜E領域）が、1つの実システムの中でどう配置されるのかを見ていきます。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          本ユニットは、一般社団法人 送配電網協議会・OCCTO・資源エネルギー庁（次世代電力系統ワーキンググループ）が
+          公開している次期中給システムの<strong>機能構成の概要</strong>を扱います。
+          特定事業者の非公開情報（内部仕様・画面・データ項目名など）には踏み込みません。
+          掲載する図は公開資料を丸写しせず、その内容に基づく<strong>概念図</strong>として示したものです。
+          制度・計画は今後の検討で変わり得ます。参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 次期中給システムの全体像</a></li>
+          <li><a href="#section-2">2. 主要な機能群とその役割</a></li>
+          <li><a href="#section-3">3. 計画機能と混雑計算の位置づけ</a></li>
+          <li><a href="#section-4">4. 外部システムとの連携</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 次期中給システムの全体像</h2>
+        <p>
+          F-01で見た混雑管理のフローを、<strong>より広く・より速く</strong>回せるようにするのが、
+          現在検討・開発が進む次期中給システムです。再生可能エネルギーの拡大や全国大での効率化の要請を背景に、
+          各エリアを個別に最適化するのではなく、<strong>全国を一体として同時に最適化する</strong>方向が目指されています。
+          具体的には、地域間連系線の混雑と各エリア地内基幹系統の混雑を同時に考慮し、
+          全国大の<span class="term">メリットオーダー<span class="term-tooltip">発電コストの安い電源から順に使う考え方。安い電源を優先することで全体の費用を抑える。</span></span>で需給を運用することがねらいです
+          （送配電網協議会が次世代電力系統ワーキンググループ等で公開。末尾の<a href="#references">参考資料</a>を参照）。
+        </p>
+        <p>
+          次期中給システムは、大きく<strong>2層</strong>で構成されます。
+          全国大の最適化など中核の演算を担う<strong>メインシステム</strong>と、
+          各エリアの系統情報を収集してメインへ連携する<strong>エリアシステム</strong>です。
+          メインシステムの最適化に必要な系統情報は、<strong>エリアシステムから連携・送信されて</strong>供給されます。
+          つまり、エリアが「足元の系統の状態」を集め、メインが「全国を見渡した最適化」を行う、という役割分担です。
+          次期システムは2032年度の運用開始が予定されています。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 300" role="img"
+               aria-label="上段に需給調整市場システム・広域機関システム・簡易指令システムの外部システム、中段にメインシステム（全国大のSCUC/SCED・混雑計算・予測・状態推定・広域LFC）、下段に各エリアのエリアシステムを配置し、エリアからメインへ系統情報を連携、外部システムとメインが双方向連携する2層構成の概念図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="f2-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+              <marker id="f2-ah-s" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M10,0 L0,5 L10,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 外部システム -->
+            <text x="20" y="13" font-size="10" fill="#4a5568">外部システム</text>
+            <g font-size="10.5" text-anchor="middle">
+              <rect x="20" y="18" width="125" height="34" rx="6" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.3"></rect>
+              <text x="82" y="33" fill="#1a1a2e">需給調整市場</text>
+              <text x="82" y="46" fill="#1a1a2e">システム（MMS）</text>
+              <rect x="158" y="18" width="125" height="34" rx="6" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.3"></rect>
+              <text x="220" y="33" fill="#1a1a2e">広域機関</text>
+              <text x="220" y="46" fill="#1a1a2e">システム</text>
+              <rect x="296" y="18" width="125" height="34" rx="6" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.3"></rect>
+              <text x="358" y="33" fill="#1a1a2e">簡易指令</text>
+              <text x="358" y="46" fill="#1a1a2e">システム</text>
+            </g>
+            <!-- 双方向連携（外部 ↔ メイン） -->
+            <line x1="220" y1="56" x2="220" y2="92" stroke="#4a5568" stroke-width="1.4"
+                  marker-start="url(#f2-ah-s)" marker-end="url(#f2-ah)"></line>
+            <text x="228" y="78" font-size="9" fill="#4a5568" text-anchor="start">連携</text>
+            <!-- メインシステム -->
+            <rect x="30" y="96" width="380" height="104" rx="9" fill="#eef2ff" stroke="#6366f1" stroke-width="1.8"></rect>
+            <text x="44" y="116" font-size="13" font-weight="700" fill="#4338ca">メインシステム（全国大）</text>
+            <g font-size="11.5" text-anchor="middle" fill="#1a1a2e">
+              <text x="220" y="140">SCUC ／ SCED（潮流制約付き最適化）</text>
+              <text x="220" y="162">混雑計算（前処理）・状態推定</text>
+              <text x="220" y="184">需要・再エネ予測 ／ 広域LFC</text>
+            </g>
+            <!-- 系統情報の連携（エリア → メイン） -->
+            <line x1="220" y1="244" x2="220" y2="204" stroke="#4a5568" stroke-width="1.4" marker-end="url(#f2-ah)"></line>
+            <text x="228" y="226" font-size="9" fill="#4a5568" text-anchor="start">系統情報を連携・送信</text>
+            <!-- エリアシステム -->
+            <text x="20" y="259" font-size="10" fill="#4a5568">エリアシステム</text>
+            <g font-size="10.5" text-anchor="middle" fill="#1a1a2e">
+              <rect x="20" y="264" width="118" height="30" rx="6" fill="#eef2ff" stroke="#a5b4fc" stroke-width="1.2"></rect>
+              <text x="79" y="283">エリアA</text>
+              <rect x="161" y="264" width="118" height="30" rx="6" fill="#eef2ff" stroke="#a5b4fc" stroke-width="1.2"></rect>
+              <text x="220" y="283">エリアB</text>
+              <rect x="302" y="264" width="118" height="30" rx="6" fill="#eef2ff" stroke="#a5b4fc" stroke-width="1.2"></rect>
+              <text x="361" y="283">…ほかエリア</text>
+            </g>
+          </svg>
+          <figcaption>図1: 次期中給システムの2層構成（概念図）。エリアシステムが系統情報を集め、メインシステムが全国大の最適化を行い、外部システムと連携する</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 主要な機能群とその役割</h2>
+        <p>
+          メインシステムには、これまで本サイトで学んできた演算が、機能としてまとまって配置されます。
+          主な機能群を、対応する既習ユニットとともに整理します。
+        </p>
+        <ul>
+          <li>
+            <strong>状態推定</strong> ―
+            実系統の計測値（各所の電力・電圧など、誤差を含む）から、つじつまの合った系統の状態を推定する機能。
+            <a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02: 潮流計算の基礎</a> の潮流計算が
+            「計画値（注入）から潮流を求める」のに対し、状態推定は「実際の計測から今の状態を割り出す」点が違いです。
+            リアルタイムで系統を把握する土台になります。
+          </li>
+          <li>
+            <strong>需要予測・再エネ予測</strong> ―
+            電力需要と、太陽光・風力など
+            <span class="term">自然変動電源<span class="term-tooltip">太陽光・風力など、天候で出力が変動する電源。出力を任意に増やせない。</span></span>の発電量を予測し、計画・最適化の入力にする機能。
+            予測の精度が、後段の計画の質を左右します。
+          </li>
+          <li>
+            <strong>混雑計算</strong> ―
+            潮流計算（A-02）と
+            <a href="../b-congestion/01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a> のN-1評価、
+            <a href="../d-algorithms/01-ptdf-sensitivity.html">D-01: PTDFと感度分析</a> の感度を使って、
+            どの送電線が混雑するか、
+            <a href="../d-algorithms/02-redispatch.html">D-02: 再給電（リディスパッチ）</a> でどう解消するかを算定する機能。
+          </li>
+          <li>
+            <strong>SCUC（潮流制約付き 電源起動停止計画）</strong> ―
+            送電線の潮流（混雑）の制約を満たしつつ、どの電源をいつ起動・停止するかを最適化する機能。
+            「起動停止」を決めるのが特徴です。
+          </li>
+          <li>
+            <strong>SCED（潮流制約付き 経済負荷配分）</strong> ―
+            起動している電源の出力配分を、潮流制約を満たしつつ費用が最小になるように決める機能。
+            メリットオーダー（<a href="../d-algorithms/02-redispatch.html">D-02</a>）の考え方を、全国大で適用するイメージです。
+          </li>
+          <li>
+            <strong>広域LFC（広域周波数制御）</strong> ―
+            エリアを越えて<span class="term">調整力<span class="term-tooltip">需給の差を埋めるために一般送配電事業者が確保する供給力（上げ・下げ）。</span></span>を協調させ、
+            周波数を保つ機能。需給調整市場（<a href="../e-market/03-balancing-market.html">E-03</a>）で調達した調整力を、広域で効率的に使うことにつながります。
+          </li>
+        </ul>
+        <p>
+          <strong>SCUC</strong> と <strong>SCED</strong> は、いずれも<strong>潮流制約（＝混雑の制約）を考慮した最適化</strong>である点が、
+          次期システムの大きな特徴です。混雑を「後から直す」のではなく、計画の最適化そのものに混雑の制約を織り込んでいきます。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 計画機能と混雑計算の位置づけ</h2>
+        <p>
+          SCUC／SCEDによる最適化は、いきなり単独で動くわけではありません。
+          その<strong>上流</strong>には、最適化の前提条件を与える3つの計画機能があります。
+        </p>
+        <ul>
+          <li><strong>需給計画</strong> ― いつ・どれだけの需要と供給があるか（<a href="../e-market/01-bg-and-generation-plan.html">E-01: BGと発電計画値</a> の発電計画値などが入力になります）。</li>
+          <li><strong>系統構成計画</strong> ― 系統をどうつなぐか（設備の構成・接続状態）。</li>
+          <li><strong>作業停止計画</strong> ― 点検などでどの設備をいつ停止するか。停止中の設備は使えないので、潮流や容量の前提が変わります。</li>
+        </ul>
+        <p>
+          これら3つの計画が「どの設備が使えて、どれだけ供給が要るか」という前提を固め、
+          その前提のもとで<strong>SCUC／SCED</strong>が最適化を行います。
+        </p>
+        <p>
+          ここで重要なのが、<strong>混雑計算がSCUC／SCEDの「前処理」として動く</strong>という構造です。
+          次期システムの初期運用では、現行の出力抑制の順序、すなわち
+          <a href="../e-market/04-priority-dispatch.html">E-04: 優先給電ルールと出力制御の優先順位</a> に基づいて、
+          あらかじめ混雑計算を行います。これにより
+          <a href="../d-algorithms/02-redispatch.html">D-02: 再給電（リディスパッチ）</a> のルールを適切に反映したうえで、
+          SCUC／SCEDが扱う問題を整理し、<strong>最適化の計算負荷を下げる</strong>ねらいがあります。
+          そして将来的には、混雑計算と需給の調整を<strong>同時に</strong>考慮するSCUC／SCEDへと発展させることが目指されています
+          （この前処理の構造は、送配電網協議会の公開資料で示されています。末尾の<a href="#references">参考資料</a>を参照）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 420 286" role="img"
+               aria-label="上流に需給計画・系統構成計画・作業停止計画の3つの計画機能、その下に前処理としての混雑計算、その下にSCUC/SCEDによる最適化、最後に給電計画の確定が並ぶ縦のフロー図。混雑計算とSCUC/SCEDは将来同時最適化へ発展する注記つき"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="f2b-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <g text-anchor="middle">
+              <!-- box1 3つの計画機能 -->
+              <rect x="55" y="10" width="310" height="50" rx="7" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"></rect>
+              <text x="210" y="30" font-size="12.5" font-weight="700" fill="#1d4ed8">3つの計画機能（上流）</text>
+              <text x="210" y="49" font-size="10.5" fill="#1a1a2e">需給計画 ／ 系統構成計画 ／ 作業停止計画</text>
+              <!-- arrow -->
+              <line x1="210" y1="60" x2="210" y2="80" stroke="#4a5568" stroke-width="1.5" marker-end="url(#f2b-ah)"></line>
+              <text x="218" y="74" font-size="9" fill="#4a5568" text-anchor="start">前提条件</text>
+              <!-- box2 混雑計算（前処理） -->
+              <rect x="55" y="82" width="310" height="50" rx="7" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5"></rect>
+              <text x="210" y="102" font-size="12.5" font-weight="700" fill="#b45309">混雑計算（前処理）</text>
+              <text x="210" y="121" font-size="10.5" fill="#1a1a2e">優先給電・再給電ルールを反映し、計算負荷を低減</text>
+              <!-- arrow -->
+              <line x1="210" y1="132" x2="210" y2="152" stroke="#4a5568" stroke-width="1.5" marker-end="url(#f2b-ah)"></line>
+              <!-- box3 SCUC/SCED -->
+              <rect x="55" y="154" width="310" height="46" rx="7" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"></rect>
+              <text x="210" y="174" font-size="12.5" font-weight="700" fill="#4338ca">SCUC ／ SCED</text>
+              <text x="210" y="191" font-size="10.5" fill="#1a1a2e">潮流制約付きの最適化（起動停止・出力配分）</text>
+              <!-- arrow -->
+              <line x1="210" y1="200" x2="210" y2="220" stroke="#4a5568" stroke-width="1.5" marker-end="url(#f2b-ah)"></line>
+              <!-- box4 確定 -->
+              <rect x="120" y="222" width="180" height="38" rx="7" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"></rect>
+              <text x="210" y="246" font-size="12" font-weight="700" fill="#15803d">給電計画の確定</text>
+              <!-- 将来の同時最適化 注記 -->
+              <path d="M55,107 L30,107 L30,177 L53,177" fill="none" stroke="#6366f1" stroke-width="1.3" stroke-dasharray="5 4"></path>
+              <text x="26" y="142" font-size="9" fill="#6366f1" text-anchor="middle" transform="rotate(-90 26 142)">将来は同時に最適化</text>
+            </g>
+          </svg>
+          <figcaption>図2: 計画機能と混雑計算の位置づけ。3つの計画が前提を固め、混雑計算が前処理として働き、SCUC／SCEDが最適化する。将来は混雑計算と需給を同時最適化</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 外部システムとの連携</h2>
+        <p>
+          次期中給システムは、単独で完結するのではなく、複数の外部システムと連携して全国大の運用を支えます。
+          主な連携先を概観します。
+        </p>
+        <ul>
+          <li>
+            <strong>需給調整市場システム（MMS）</strong> ―
+            <a href="../e-market/03-balancing-market.html">E-03: 需給調整市場</a> で調整力を調達・運用するためのシステム。
+            落札結果や調整力の情報を中給と連携し、需給調整の実運用につなげます。
+          </li>
+          <li>
+            <strong>広域機関システム</strong> ―
+            <span class="term">電力広域的運営推進機関（OCCTO）<span class="term-tooltip">全国大での需給・系統運用の調整を担う機関。連系線の運用や広域的な需給調整を取りまとめる。</span></span>のシステム。
+            広域での需給・系統運用や連系線の運用に関する情報を連携します。
+          </li>
+          <li>
+            <strong>簡易指令システム</strong> ―
+            比較的小規模な電源や、デマンドレスポンス（<a href="../e-market/03-balancing-market.html">DR</a>）・アグリゲーターなど多様なリソースに対し、
+            簡易な手段で指令を行う仕組み。小口のリソースも需給調整に取り込めるようにします。
+          </li>
+        </ul>
+        <p>
+          これらと連携することで、市場（E領域）・広域運用・多様なリソースを束ね、
+          <strong>全国大の需給と混雑管理を一体的に</strong>行えるようにするのが、次期中給システムの全体像です。
+          本サイトで学んできた一つひとつの演算が、こうして1つの実システムの機能として配置されていることが見えてきます。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（メイン/エリアの機能分担） -->
+        <div class="exercise" data-exercise-id="f-02-ex01" data-type="choice">
+          <h3>演習 1: メインシステムとエリアシステムの分担</h3>
+          <div class="exercise-problem">
+            <p>
+              次期中給システムにおける、メインシステムとエリアシステムの機能分担の説明として、
+              最も適切なものはどれか。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="f-02-ex01" value="1">
+              <span>メインシステムが全国大のSCUC／SCEDによる最適化を担い、必要な系統情報はエリアシステムから連携・送信される</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-02-ex01" value="2">
+              <span>各エリアシステムがそれぞれ独立に全国大の最適化を行い、メインシステムは結果を受け取るだけである</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-02-ex01" value="3">
+              <span>全国大の最適化は外部の需給調整市場システム（MMS）が行い、メイン・エリアは関与しない</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-02-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "全国大の最適化（SCUC／SCED）を担うのはメインシステムで、その最適化に必要な系統情報は各エリアシステムから連携・送信されます。これが2層構成の役割分担です。選択肢2は『各エリアが独立に全国最適化』としている点が誤り（全国大の同時最適化はメインの役割）。選択肢3の需給調整市場システム（MMS）は外部の連携先であり、全国大の最適化を行う主体ではありません。"
+        }
+        </script>
+
+        <!-- 演習2: multi-choice（次期中給システムの特徴） -->
+        <div class="exercise" data-exercise-id="f-02-ex02" data-type="multi-choice">
+          <h3>演習 2: 次期中給システムの特徴</h3>
+          <div class="exercise-problem">
+            <p>次期中給システムの特徴として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="f-02-ex02" value="1">
+              <span>地域間連系線の混雑と各エリア地内基幹系統の混雑を同時に考慮し、全国大で需給を最適化する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-02-ex02" value="2">
+              <span>初期運用では、混雑計算をSCUC／SCEDの前処理として行い、優先給電・再給電のルールを反映して計算負荷を下げる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-02-ex02" value="3">
+              <span>SCUC／SCEDは、送電線の潮流（混雑）の制約を考慮した最適化である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-02-ex02" value="4">
+              <span>混雑が見つかったときは、その送電線の送電容量を運用で引き上げて混雑を解消する</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-02-ex02",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1は全国大の同時最適化、2は混雑計算を前処理に置く構造、3はSCUC／SCEDが潮流制約付き最適化であること。いずれも次期中給システムの特徴で正しい。4は誤りで、送電容量は設備の制約（熱的制約・安定度など）で決まり、運用で勝手に引き上げて混雑を解消することはできません（F-01でも確認したとおり、混雑は再給電などで潮流側を下げて解消します）。"
+        }
+        </script>
+
+        <!-- 演習3: diagram-label（計画→混雑計算→SCUC/SCEDの構造） -->
+        <div class="exercise" data-exercise-id="f-02-ex03" data-type="diagram-label">
+          <h3>演習 3: 最適化までの流れを完成させる</h3>
+          <div class="exercise-problem">
+            <p>
+              計画機能から給電計画の確定までの流れになるよう、空欄に当てはまるステップを配置せよ。
+              ラベルをドラッグするか、ラベルを選んでから空欄をクリックして配置できます。
+              使わないラベルが1つあります。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <div class="diagram-exercise">
+              <svg class="diagram-base" viewBox="0 0 100 24" role="img"
+                   aria-label="3つの計画機能から始まり、3つの空欄を経て給電計画の確定に至る横並びのフロー図"
+                   xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="f2-d-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+                  </marker>
+                </defs>
+                <!-- 固定ボックス: 3つの計画機能 -->
+                <rect x="1" y="7" width="17" height="10" rx="2" fill="#eff6ff" stroke="#3b82f6" stroke-width="0.5"></rect>
+                <text x="9.5" y="12" font-size="2.7" text-anchor="middle" fill="#1a1a2e">3つの</text>
+                <text x="9.5" y="15" font-size="2.7" text-anchor="middle" fill="#1a1a2e">計画機能</text>
+                <!-- 固定ボックス: 給電計画の確定 -->
+                <rect x="82" y="7" width="17" height="10" rx="2" fill="#f0fdf4" stroke="#16a34a" stroke-width="0.5"></rect>
+                <text x="90.5" y="12" font-size="2.7" text-anchor="middle" fill="#15803d">給電計画</text>
+                <text x="90.5" y="15" font-size="2.7" text-anchor="middle" fill="#15803d">の確定</text>
+                <!-- 連結矢印（区間ごと） -->
+                <g stroke="#4a5568" stroke-width="0.5" marker-end="url(#f2-d-ah)" fill="none">
+                  <line x1="18" y1="12" x2="23" y2="12"></line>
+                  <line x1="37" y1="12" x2="43" y2="12"></line>
+                  <line x1="57" y1="12" x2="63" y2="12"></line>
+                  <line x1="77" y1="12" x2="82" y2="12"></line>
+                </g>
+              </svg>
+              <div class="label-targets">
+                <div class="drop-zone" data-slot="1" style="left:30%; top:50%;"></div>
+                <div class="drop-zone" data-slot="2" style="left:50%; top:50%;"></div>
+                <div class="drop-zone" data-slot="3" style="left:70%; top:50%;"></div>
+              </div>
+              <div class="label-choices">
+                <span class="draggable-label" data-label-id="a">混雑計算（前処理）</span>
+                <span class="draggable-label" data-label-id="b">SCUC／SCED</span>
+                <span class="draggable-label" data-label-id="c">混雑解消の確認</span>
+                <span class="draggable-label" data-label-id="d">送電容量の引き上げ</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-02-ex03",
+          "type": "diagram-label",
+          "correct": {"1": "a", "2": "b", "3": "c"},
+          "explanation": "3つの計画機能（需給計画・系統構成計画・作業停止計画）が前提を固めたあと、混雑計算（前処理／slot1）→ SCUC／SCED（最適化／slot2）→ 混雑解消の確認（slot3）→ 給電計画の確定、という流れになります。『送電容量の引き上げ』は設備側を変える対策で、しかも容量は設備の制約で決まるため運用では行えません。この最適化フローには含まれないので使いません。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/pdf/008_02_00.pdf"
+               target="_blank" rel="noopener noreferrer">一般社団法人 送配電網協議会「次期中給システム開発に関する検討状況」（経済産業省 次世代電力系統ワーキンググループ 第8回 資料2、2026年3月16日）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/assets/iinkai/chousei_jukyu/117/chousei_117_04_besshi.pdf"
+               target="_blank" rel="noopener noreferrer">同「次期中給システム開発に関する検討状況」（OCCTO 第60回需給調整市場検討小委員会 別紙、2026年3月3日）</a>
+          </li>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/index.html"
+               target="_blank" rel="noopener noreferrer">経済産業省「次世代電力系統ワーキンググループ」（索引）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション（F-02は最終領域・最終ユニットのため「次」はトップへ戻る） -->
+    <nav class="unit-nav">
+      <a href="01-congestion-management-overview.html" class="unit-nav-prev">&larr; 系統混雑管理の全体像</a>
+      <a href="../../index.html" class="unit-nav-next">トップへ戻る &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>
