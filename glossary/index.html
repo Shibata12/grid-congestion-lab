@@ -93,7 +93,7 @@
         <dd>
           <p>潮流制約付き経済負荷配分。送電線の潮流（混雑）の制約を満たしながら、起動している電源の出力配分を、費用が最小になるように決める最適化。メリットオーダーの考え方を全国大で適用するイメージで、次期中給システムの中核機能の一つ。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
+            関連ユニット: <a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>、<a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
           </p>
         </dd>
       </div>
@@ -103,7 +103,7 @@
         <dd>
           <p>潮流制約付き電源起動停止計画。送電線の潮流（混雑）の制約を満たしながら、どの電源をいつ起動・停止するかを最適化する。出力配分を決めるSCEDに対し、SCUCは起動停止を決める点が特徴。次期中給システムの中核機能の一つ。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
+            関連ユニット: <a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>、<a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
           </p>
         </dd>
       </div>
@@ -238,6 +238,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="d,f" id="term-optimization">
+        <dt>最適化（数理最適化）</dt>
+        <dd>
+          <p>目的関数を、制約条件を満たす範囲で最小（または最大）にする変数の値を求めること。SCUC/SCEDは、発電コスト（目的関数）を、需給バランス・潮流制約・出力上下限（制約条件）のもとで最小化する最適化である。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="c,f" id="term-outage-plan">
         <dt>作業停止計画</dt>
         <dd>
@@ -324,6 +334,16 @@
           <p>注入の過不足を吸収する基準の母線。電力は保存するため、ある母線で注入を増やすとどこかで減らす必要があり、その基準として置く。PTDFは「ある母線からスラックバスへ1単位送電したとき」の感度として定義される。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d" id="term-constraint">
+        <dt>制約条件</dt>
+        <dd>
+          <p>最適化で必ず満たさなければならない条件。SCUC/SCEDでは、需給バランス（総発電＝総需要）、潮流制約（各送電線の潮流≤送電容量）、出力上下限（Pmin≤P≤Pmax）の3つが基本。潮流制約にはPTDFが使われる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>
           </p>
         </dd>
       </div>
@@ -504,6 +524,16 @@
           <p>発電コストの安い電源から順に使う考え方。再給電では、コストを抑えるため、上げる電源は安い順・下げる電源は高い順に選ぶのが基本となる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/d-algorithms/02-redispatch.html">D-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d" id="term-objective">
+        <dt>目的関数</dt>
+        <dd>
+          <p>最適化で最小化（または最大化）したい対象を表す式。SCUC/SCEDの目的関数は発電コスト（燃料費・起動費など）の合計で、これを最小化する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>
           </p>
         </dd>
       </div>
