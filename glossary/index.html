@@ -118,6 +118,26 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="c" id="term-lower-system">
+        <dt>下位系統</dt>
+        <dd>
+          <p>上位系統（基幹系統）より下の電圧階級の系統（例：154kV・66kV・配電）。変圧器で上位系統につながる。母線・線路の数が多いため、系統モデルでは集約して扱うことが多い。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/03-upper-lower-and-aggregated-bus.html">C-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c,d" id="term-aggregated-bus">
+        <dt>下位系統集約母線（集約母線）</dt>
+        <dd>
+          <p>下位系統全体を1つの母線に集約したもの。その注入＝下位系統の発電合計−負荷合計として、上位系統モデルの境界（変圧器の上位側）につなぐ。アドミタンス行列（Yバス）上では1つの母線（1行・1列）として扱われ、モデルを小さくして計算量を削減する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/03-upper-lower-and-aggregated-bus.html">C-03</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="c" id="term-switchgear">
         <dt>開閉器（遮断器・断路器）</dt>
         <dd>
@@ -328,6 +348,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="c" id="term-upper-system">
+        <dt>上位系統</dt>
+        <dd>
+          <p>各エリアの上位2電圧（例：500kV/275kV）からなる系統。基幹系統とほぼ同義で、系統の骨格をなし、系統混雑管理の主舞台になる。系統モデルでは詳細にモデル化される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/03-upper-lower-and-aggregated-bus.html">C-03</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="d" id="term-slack-bus">
         <dt>スラックバス（参照母線）</dt>
         <dd>
@@ -494,6 +524,16 @@
           <p>送電線に空き容量があることを前提に接続を認める従来方式。接続後は混雑による出力制御を前提としない（確定的＝firm）。空き容量がないと接続できない点が、ノンファーム型接続との違い。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,c" id="term-transformer">
+        <dt>変圧器</dt>
+        <dd>
+          <p>電圧を変える機器。変電所で上位系統と下位系統をつなぎ、1次側（高電圧）と2次側（低電圧）を持つ。系統情報の公表や下位系統の集約では、変圧器二次側母線が1つの単位になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/03-upper-lower-and-aggregated-bus.html">C-03</a>、<a href="../units/c-grid-model/01-grid-model-structure.html">C-01</a>
           </p>
         </dd>
       </div>

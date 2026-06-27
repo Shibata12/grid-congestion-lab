@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C-03: 上位系統・下位系統と集約母線 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="c" data-unit="c-03">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">C: 系統モデル</a> &gt;
+      <span>上位系統・下位系統と集約母線</span>
+    </nav>
+
+    <article>
+      <h1>C-03: 上位系統・下位系統と集約母線</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="01-grid-model-structure.html">C-01</a> でモデルの「器」（母線・Yバス）、
+        <a href="02-system-data-and-inputs.html">C-02</a> でそこに入る「データ」（3計画）を学びました。
+        ただ、実際の系統は基幹から配電まで<strong>階層構造</strong>になっていて、すべてを細かくモデル化することはできません。
+        本ユニットでは、下位の系統を<strong>1つの母線に集約</strong>して上位系統モデルの境界につなぐ、という
+        <strong>境界処理</strong>を学びます。これが、<a href="../d-algorithms/03-scuc-sced-overview.html">D-03: SCUC/SCEDの概要</a>
+        の最適化を<strong>現実的な時間で解く</strong>ための鍵になります。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          本ユニットは<strong>概念と公開情報の範囲</strong>で扱います。下位系統を集約する内部アルゴリズム
+          （等価インピーダンスの計算など）には踏み込まず、「1つの母線に集約し、注入として境界につなぐ」という考え方に焦点を当てます。
+          §5の公開規定はOCCTOの系統情報公表ルールに基づきます。参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 系統の階層構造</a></li>
+          <li><a href="#section-2">2. なぜ下位系統を集約するのか</a></li>
+          <li><a href="#section-3">3. 下位系統集約母線とは</a></li>
+          <li><a href="#section-4">4. C-01のYバスとの関係</a></li>
+          <li><a href="#section-5">5. OCCTOの公開規定と実務</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 系統の階層構造</h2>
+        <p>
+          C-01の §3 で見たように、電力系統は<strong>電圧の階層構造</strong>になっています。
+          発電所から超高圧で送り出し、変電所の<span class="term">変圧器<span class="term-tooltip">電圧を変える機器。変電所で上位系統と下位系統をつなぐ。1次側（高電圧）と2次側（低電圧）がある。</span></span>で電圧を段階的に下げて、最後は配電で家庭・工場へ届けます。
+        </p>
+        <ul>
+          <li><strong>上位系統（基幹系統）</strong>：各エリアの<strong>上位2電圧</strong>（例：500kV／275kV）。系統の骨格で、<strong>系統混雑管理の主舞台</strong>（領域B・D・F）です。</li>
+          <li><strong>下位系統</strong>：その下の電圧階級（例：154kV・66kV・配電）。上位系統に変圧器でつながり、母線や線路の数は<strong>はるかに多く</strong>なります。</li>
+        </ul>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 250" role="img"
+               aria-label="上位系統（基幹系統、500kV/275kV）が上に、変圧器を介して下位系統（154kV/66kV/配電）が下につながる階層構造の図。上位系統が混雑管理の主舞台であることを示す"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="c3-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 上位系統 -->
+            <rect x="120" y="18" width="200" height="56" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="2"></rect>
+            <text x="220" y="40" font-size="13" text-anchor="middle" font-weight="700" fill="#4338ca">上位系統（基幹系統）</text>
+            <text x="220" y="58" font-size="11" text-anchor="middle" fill="#1a1a2e">上位2電圧 例: 500kV / 275kV</text>
+            <text x="334" y="48" font-size="9" text-anchor="start" fill="#6366f1">混雑管理</text>
+            <text x="334" y="60" font-size="9" text-anchor="start" fill="#6366f1">の主舞台</text>
+            <!-- 変圧器 -->
+            <circle cx="220" cy="92" r="11" fill="none" stroke="#8b5cf6" stroke-width="1.8"></circle>
+            <circle cx="220" cy="108" r="11" fill="none" stroke="#8b5cf6" stroke-width="1.8"></circle>
+            <line x1="220" y1="74" x2="220" y2="81" stroke="#4a5568" stroke-width="1.5"></line>
+            <text x="238" y="104" font-size="10" text-anchor="start" fill="#8b5cf6">変圧器</text>
+            <line x1="220" y1="119" x2="220" y2="132" stroke="#4a5568" stroke-width="1.5"></line>
+            <!-- 下位系統 -->
+            <rect x="90" y="134" width="260" height="44" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.4"></rect>
+            <text x="220" y="153" font-size="12" text-anchor="middle" font-weight="700" fill="#1a1a2e">下位系統</text>
+            <text x="220" y="170" font-size="10" text-anchor="middle" fill="#4a5568">154kV / 66kV …（母線・線路が多数）</text>
+            <!-- 配電 -->
+            <rect x="120" y="199" width="200" height="34" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"></rect>
+            <text x="220" y="220" font-size="11" text-anchor="middle" fill="#1a1a2e">配電（家庭・工場へ）</text>
+            <line x1="220" y1="178" x2="220" y2="199" stroke="#4a5568" stroke-width="1.2" marker-end="url(#c3-d)"></line>
+          </svg>
+          <figcaption>図1: 系統の階層構造。上位系統（基幹）に、変圧器を介して下位系統がつながる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. なぜ下位系統を集約するのか</h2>
+        <p>
+          系統全体の母線や送電線の数は膨大です。とくに下位系統は、上位系統よりずっと数が多くなります。
+          これを<strong>すべて細かくモデル化</strong>して <a href="01-grid-model-structure.html">C-01</a> のアドミタンス行列（Yバス）に入れると、
+          行列のサイズが<strong>巨大</strong>になります。
+        </p>
+        <p>
+          ここで問題になるのが計算量です。<a href="../d-algorithms/03-scuc-sced-overview.html">D-03: SCUC/SCEDの概要</a> で見たように、
+          SCUC／SCEDは<strong>もともと重い最適化</strong>です（とくにSCUCは起動停止という整数の問題）。
+          モデルが巨大になると、<strong>現実的な時間で解けなく</strong>なってしまいます。
+        </p>
+        <p>
+          そこで、<strong>混雑管理の主舞台である上位系統（基幹）は詳細に</strong>モデル化し、
+          <strong>下位系統は集約して</strong>簡略化します。こうして計算量を抑え、SCUC／SCEDを実用的な時間で解けるようにするのです。
+          「重要なところは細かく、そうでないところは粗く」というメリハリが、系統モデルの基本的な考え方です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 下位系統集約母線とは</h2>
+        <p>
+          では、どう集約するのでしょうか。基本の考え方は、<strong>下位系統全体を1つの母線にまとめる</strong>ことです。
+          これを<span class="term">下位系統集約母線<span class="term-tooltip">下位系統全体を1つの母線に集約したもの。集約母線ともいう。その注入＝下位系統の発電合計−負荷合計として、上位系統モデルの境界につなぐ。</span></span>（集約母線）といいます。
+        </p>
+        <p>
+          集約母線の<strong>注入</strong>は、<a href="02-system-data-and-inputs.html">C-02</a> で学んだ考え方そのままで、
+          下位系統の中の<strong>発電合計から負荷合計を引いたもの</strong>になります。
+        </p>
+        <div class="math-block"
+             data-tex="P_{\text{agg}} = \sum P_{\text{gen}} - \sum P_{\text{load}}"
+             data-fallback="集約母線の注入 = （下位系統の発電合計）−（負荷合計）"></div>
+        <p>
+          つまり、下位系統が正味でどれだけ発電するか（または消費するか）を、<strong>1つの注入</strong>で代表させるのです。
+          多くの下位系統は正味で電力を消費する（負荷が発電を上回る）ので注入はマイナスになりますが、
+          太陽光などが多い地域では正味で送り出す（プラス）こともあります。
+          この集約母線を、<strong>変圧器の上位側＝上位系統の母線</strong>につなげば、境界処理は完了です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="左の下位系統（多数の母線・発電・負荷）を、変圧器を介して右の1つの集約母線（注入＝発電合計−負荷合計）に集約し、上位系統の母線につなぐ図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="c3-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 下位系統（ごちゃっと） -->
+            <rect x="14" y="24" width="170" height="150" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.3"></rect>
+            <text x="99" y="42" font-size="11" text-anchor="middle" font-weight="700" fill="#1a1a2e">下位系統</text>
+            <g stroke="#64748b" stroke-width="1">
+              <line x1="40" y1="70" x2="40" y2="95"></line>
+              <line x1="80" y1="60" x2="80" y2="85"></line>
+              <line x1="120" y1="75" x2="120" y2="100"></line>
+              <line x1="155" y1="62" x2="155" y2="87"></line>
+              <line x1="55" y1="120" x2="55" y2="145"></line>
+              <line x1="100" y1="125" x2="100" y2="150"></line>
+              <line x1="140" y1="120" x2="140" y2="145"></line>
+              <line x1="40" y1="82" x2="155" y2="74" stroke-dasharray="2 2"></line>
+              <line x1="55" y1="132" x2="140" y2="132" stroke-dasharray="2 2"></line>
+              <line x1="80" y1="85" x2="100" y2="125"></line>
+            </g>
+            <text x="40" y="64" font-size="9" text-anchor="middle" fill="#3b82f6">G</text>
+            <text x="120" y="69" font-size="9" text-anchor="middle" fill="#3b82f6">G</text>
+            <text x="100" y="164" font-size="9" text-anchor="middle" fill="#ef4444">負荷</text>
+            <text x="99" y="190" font-size="9" text-anchor="middle" fill="#4a5568">母線・線路が多数</text>
+            <!-- 変圧器＋集約矢印 -->
+            <circle cx="212" cy="92" r="8" fill="none" stroke="#8b5cf6" stroke-width="1.6"></circle>
+            <circle cx="212" cy="104" r="8" fill="none" stroke="#8b5cf6" stroke-width="1.6"></circle>
+            <text x="212" y="128" font-size="9" text-anchor="middle" fill="#8b5cf6">変圧器</text>
+            <line x1="184" y1="98" x2="200" y2="98" stroke="#4a5568" stroke-width="1.3"></line>
+            <line x1="224" y1="98" x2="252" y2="98" stroke="#6366f1" stroke-width="1.6" marker-end="url(#c3-2)"></line>
+            <text x="238" y="88" font-size="9" text-anchor="middle" fill="#6366f1">集約</text>
+            <!-- 集約母線 -->
+            <circle cx="300" cy="98" r="11" fill="#6366f1"></circle>
+            <text x="300" y="78" font-size="11" text-anchor="middle" font-weight="700" fill="#4338ca">集約母線</text>
+            <text x="300" y="128" font-size="9.5" text-anchor="middle" fill="#1a1a2e">注入 ＝ Σ発電 − Σ負荷</text>
+            <!-- 上位系統の母線 -->
+            <line x1="410" y1="58" x2="410" y2="138" stroke="#1a1a2e" stroke-width="4"></line>
+            <text x="410" y="48" font-size="10" text-anchor="middle" fill="#1a1a2e">上位系統</text>
+            <text x="410" y="152" font-size="9" text-anchor="middle" fill="#4a5568">の母線</text>
+            <line x1="311" y1="98" x2="406" y2="98" stroke="#4a5568" stroke-width="1.6"></line>
+          </svg>
+          <figcaption>図2: 下位系統全体を1つの集約母線にまとめ、注入（＝発電合計−負荷合計）として上位系統の母線につなぐ</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. C-01のYバスとの関係</h2>
+        <p>
+          集約母線は、<a href="01-grid-model-structure.html">C-01: 母線・送電線・系統モデルの構造</a> で学んだ
+          <strong>アドミタンス行列（Yバス）の上の1つの母線</strong>（1つの行・列）として扱われます。
+          下位系統の詳細な母線・線路は、もうYバスには現れません。<strong>1つの母線に圧縮</strong>されているからです。
+        </p>
+        <p>
+          結果として、Yバスのサイズは「<strong>上位系統の母線数 ＋ 集約母線</strong>」程度に収まります。
+          もし下位系統を全部詳細に入れていたら、Yバスは何倍にも大きくなっていたでしょう。
+          この<strong>サイズの圧縮</strong>こそが、§2で見たSCUC／SCEDを現実的な時間で解くための鍵です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 192" role="img"
+               aria-label="下位系統を全部詳細に入れた巨大なYバスと、下位系統を集約母線1つにまとめた小さなYバスの対比。集約によって行列のサイズが小さくなることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 左: 全詳細（大） -->
+            <text x="105" y="24" font-size="11" text-anchor="middle" font-weight="700" fill="#dc2626">全部詳細にすると…</text>
+            <g stroke="#fca5a5" stroke-width="1" fill="none">
+              <rect x="40" y="34" width="130" height="130"></rect>
+              <line x1="40" y1="47" x2="170" y2="47"></line><line x1="40" y1="60" x2="170" y2="60"></line>
+              <line x1="40" y1="73" x2="170" y2="73"></line><line x1="40" y1="86" x2="170" y2="86"></line>
+              <line x1="40" y1="99" x2="170" y2="99"></line><line x1="40" y1="112" x2="170" y2="112"></line>
+              <line x1="40" y1="125" x2="170" y2="125"></line><line x1="40" y1="138" x2="170" y2="138"></line>
+              <line x1="40" y1="151" x2="170" y2="151"></line>
+              <line x1="53" y1="34" x2="53" y2="164"></line><line x1="66" y1="34" x2="66" y2="164"></line>
+              <line x1="79" y1="34" x2="79" y2="164"></line><line x1="92" y1="34" x2="92" y2="164"></line>
+              <line x1="105" y1="34" x2="105" y2="164"></line><line x1="118" y1="34" x2="118" y2="164"></line>
+              <line x1="131" y1="34" x2="131" y2="164"></line><line x1="144" y1="34" x2="144" y2="164"></line>
+              <line x1="157" y1="34" x2="157" y2="164"></line>
+            </g>
+            <text x="105" y="178" font-size="9" text-anchor="middle" fill="#dc2626">巨大なYバス（解くのが大変）</text>
+            <!-- 矢印 -->
+            <text x="230" y="100" font-size="20" text-anchor="middle" fill="#4a5568">⇒</text>
+            <text x="230" y="120" font-size="9" text-anchor="middle" fill="#4a5568">下位を集約</text>
+            <!-- 右: 集約（小） -->
+            <text x="360" y="24" font-size="11" text-anchor="middle" font-weight="700" fill="#16a34a">下位を集約すると</text>
+            <g stroke="#86efac" stroke-width="1.2" fill="none">
+              <rect x="320" y="60" width="78" height="78"></rect>
+              <line x1="320" y1="86" x2="398" y2="86"></line><line x1="320" y1="112" x2="398" y2="112"></line>
+              <line x1="346" y1="60" x2="346" y2="138"></line><line x1="372" y1="60" x2="372" y2="138"></line>
+            </g>
+            <text x="359" y="100" font-size="8" text-anchor="middle" fill="#16a34a">集約母線=1行1列</text>
+            <text x="359" y="156" font-size="9" text-anchor="middle" fill="#16a34a">小さなYバス（解ける）</text>
+          </svg>
+          <figcaption>図3: 下位系統を集約母線1つにまとめると、Yバスのサイズが小さくなり、最適化が現実的な時間で解ける</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. OCCTOの公開規定と実務</h2>
+        <p>
+          この「下位系統は集約して扱う」という考え方は、実務のルールにも表れています。
+          <a href="https://www.occto.or.jp/institution/keitoujouhou/" target="_blank" rel="noopener noreferrer">OCCTO（電力広域的運営推進機関）</a>
+          の系統情報の公表ルールでは、公開する情報の<strong>粒度</strong>も系統の階層に応じて決められています。
+        </p>
+        <p>
+          具体的には、母線別の需要や系統潮流などの情報について、<strong>変圧器二次側母線単位で集約</strong>して扱うとされています。
+          下位系統（一例として<strong>154kV未満</strong>）は、こうして<strong>変圧器二次側の母線ごとにまとめた粒度</strong>で扱われます。
+          これは、本ユニットで見た「下位系統を集約母線にまとめる」考え方と整合しています。
+          公開される情報も、運用で使うモデルも、<strong>基幹系統は細かく・下位系統は集約して</strong>という方針で一貫しているのです
+          （OCCTOの系統情報公表ルールに基づきます。末尾の<a href="#references">参考資料</a>）。
+        </p>
+        <p>
+          こうしてC領域では、系統を<strong>モデルの器（C-01）</strong>・<strong>入力データ（C-02）</strong>・
+          <strong>上位／下位の境界処理（本ユニット）</strong>として整理しました。
+          ここで作った現実的なサイズのモデルが、領域Dの混雑計算・SCUC／SCEDの土台になります。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（集約する理由） -->
+        <div class="exercise" data-exercise-id="c-03-ex01" data-type="choice">
+          <h3>演習 1: 下位系統を集約する理由</h3>
+          <div class="exercise-problem">
+            <p>下位系統を集約する主な理由として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="c-03-ex01" value="1">
+              <span>下位系統は母線・線路が膨大で、すべて詳細にモデル化するとSCUC/SCEDが現実的な時間で解けなくなるため（計算量の削減）</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-03-ex01" value="2">
+              <span>下位系統ではいっさい混雑が起きないので、モデルに入れる必要がないため</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-03-ex01" value="3">
+              <span>下位系統のデータは秘密で、モデルに含めることが禁止されているため</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-03-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "下位系統は母線・線路の数が膨大で、すべて詳細にYバスへ入れると行列が巨大になります。SCUC/SCEDはもともと重い最適化（特にSCUCは整数問題）なので、巨大なモデルでは現実的な時間で解けません。そこで下位系統を集約して計算量を減らします。選択肢2は誤り（下位系統でも事象は起きますが、混雑管理の主舞台は上位系統です）。選択肢3も誤りで、集約は秘密保持のためではなく計算量削減のためです。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（集約母線の注入） -->
+        <div class="exercise" data-exercise-id="c-03-ex02" data-type="numeric">
+          <h3>演習 2: 集約母線の注入</h3>
+          <div class="exercise-problem">
+            <p>
+              ある下位系統の中に、発電所の発電合計が 40 MW、負荷の合計が 100 MW ある。
+              この下位系統を1つの集約母線にまとめたとき、その注入は何 MW か（発電を＋、負荷を−とする）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              集約母線の注入:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-03-ex02",
+          "type": "numeric",
+          "correct": -60,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "集約母線の注入 = 発電合計 − 負荷合計 = 40 − 100 = −60 MW。注入がマイナスなので、この下位系統は正味で電力を消費しており、上位系統から 60 MW を引き込む（負荷側の）境界として、上位系統の母線につながります。"
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（集約母線の性質） -->
+        <div class="exercise" data-exercise-id="c-03-ex03" data-type="multi-choice">
+          <h3>演習 3: 集約母線について</h3>
+          <div class="exercise-problem">
+            <p>下位系統集約母線について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="c-03-ex03" value="1">
+              <span>下位系統全体を1つの母線に集約し、注入＝発電合計−負荷合計として扱う</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-03-ex03" value="2">
+              <span>集約母線は、C-01のアドミタンス行列（Yバス）の上の1つの母線（1行・1列）として扱われる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-03-ex03" value="3">
+              <span>OCCTOの系統情報公表では、154kV未満は変圧器二次側母線単位で集約して扱われる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-03-ex03" value="4">
+              <span>集約すると、下位系統のすべての母線が個別にYバスに現れるようになる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-03-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1は集約母線の定義（1母線に集約し注入として扱う）、2はYバス上の1母線として扱われること、3はOCCTOの系統情報公表ルール（変圧器二次側母線単位の集約）で、いずれも正しい。4は誤りで、集約はむしろ逆です。下位系統の詳細な母線はYバスに現れず、1つの集約母線に圧縮されます。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/institution/keitoujouhou/"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「系統情報サービス等」</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/keitoujouhou/files/1.souden_kouhyou_koumoku2105.pdf"
+               target="_blank" rel="noopener noreferrer">OCCTO「一般送配電事業者及び送電事業者が公開する系統情報及び公開の手段、時期」（母線別需要・系統潮流の変圧器二次側母線単位での集約を含む）</a>
+          </li>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/pdf/008_02_00.pdf"
+               target="_blank" rel="noopener noreferrer">一般社団法人 送配電網協議会「次期中給システム開発に関する検討状況」（経済産業省 次世代電力系統ワーキンググループ 第8回 資料2、2026年3月16日。SCUC/SCEDと計算規模）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="02-system-data-and-inputs.html" class="unit-nav-prev">&larr; 系統データと混雑計算のインプット</a>
+      <a href="../d-algorithms/index.html" class="unit-nav-next">次の領域へ: D 混雑計算のアルゴリズム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>

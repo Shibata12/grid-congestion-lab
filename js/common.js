@@ -52,6 +52,8 @@ const SITE_STRUCTURE = {
         summary: '実系統を母線（節点）・送電線（枝）に抽象化し、送電線インピーダンスからアドミタンス行列（Yバス）を組み立てる考え方を学ぶ。D領域の入力になる。' },
       { id: 'c-02', title: '系統データと混雑計算のインプット', file: '02-system-data-and-inputs.html', exerciseCount: 3,
         summary: '系統構成計画・作業停止計画・需給計画が系統モデル（Yバス・注入）にどう反映されるかを学ぶ。N-1解析で1回線を落とした構成の作り方にも触れる。' },
+      { id: 'c-03', title: '上位系統・下位系統と集約母線', file: '03-upper-lower-and-aggregated-bus.html', exerciseCount: 3,
+        summary: '上位系統（基幹）と下位系統の階層構造、下位系統を1母線に集約する境界処理（注入＝発電合計−負荷合計、Yバス上の1母線）を学ぶ。計算量削減でSCUC/SCEDを現実的に解く。' },
     ],
   },
   d: {
