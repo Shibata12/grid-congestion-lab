@@ -118,6 +118,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="c" id="term-switchgear">
+        <dt>開閉器（遮断器・断路器）</dt>
+        <dd>
+          <p>系統の接続構成を変更するための装置。遮断器・断路器など。入／切によって送電線などが系統に入る・出るが切り替わり、トポロジー（系統モデルの構造）が変わる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="b" id="term-overload">
         <dt>過負荷</dt>
         <dd>
@@ -154,6 +164,16 @@
           <p>2016年4月の小売全面自由化にあわせて導入された制度。各事業者（BG）が30分コマごとに発電・需要の計画値を提出し、実需給でその達成を目指す。計画と実績の差はインバランスとして精算される。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c,f" id="term-system-config-plan">
+        <dt>系統構成計画</dt>
+        <dd>
+          <p>系統をどう構成するか（どの母線とどの送電線がつながっているか＝トポロジー）を定める計画。トポロジーが系統モデルの構造、すなわちアドミタンス行列（Yバス）のどこに線路があるか（0か非0か）を決める。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>
           </p>
         </dd>
       </div>
@@ -218,6 +238,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="c,f" id="term-outage-plan">
+        <dt>作業停止計画</dt>
+        <dd>
+          <p>保守・点検などで設備を計画的に停止する計画。停止中の送電線などは「ない」ものとして系統モデルに反映する（Yバスからその線路のアドミタンスを除く）。設備停止で潮流分布が変わり混雑が起きやすくなることもあるため、混雑管理の前提になる。OCCTOが調整・記載要領を公開している。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-variable-re">
         <dt>自然変動電源</dt>
         <dd>
@@ -264,6 +294,16 @@
           <p>計画値同時同量の前に行われていた、リアルタイムで発電を調整して需給を一致させる方式。地域独占下で一般電気事業者が担っていた。小売全面自由化により計画値同時同量へ移行した。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/02-simultaneous-balancing.html">E-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c,e,f" id="term-supply-demand-plan">
+        <dt>需給計画</dt>
+        <dd>
+          <p>各母線（エリア）の発電量・負荷量の計画。発電側は発電計画値、負荷側は需要計画値（いずれもE-01）からなり、電気事業法等に基づき広域機関（OCCTO）のシステムを通じて提出される。系統モデルでは各母線の注入（発電−負荷）として入力される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>、<a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
           </p>
         </dd>
       </div>

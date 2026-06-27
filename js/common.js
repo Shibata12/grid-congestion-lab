@@ -50,6 +50,8 @@ const SITE_STRUCTURE = {
     units: [
       { id: 'c-01', title: '母線・送電線・系統モデルの構造', file: '01-grid-model-structure.html', exerciseCount: 3,
         summary: '実系統を母線（節点）・送電線（枝）に抽象化し、送電線インピーダンスからアドミタンス行列（Yバス）を組み立てる考え方を学ぶ。D領域の入力になる。' },
+      { id: 'c-02', title: '系統データと混雑計算のインプット', file: '02-system-data-and-inputs.html', exerciseCount: 3,
+        summary: '系統構成計画・作業停止計画・需給計画が系統モデル（Yバス・注入）にどう反映されるかを学ぶ。N-1解析で1回線を落とした構成の作り方にも触れる。' },
     ],
   },
   d: {

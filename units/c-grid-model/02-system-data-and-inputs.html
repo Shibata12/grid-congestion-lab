@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C-02: 系統データと混雑計算のインプット - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="c" data-unit="c-02">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">C: 系統モデル</a> &gt;
+      <span>系統データと混雑計算のインプット</span>
+    </nav>
+
+    <article>
+      <h1>C-02: 系統データと混雑計算のインプット</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="01-grid-model-structure.html">C-01: 母線・送電線・系統モデルの構造</a> では、系統を
+        母線（節点）・送電線（枝）・アドミタンス行列（Yバス）で表す<strong>「器」</strong>を作りました。
+        本ユニットでは、その器に実際に入る<strong>「データ」</strong>を扱います。
+        <a href="../f-dispatch-system/02-next-gen-dispatch-system.html">F-02: 次期中給システムの機能構成</a> で出てきた
+        3つの計画機能（系統構成計画・作業停止計画・需給計画）が、系統モデルのどこに反映されるのかを見ていきます。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          本ユニットは、公開情報で裏付けられる範囲で<strong>「計画データが系統モデルにどう対応するか」</strong>を扱います。
+          各計画の提出手続きや設備停止の概念はOCCTO等の公開資料に基づき、開閉器の状態管理や需給計画機能の
+          <strong>内部ロジックには踏み込みません</strong>。参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 系統モデルに入力するデータ</a></li>
+          <li><a href="#section-2">2. 系統構成計画とトポロジー</a></li>
+          <li><a href="#section-3">3. 作業停止計画</a></li>
+          <li><a href="#section-4">4. 需給計画と各母線の注入</a></li>
+          <li><a href="#section-5">5. N-1解析時のモデル</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 系統モデルに入力するデータ</h2>
+        <p>
+          C-01で作ったのは、系統の「かたち」を表す器でした。しかし器だけでは計算できません。
+          実際の運用では、<strong>いつ・どんな構成で・どれだけ発電し消費するか</strong>というデータが入って、
+          はじめて潮流計算（<a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02</a>）や混雑演算（領域B・D）が動きます。
+        </p>
+        <p>
+          F-02で見た<strong>3つの計画機能</strong>が、まさにこの入力データにあたります。
+          送配電網協議会が次世代電力系統ワーキンググループで公開した機能構成でも、需給計画・系統構成計画・作業停止計画が
+          最適化（SCUC／SCED）の上流に位置づけられていました（末尾の<a href="#references">参考資料</a>）。
+          本ユニットでは、それぞれが系統モデルのどこに反映されるかを整理します。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 220" role="img"
+               aria-label="系統構成計画・作業停止計画・需給計画の3つの計画が、系統モデル（Yバスと各母線の注入）に反映され、潮流計算・混雑演算（N-1を含む）の入力になることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="c2-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 3計画 -->
+            <g font-size="11" text-anchor="middle">
+              <!-- 大枠 -->
+              <rect x="5" y="10" width="280" height="140" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.3"></rect>
+              <!-- 各計画機能の枠 -->
+              <rect x="14" y="20" width="150" height="32" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.3"></rect>
+              <text x="89" y="40" fill="#1a1a2e">系統構成計画</text>
+              <rect x="14" y="64" width="150" height="32" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.3"></rect>
+              <text x="89" y="84" fill="#1a1a2e">作業停止計画</text>
+              <rect x="14" y="108" width="150" height="32" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.3"></rect>
+              <text x="89" y="128" fill="#1a1a2e">需給計画</text>
+            </g>
+            <!-- 反映先の注記 -->
+            <g font-size="8.5" fill="#4a5568" text-anchor="start">
+              <text x="172" y="40">→ トポロジー（線路の有無）</text>
+              <text x="172" y="84">→ 停止設備を除く</text>
+              <text x="172" y="128">→ 各母線の注入</text>
+            </g>
+            <!-- 矢印 → モデル -->
+            <line x1="285" y1="80" x2="350" y2="80" stroke="#4a5568" stroke-width="1.5" marker-end="url(#c2-ah)"></line>
+            <!-- 系統モデル -->
+            <rect x="352" y="40" width="96" height="80" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.8"></rect>
+            <text x="400" y="66" font-size="11" text-anchor="middle" font-weight="700" fill="#4338ca">系統モデル</text>
+            <text x="400" y="86" font-size="10" text-anchor="middle" fill="#1a1a2e">Yバス</text>
+            <text x="400" y="104" font-size="10" text-anchor="middle" fill="#1a1a2e">＋各母線の注入</text>
+            <!-- 下へ: 潮流計算・N-1 -->
+            <line x1="400" y1="120" x2="400" y2="150" stroke="#4a5568" stroke-width="1.5" marker-end="url(#c2-ah)"></line>
+            <rect x="300" y="152" width="150" height="50" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.3"></rect>
+            <text x="375" y="173" font-size="11" text-anchor="middle" fill="#1a1a2e">潮流計算・混雑演算</text>
+            <text x="375" y="190" font-size="10" text-anchor="middle" fill="#b45309">（N-1解析を含む）</text>
+          </svg>
+          <figcaption>図1: 3つの計画が系統モデル（Yバスと各母線の注入）に反映され、潮流計算・混雑演算の入力になる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 系統構成計画とトポロジー</h2>
+        <p>
+          <span class="term">系統構成計画<span class="term-tooltip">系統をどう構成するか（どの母線とどの送電線がつながっているか＝トポロジー）を定める計画。系統モデルの構造を決める。</span></span>は、系統を
+          <strong>どう構成するか</strong>を定めます。本ユニットで注目するのは、その結果として決まる
+          <strong>トポロジー</strong>、すなわち<strong>どの母線とどの送電線がつながっているか</strong>です。
+        </p>
+        <p>
+          トポロジーが決まると、系統モデルの構造が決まります。C-01で見たように、アドミタンス行列（Yバス）の
+          非対角要素は「2つの母線を結ぶ線路があれば −y、なければ 0」でした。つまり
+          <strong>トポロジー（線路のつながり方）が、Yバスのどこに値が入るか（0 か非 0 か）を決める</strong>のです。
+        </p>
+        <p>
+          送電線が系統に入る・出るの切り替えは、変電所の
+          <span class="term">開閉器<span class="term-tooltip">系統の接続構成を変更するための装置。遮断器・断路器など。</span></span>（遮断器・断路器）の入／切で行われます。
+          本ユニットでは、開閉器の具体的な運用手順や状態管理の詳細には立ち入らず、
+          <strong>「トポロジーが系統モデルの構造（Yバスの形）を決める」</strong>という対応関係に焦点を当てます。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 作業停止計画</h2>
+        <p>
+          送電線や変圧器などの設備は、保守・点検のために計画的に停止させる必要があります。これを定めるのが
+          <span class="term">作業停止計画<span class="term-tooltip">保守・点検などで設備を停止する計画。停止中の設備は系統モデルから除いて扱う。OCCTOが調整・記載要領を公開している。</span></span>です。
+          OCCTOは、事業者間および一般送配電事業者との調整を経た作業停止計画を広域機関システムで扱い、
+          作業停止計画の調整マニュアルや記載要領を公開しています（末尾の<a href="#references">参考資料</a>）。
+        </p>
+        <p>
+          停止した送電線は、その期間は<strong>「ない」ものとして系統モデルに反映</strong>します。
+          やることはC-01の組み立てルールの逆操作です。停止する線路について、
+        </p>
+        <ul>
+          <li>その線路がつながっていた2つの母線の<strong>対角</strong>から、その線路のアドミタンスを<strong>引く</strong></li>
+          <li>その2母線間の<strong>非対角</strong>を <strong>0</strong> にする</li>
+        </ul>
+        <p>
+          こうしてYバスからその線路を除きます。設備が止まると系統の流れ方（潮流分布）が変わり、
+          別の送電線に潮流が集中して<strong>混雑が起きやすくなる</strong>こともあります。
+          だから作業停止計画は、混雑管理の重要な前提条件になります。
+          （具体的な操作は §5 の例で確認します。）
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 需給計画と各母線の注入</h2>
+        <p>
+          <span class="term">需給計画<span class="term-tooltip">各母線（エリア）の発電量・負荷量の計画。発電計画値・需要計画値からなり、系統モデルでは各母線の注入として入力される。</span></span>は、
+          各母線（エリア）で<strong>どれだけ発電し、どれだけ消費するか</strong>の計画です。
+          これは新しい数字ではなく、<a href="../e-market/01-bg-and-generation-plan.html">E-01: BGと発電計画値</a> で学んだ
+          <strong>発電計画値</strong>（発電側）と<strong>需要計画値</strong>（負荷側）からなります。
+          各事業者は電気事業法等に基づき、これらの計画を広域機関（OCCTO）のシステムを通じて提出します（末尾の<a href="#references">参考資料</a>）。
+        </p>
+        <p>
+          系統モデルでは、各母線の発電量・負荷量は、A-02で学んだ<strong>注入</strong>として入ります。
+        </p>
+        <div class="math-block"
+             data-tex="P_{\text{inj}} = P_{\text{gen}} - P_{\text{load}}"
+             data-fallback="注入 = 発電量 − 負荷量（Pinj = Pgen − Pload）"></div>
+        <p>
+          発電が多い母線は ＋（系統へ送り出す）、負荷が多い母線は −（系統から引き込む）になります。
+          こうして<strong>「Yバス（構成）」と「各母線の注入（需給）」がそろって、潮流計算の入力が完成</strong>します。
+          C-01の器に、系統構成・作業停止でかたちを整え、需給計画で中身（注入）を入れる、というイメージです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 130" role="img"
+               aria-label="母線1は発電120・負荷20で注入+100、母線2は発電0・負荷70で注入−70、母線3は発電50・負荷60で注入−10という、発電量と負荷量から各母線の注入が決まる例"
+               xmlns="http://www.w3.org/2000/svg">
+            <g font-size="11" text-anchor="middle">
+              <!-- 母線1 -->
+              <rect x="20" y="20" width="130" height="90" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"></rect>
+              <text x="85" y="40" font-weight="700" fill="#1a1a2e">母線1</text>
+              <text x="85" y="60" font-size="10" fill="#3b82f6">発電 120</text>
+              <text x="85" y="76" font-size="10" fill="#ef4444">負荷 20</text>
+              <text x="85" y="98" font-size="12" font-weight="700" fill="#16a34a">注入 +100</text>
+              <!-- 母線2 -->
+              <rect x="165" y="20" width="130" height="90" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"></rect>
+              <text x="230" y="40" font-weight="700" fill="#1a1a2e">母線2</text>
+              <text x="230" y="60" font-size="10" fill="#3b82f6">発電 0</text>
+              <text x="230" y="76" font-size="10" fill="#ef4444">負荷 70</text>
+              <text x="230" y="98" font-size="12" font-weight="700" fill="#dc2626">注入 −70</text>
+              <!-- 母線3 -->
+              <rect x="310" y="20" width="130" height="90" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.2"></rect>
+              <text x="375" y="40" font-weight="700" fill="#1a1a2e">母線3</text>
+              <text x="375" y="60" font-size="10" fill="#3b82f6">発電 50</text>
+              <text x="375" y="76" font-size="10" fill="#ef4444">負荷 60</text>
+              <text x="375" y="98" font-size="12" font-weight="700" fill="#dc2626">注入 −10</text>
+            </g>
+          </svg>
+          <figcaption>図2: 需給計画（発電量・負荷量）から各母線の注入（＝発電−負荷）が決まる。単位はMW</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. N-1解析時のモデル</h2>
+        <p>
+          <a href="../b-congestion/01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a> では、
+          設備が1つ止まっても過負荷にならないかを評価する<strong>N-1基準</strong>を学びました。
+          このN-1解析では、系統モデルを<strong>想定故障ごとに「その設備（たとえば1回線）を落とした構成」に作り替えます</strong>。
+          やること自体は作業停止（§3）と同じで、<strong>その線路のアドミタンスをYバスから除く</strong>操作です。
+          違いは目的で、作業停止は「実際に止める計画」、N-1は「仮に止まったらどうなるかを評価する想定」です。
+        </p>
+        <p>
+          例で見ましょう。母線 1・2・3 が<strong>三角形（ループ）</strong>につながり、線路1-2のアドミタンスが y₁₂ = 5、
+          線路2-3が y₂₃ = 3、線路1-3が y₁₃ = 2 だとします。C-01のルールで組み立てた基準構成のYバスは次のとおりです。
+        </p>
+        <div class="math-block"
+             data-tex="Y = \begin{bmatrix} 7 & -5 & -2 \\ -5 & 8 & -3 \\ -2 & -3 & 5 \end{bmatrix}"
+             data-fallback="基準: Y = [ [7,-5,-2], [-5,8,-3], [-2,-3,5] ]"></div>
+        <p>
+          ここで<strong>線路1-3（y₁₃ = 2）が1回線開放（N-1）</strong>されたとします。
+          線路1-3を除くので、母線1と母線3の対角からそれぞれ 2 を引き（7→5、5→3）、母線1-3間の非対角を 0 にします。
+          N-1後のYバスはこうなります。
+        </p>
+        <div class="math-block"
+             data-tex="Y' = \begin{bmatrix} 5 & -5 & 0 \\ -5 & 8 & -3 \\ 0 & -3 & 3 \end{bmatrix}"
+             data-fallback="N-1後: Y' = [ [5,-5,0], [-5,8,-3], [0,-3,3] ]"></div>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 170" role="img"
+               aria-label="左は母線1・2・3が三角形につながった基準構成。右は線路1-3が開放されてパス状になったN-1後の構成。Yバスの該当要素が変わることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 左: 基準（三角形） -->
+            <text x="105" y="20" font-size="11" text-anchor="middle" font-weight="700" fill="#1a1a2e">基準構成（ループ）</text>
+            <circle cx="105" cy="45" r="8" fill="#6366f1"></circle><text x="105" y="35" font-size="9" text-anchor="middle" fill="#1a1a2e">1</text>
+            <circle cx="55" cy="125" r="8" fill="#6366f1"></circle><text x="42" y="129" font-size="9" text-anchor="middle" fill="#1a1a2e">2</text>
+            <circle cx="155" cy="125" r="8" fill="#6366f1"></circle><text x="168" y="129" font-size="9" text-anchor="middle" fill="#1a1a2e">3</text>
+            <line x1="100" y1="52" x2="60" y2="118" stroke="#10b981" stroke-width="2.5"></line>
+            <line x1="63" y1="125" x2="147" y2="125" stroke="#10b981" stroke-width="2.5"></line>
+            <line x1="110" y1="52" x2="150" y2="118" stroke="#10b981" stroke-width="2.5"></line>
+            <text x="62" y="86" font-size="8.5" fill="#047857" text-anchor="end">y₁₂=5</text>
+            <text x="105" y="140" font-size="8.5" fill="#047857" text-anchor="middle">y₂₃=3</text>
+            <text x="148" y="86" font-size="8.5" fill="#047857" text-anchor="start">y₁₃=2</text>
+            <!-- 矢印 -->
+            <line x1="200" y1="90" x2="250" y2="90" stroke="#4a5568" stroke-width="1.5" marker-end="url(#c2-ah-2)"></line>
+            <text x="225" y="80" font-size="9" text-anchor="middle" fill="#dc2626">線路1-3開放</text>
+            <defs>
+              <marker id="c2-ah-2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 右: N-1後（パス） -->
+            <text x="360" y="20" font-size="11" text-anchor="middle" font-weight="700" fill="#1a1a2e">N-1後（パス）</text>
+            <circle cx="360" cy="45" r="8" fill="#6366f1"></circle><text x="360" y="35" font-size="9" text-anchor="middle" fill="#1a1a2e">1</text>
+            <circle cx="310" cy="125" r="8" fill="#6366f1"></circle><text x="297" y="129" font-size="9" text-anchor="middle" fill="#1a1a2e">2</text>
+            <circle cx="410" cy="125" r="8" fill="#6366f1"></circle><text x="423" y="129" font-size="9" text-anchor="middle" fill="#1a1a2e">3</text>
+            <line x1="355" y1="52" x2="315" y2="118" stroke="#10b981" stroke-width="2.5"></line>
+            <line x1="318" y1="125" x2="402" y2="125" stroke="#10b981" stroke-width="2.5"></line>
+            <line x1="365" y1="52" x2="405" y2="118" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4 3"></line>
+            <text x="388" y="86" font-size="8.5" fill="#94a3b8" text-anchor="start">開放</text>
+          </svg>
+          <figcaption>図3: N-1で線路1-3を開放すると、三角形（ループ）がパスになり、Yバスの該当要素が変わる。母線1と3は母線2経由でまだつながる</figcaption>
+        </figure>
+
+        <p>
+          ループが1本切れてパスになりましたが、母線1と母線3は<strong>母線2を経由してまだつながっています</strong>。
+          このように1回線が止まっても系統が維持される（過負荷にならない）かを確認するのがN-1基準でした。
+          各想定故障についてこのようにYバスを作り直し、潮流を再計算して過負荷の有無を調べるのが
+          <strong>N-1解析の中身</strong>であり、領域Dの混雑演算へとつながっていきます。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（3計画とモデル反映の対応） -->
+        <div class="exercise" data-exercise-id="c-02-ex01" data-type="choice">
+          <h3>演習 1: 3つの計画とモデルへの反映</h3>
+          <div class="exercise-problem">
+            <p>3つの計画と、それが系統モデルに反映される先の組み合わせとして、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="c-02-ex01" value="1">
+              <span>系統構成計画→トポロジー（線路の有無）、作業停止計画→停止設備をYバスから除く、需給計画→各母線の注入</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-02-ex01" value="2">
+              <span>系統構成計画→各母線の注入、需給計画→トポロジー、作業停止計画→送電線の容量の引き上げ</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-02-ex01" value="3">
+              <span>3つの計画はいずれも、各送電線に流す潮流の目標値を直接与えるものである</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-02-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "系統構成計画はトポロジー（どの母線間に線路があるか＝Yバスの構造）、作業停止計画は停止する設備をYバスから除くこと、需給計画は各母線の注入（発電−負荷）に反映されます。選択肢2は対応が入れ替わっており、送電容量は設備の制約で運用で引き上げるものではありません。選択肢3は誤りで、潮流は計算の出力であって、計画が直接与える目標値ではありません。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（需給計画→注入） -->
+        <div class="exercise" data-exercise-id="c-02-ex02" data-type="numeric">
+          <h3>演習 2: 需給計画から注入を求める</h3>
+          <div class="exercise-problem">
+            <p>
+              ある母線に、発電計画値 80 MW の発電所と、需要計画値 50 MW の負荷が接続している。
+              この母線の注入は何 MW か（発電を＋、負荷を−とする）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              母線の注入:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-02-ex02",
+          "type": "numeric",
+          "correct": 30,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "注入 = 発電量 − 負荷量 = 80 − 50 = +30 MW。発電が負荷を上回るので、この母線は系統へ電力を送り出す（＋の注入）側になります。需給計画の発電計画値・需要計画値（E-01）が、こうして各母線の注入として系統モデルに入ります。"
+        }
+        </script>
+
+        <!-- 演習3: matrix（N-1でYバスを更新） -->
+        <div class="exercise" data-exercise-id="c-02-ex03" data-type="matrix">
+          <h3>演習 3: N-1でYバスを作り直す</h3>
+          <div class="exercise-problem">
+            <p>
+              母線 1・2・3 が三角形（ループ）につながり、線路1-2のアドミタンスは y₁₂ = 4、線路2-3は y₂₃ = 4、
+              線路1-3は y₁₃ = 2 である。基準構成のYバスは次のとおり。
+            </p>
+            <div class="math-block"
+                 data-tex="Y = \begin{bmatrix} 6 & -4 & -2 \\ -4 & 8 & -4 \\ -2 & -4 & 6 \end{bmatrix}"
+                 data-fallback="Y = [ [6,-4,-2], [-4,8,-4], [-2,-4,6] ]"></div>
+            <p>
+              いま<strong>線路1-3（y₁₃ = 2）が1回線開放（N-1）</strong>された。N-1後のYバスを求めて表を埋めよ。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <table class="matrix-input">
+              <thead>
+                <tr><th></th><th>母線1</th><th>母線2</th><th>母線3</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>母線1</th>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="0" data-col="0" aria-label="1行1列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="0" data-col="1" aria-label="1行2列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="0" data-col="2" aria-label="1行3列"></td>
+                </tr>
+                <tr>
+                  <th>母線2</th>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="1" data-col="0" aria-label="2行1列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="1" data-col="1" aria-label="2行2列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="1" data-col="2" aria-label="2行3列"></td>
+                </tr>
+                <tr>
+                  <th>母線3</th>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="2" data-col="0" aria-label="3行1列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="2" data-col="1" aria-label="3行2列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="2" data-col="2" aria-label="3行3列"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-02-ex03",
+          "type": "matrix",
+          "correct": [[4, -4, 0], [-4, 8, -4], [0, -4, 4]],
+          "tolerance": 0.01,
+          "explanation": "線路1-3（y=2）を除くので、母線1と母線3の対角からそれぞれ2を引き（6→4、6→4）、母線1-3間の非対角（Y13・Y31）を0にします。母線2は線路1-3とつながっていないので変わりません。よって N-1後のYバスは [[4,-4,0],[-4,8,-4],[0,-4,4]]。三角形（ループ）が、母線2を中心としたパスになったことを表します。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/pdf/008_02_00.pdf"
+               target="_blank" rel="noopener noreferrer">一般社団法人 送配電網協議会「次期中給システム開発に関する検討状況」（経済産業省 次世代電力系統ワーキンググループ 第8回 資料2、2026年3月16日。需給計画・系統構成計画・作業停止計画の位置づけ）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/occtosystem2/kisaiyouryou/kisai_sonota.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「計画に関する記載要領等・その他情報」（作業停止計画の記載要領・調整に関する公開情報）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/occtosystem2/keikakuteishutsu/"
+               target="_blank" rel="noopener noreferrer">OCCTO「計画提出」（電気事業法等に基づく各種計画の提出に関する公開情報）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="01-grid-model-structure.html" class="unit-nav-prev">&larr; 母線・送電線・系統モデルの構造</a>
+      <a href="../d-algorithms/index.html" class="unit-nav-next">次の領域へ: D 混雑演算のアルゴリズム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>
