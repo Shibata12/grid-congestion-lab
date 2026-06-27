@@ -48,6 +48,26 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a,c" id="term-admittance">
+        <dt>アドミタンス</dt>
+        <dd>
+          <p>インピーダンスの逆数で、電流の“流れやすさ”を表す。記号Y、Y=1/Z。リアクタンスが小さい（流れやすい）線路ほどアドミタンスは大きい。本サイトでは複素数を避け、実数の大きさ（y=1/X）として扱うことが多い。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/01-grid-model-structure.html">C-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c,d" id="term-admittance-matrix">
+        <dt>アドミタンス行列（Yバス）</dt>
+        <dd>
+          <p>系統全体のアドミタンスを母線×母線の正方行列にまとめたもの。Yバス（Y-bus）ともいう。対角は「その母線につながる線路アドミタンスの合計」、非対角は「2母線を結ぶ線路アドミタンス×(−1)、線路がなければ0」。潮流計算やPTDFの計算に使う、系統モデルの中核データ。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/01-grid-model-structure.html">C-01</a>、<a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-imbalance">
         <dt>インバランス</dt>
         <dd>
@@ -118,6 +138,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="c,f" id="term-kikan-keitou">
+        <dt>基幹系統（上位2電圧）</dt>
+        <dd>
+          <p>各エリアの上位2電圧（最上位電圧とその1階級下。最上位が250kV未満の区域はその最上位電圧）の送電線・母線。系統の骨格をなす。具体的な電圧はエリアで異なり（例: 500kV/275kV、275kV/154kV等）、系統混雑管理の主舞台になる。OCCTOが定義・公表している。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/01-grid-model-structure.html">C-01</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-keikakuchi-doujidouryou">
         <dt>計画値同時同量</dt>
         <dd>
@@ -144,6 +174,16 @@
           <p>混雑を検出し、解消するための一連の運用。発電計画値をもとに潮流計算を行い、混雑（容量超過・N-1違反）を判定し、必要なら再給電で解消する、という流れを繰り返す。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/f-dispatch-system/01-congestion-management-overview.html">F-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c" id="term-grid-model">
+        <dt>系統モデル</dt>
+        <dd>
+          <p>現実の電力系統を、計算機で扱える形に抽象化したもの。母線（節点）と、それをつなぐ送電線・変圧器（枝）でつながりを表し、送電線をインピーダンス／アドミタンスでデータ化する。潮流計算や混雑演算（領域D）の入力になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/01-grid-model-structure.html">C-01</a>
           </p>
         </dd>
       </div>
@@ -404,6 +444,16 @@
           <p>ループ（閉路）を持たない樹状の系統。潮流の経路が一意に決まり、各送電線の潮流は下流の負荷合計として求まる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,c,d" id="term-bus">
+        <dt>母線（バス）</dt>
+        <dd>
+          <p>発電機・送電線・変圧器などが集まって接続する点。回路でいう節点（ノード）に相当する。物理的には変電所内の導体（ブスバー）で、電圧階級ごとに複数ある。系統モデルでは1つの母線＝1つの節点として扱い、アドミタンス行列の行・列に並べる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/01-grid-model-structure.html">C-01</a>、<a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
           </p>
         </dd>
       </div>

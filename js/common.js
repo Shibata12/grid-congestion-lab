@@ -47,7 +47,10 @@ const SITE_STRUCTURE = {
     name: '系統モデル',
     folder: 'c-grid-model',
     summary: '実際の系統を計算可能なモデル（母線・線路・アドミタンス）として表現する方法を学ぶ。',
-    units: [],
+    units: [
+      { id: 'c-01', title: '母線・送電線・系統モデルの構造', file: '01-grid-model-structure.html', exerciseCount: 3,
+        summary: '実系統を母線（節点）・送電線（枝）に抽象化し、送電線インピーダンスからアドミタンス行列（Yバス）を組み立てる考え方を学ぶ。D領域の入力になる。' },
+    ],
   },
   d: {
     name: '混雑演算のアルゴリズム',

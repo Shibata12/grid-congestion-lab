@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C-01: 母線・送電線・系統モデルの構造 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="c" data-unit="c-01">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">C: 系統モデル</a> &gt;
+      <span>母線・送電線・系統モデルの構造</span>
+    </nav>
+
+    <article>
+      <h1>C-01: 母線・送電線・系統モデルの構造</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        A領域では、系統を物理法則（キルヒホッフ・潮流・インピーダンス）として学びました。
+        実際の系統を計算機で扱うには、現実の設備を計算できる<strong>「モデル」</strong>に置き換える必要があります。
+        本ユニットでは、母線・送電線をどうデータ化し、系統全体を
+        <strong>アドミタンス行列</strong>としてどう組み立てるかを、構造と意味の理解に重点を置いて学びます。
+        ここで作るモデルが、領域Dの混雑演算の入力になります。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          本ユニットは<strong>モデルの構造と意味の理解</strong>を重視し、複素数や大規模な行列計算には踏み込みません。
+          アドミタンスは“流れやすさ”の実数の大きさとして扱います。
+          §3の基幹系統・上位2電圧は公開資料（OCCTO）に基づきます。参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 系統をモデル化するとは</a></li>
+          <li><a href="#section-2">2. 母線とは何か</a></li>
+          <li><a href="#section-3">3. 基幹系統の規模感と上位2電圧</a></li>
+          <li><a href="#section-4">4. 送電線データとアドミタンス行列</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 系統をモデル化するとは</h2>
+        <p>
+          現実の電力系統は、発電所・変電所・送電線・鉄塔など、おびただしい数の設備でできています。
+          これをそのまま計算することはできません。そこで、計算できる形に<strong>抽象化</strong>します。
+          <a href="../a-grid-fundamentals/01-kirchhoff.html">A-01: キルヒホッフの法則</a> で扱った回路の考え方を思い出してください。
+          回路は<strong>節点（ノード）</strong>と、それをつなぐ<strong>枝（ブランチ）</strong>でできていました。系統も同じように捉えます。
+        </p>
+        <ul>
+          <li><strong>母線（バス）＝節点</strong>：設備が集まって接続する点</li>
+          <li><strong>送電線・変圧器＝枝</strong>：母線と母線をつなぐもの</li>
+        </ul>
+        <p>
+          こうして現実の系統を「母線（節点）と枝のつながり」として表したものが<strong>系統モデル</strong>です。
+          なぜモデル化するかというと、<a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02: 潮流計算の基礎</a> の潮流計算や、
+          領域B・Dの混雑演算の<strong>入力</strong>にするためです。モデルがなければ、計算機は系統を扱えません。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="左の現実の系統（発電所・変電所・送電線）が、右のモデル（母線=節点の丸と、それをつなぐ枝の線）へ抽象化される図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="c1-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 左: 現実 -->
+            <text x="105" y="24" font-size="12" text-anchor="middle" font-weight="700" fill="#1a1a2e">現実の系統</text>
+            <!-- 発電所 -->
+            <circle cx="40" cy="70" r="15" fill="#fff" stroke="#3b82f6" stroke-width="2"></circle>
+            <text x="40" y="75" font-size="13" text-anchor="middle" font-weight="700" fill="#3b82f6">G</text>
+            <!-- 変電所（四角） -->
+            <rect x="85" y="55" width="40" height="30" rx="3" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"></rect>
+            <text x="105" y="74" font-size="9" text-anchor="middle" fill="#1a1a2e">変電所</text>
+            <rect x="150" y="55" width="40" height="30" rx="3" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"></rect>
+            <text x="170" y="74" font-size="9" text-anchor="middle" fill="#1a1a2e">変電所</text>
+            <!-- 送電線 -->
+            <line x1="55" y1="70" x2="85" y2="70" stroke="#4a5568" stroke-width="2"></line>
+            <line x1="125" y1="70" x2="150" y2="70" stroke="#4a5568" stroke-width="2"></line>
+            <line x1="170" y1="85" x2="170" y2="120" stroke="#4a5568" stroke-width="2" marker-end="url(#c1-ah)"></line>
+            <text x="170" y="138" font-size="9" text-anchor="middle" fill="#ef4444">負荷へ</text>
+            <text x="105" y="50" font-size="8" text-anchor="middle" fill="#4a5568">送電線・鉄塔…</text>
+            <!-- 抽象化矢印 -->
+            <line x1="210" y1="95" x2="258" y2="95" stroke="#6366f1" stroke-width="2" marker-end="url(#c1-ah)"></line>
+            <text x="234" y="85" font-size="10" text-anchor="middle" fill="#6366f1">抽象化</text>
+            <!-- 右: モデル -->
+            <text x="360" y="24" font-size="12" text-anchor="middle" font-weight="700" fill="#4338ca">系統モデル</text>
+            <!-- 節点（母線） -->
+            <circle cx="300" cy="70" r="9" fill="#6366f1"></circle>
+            <text x="300" y="56" font-size="10" text-anchor="middle" fill="#1a1a2e">母線1</text>
+            <circle cx="370" cy="70" r="9" fill="#6366f1"></circle>
+            <text x="370" y="56" font-size="10" text-anchor="middle" fill="#1a1a2e">母線2</text>
+            <circle cx="370" cy="140" r="9" fill="#6366f1"></circle>
+            <text x="410" y="144" font-size="10" text-anchor="start" fill="#1a1a2e">母線3</text>
+            <!-- 枝（ブランチ） -->
+            <line x1="309" y1="70" x2="361" y2="70" stroke="#4a5568" stroke-width="2"></line>
+            <line x1="370" y1="79" x2="370" y2="131" stroke="#4a5568" stroke-width="2"></line>
+            <text x="335" y="64" font-size="9" text-anchor="middle" fill="#4a5568">枝</text>
+            <!-- G/負荷 -->
+            <text x="300" y="92" font-size="9" text-anchor="middle" fill="#3b82f6">G</text>
+            <text x="370" y="162" font-size="9" text-anchor="middle" fill="#ef4444">負荷</text>
+          </svg>
+          <figcaption>図1: 現実の系統を、母線（節点）と枝（送電線・変圧器）のつながりとして抽象化したものが系統モデル</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 母線とは何か</h2>
+        <p>
+          <span class="term">母線<span class="term-tooltip">複数の設備が接続する接続点。回路でいう節点（ノード）に相当する。物理的には変電所内の導体（ブスバー）。</span></span>（バス）とは、
+          発電機・送電線・変圧器などが集まって接続する<strong>接続点</strong>のことです。回路でいう<strong>節点（ノード）</strong>に相当し、
+          <a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02: 潮流計算の基礎</a> でも「母線」として登場していました。
+        </p>
+        <p>
+          物理的な実体は、変電所の中にある<strong>「ブスバー（母線）」</strong>と呼ばれる金属の導体です。
+          ここに送電線・変圧器・発電機などがつながります。1つの変電所には、
+          <strong>電圧階級ごとに複数の母線</strong>があるのがふつうです（たとえば 500kV の母線と 275kV の母線が、変圧器でつながっています）。
+        </p>
+        <p>
+          系統モデルでは、この母線1つを<strong>1つの節点</strong>として扱い、母線1・母線2…と番号をつけて区別します。
+          あとで見るアドミタンス行列は、この母線（節点）を行と列に並べたものになります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 210" role="img"
+               aria-label="変電所の中に500kV母線と275kV母線があり、変圧器でつながっている。各母線に送電線や発電機・負荷が接続し、モデルでは各母線が1つの節点になることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 変電所の枠 -->
+            <rect x="20" y="20" width="280" height="170" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3"></rect>
+            <text x="32" y="38" font-size="11" fill="#4a5568">変電所</text>
+            <!-- 500kV母線（太い横線） -->
+            <line x1="60" y1="70" x2="260" y2="70" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="60" y="90" font-size="11" fill="#1a1a2e">500kV 母線</text>
+            <!-- 275kV母線 -->
+            <line x1="60" y1="150" x2="260" y2="150" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="60" y="170" font-size="11" fill="#1a1a2e">275kV 母線</text>
+            <!-- 変圧器（2つの円） -->
+            <circle cx="160" cy="100" r="13" fill="none" stroke="#8b5cf6" stroke-width="1.8"></circle>
+            <circle cx="160" cy="120" r="13" fill="none" stroke="#8b5cf6" stroke-width="1.8"></circle>
+            <line x1="160" y1="70" x2="160" y2="88" stroke="#4a5568" stroke-width="1.5"></line>
+            <line x1="160" y1="133" x2="160" y2="150" stroke="#4a5568" stroke-width="1.5"></line>
+            <text x="180" y="114" font-size="10" fill="#8b5cf6">変圧器</text>
+            <!-- 送電線の接続 -->
+            <line x1="100" y1="70" x2="100" y2="45" stroke="#4a5568" stroke-width="1.5"></line>
+            <text x="100" y="40" font-size="8.5" text-anchor="middle" fill="#4a5568">送電線</text>
+            <line x1="220" y1="150" x2="220" y2="178" stroke="#4a5568" stroke-width="1.5"></line>
+            <text x="220" y="188" font-size="8.5" text-anchor="middle" fill="#4a5568">送電線</text>
+            <!-- モデル化矢印 -->
+            <line x1="305" y1="105" x2="345" y2="105" stroke="#6366f1" stroke-width="2"></line>
+            <polygon points="345,100 355,105 345,110" fill="#6366f1"></polygon>
+            <text x="330" y="96" font-size="9" text-anchor="middle" fill="#6366f1">モデルでは</text>
+            <!-- モデル: 2つの節点 -->
+            <circle cx="395" cy="70" r="9" fill="#6366f1"></circle>
+            <text x="410" y="74" font-size="10" text-anchor="start" fill="#1a1a2e">節点</text>
+            <circle cx="395" cy="150" r="9" fill="#6366f1"></circle>
+            <text x="410" y="154" font-size="10" text-anchor="start" fill="#1a1a2e">節点</text>
+            <line x1="395" y1="79" x2="395" y2="141" stroke="#8b5cf6" stroke-width="1.8" stroke-dasharray="3 3"></line>
+          </svg>
+          <figcaption>図2: 変電所内の母線（ブスバー）。電圧階級ごとに母線があり、変圧器でつながる。モデルでは各母線＝1つの節点</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 基幹系統の規模感と上位2電圧</h2>
+        <p>
+          電力系統は<strong>電圧の階層構造</strong>になっています。発電所から超高圧で送り出し、変電所で段階的に電圧を下げ、
+          最後は配電線で家庭や工場へ届けます。なぜ高い電圧で送るのかというと、
+          同じ電力 P = V × I を送るとき、<strong>電圧 V を高くするほど電流 I が小さくなり</strong>、
+          送電損失（電流の2乗に比例）を小さくできるからです。だから大容量・長距離の送電ほど高い電圧を使います。
+        </p>
+        <p>
+          このうち、系統の<strong>骨格</strong>を成す最上位の送電網を<span class="term">基幹系統<span class="term-tooltip">各エリアの上位2電圧（最上位電圧とその1階級下）の送電線・母線。系統の骨格をなし、混雑管理の主舞台になる。</span></span>といいます。
+          <a href="https://www.occto.or.jp/institution/keitoujouhou/" target="_blank" rel="noopener noreferrer">OCCTO（電力広域的運営推進機関）</a>は基幹系統を、
+          各エリアの<strong>上位2電圧</strong>（最上位電圧と、その1階級下の電圧。最上位が250kV未満の区域ではその最上位電圧）の
+          送電線・母線として定義しています。具体的な電圧はエリアで異なり、たとえば 500kV と 275kV、地域によっては 275kV と 154kV（または187kV）などです。
+        </p>
+        <p>
+          基幹系統だけでも母線や送電線の数は多く、想定故障（N-1）の組み合わせも膨大です。
+          だからこそ系統を<strong>モデル化して計算機で扱う</strong>必要があり、系統混雑管理（領域B・D・F）の主な舞台も、この上位2電圧の基幹系統になります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 420 220" role="img"
+               aria-label="電圧の階層を表す台形。上から超高圧の基幹系統（上位2電圧、500kV/275kV）、その下に下位の送電・地域系統、一番下に配電（家庭・工場）。上位2電圧の帯が基幹系統として強調されている図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="c1-d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 上段: 基幹系統（強調） -->
+            <polygon points="150,20 270,20 290,70 130,70" fill="#eef2ff" stroke="#6366f1" stroke-width="2"></polygon>
+            <text x="210" y="40" font-size="12" text-anchor="middle" font-weight="700" fill="#4338ca">基幹系統（上位2電圧）</text>
+            <text x="210" y="58" font-size="10" text-anchor="middle" fill="#1a1a2e">例: 500kV / 275kV</text>
+            <!-- 中段 -->
+            <polygon points="130,72 290,72 315,128 105,128" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.3"></polygon>
+            <text x="210" y="96" font-size="11" text-anchor="middle" fill="#1a1a2e">下位の送電・地域系統</text>
+            <text x="210" y="114" font-size="10" text-anchor="middle" fill="#4a5568">例: 154kV / 66kV …</text>
+            <!-- 下段 -->
+            <polygon points="105,130 315,130 340,186 80,186" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3"></polygon>
+            <text x="210" y="154" font-size="11" text-anchor="middle" fill="#1a1a2e">配電（家庭・工場へ）</text>
+            <text x="210" y="172" font-size="10" text-anchor="middle" fill="#4a5568">例: 6.6kV / 100–200V</text>
+            <!-- 電圧を下げる矢印 -->
+            <line x1="372" y1="30" x2="372" y2="180" stroke="#4a5568" stroke-width="1.5" marker-end="url(#c1-d)"></line>
+            <text x="388" y="108" font-size="10" text-anchor="middle" fill="#4a5568" transform="rotate(90 388 108)">電圧を下げる</text>
+          </svg>
+          <figcaption>図3: 電圧の階層。系統の骨格である基幹系統は上位2電圧（最上位＋1階級下）で、混雑管理の主舞台になる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 送電線データとアドミタンス行列</h2>
+        <p>
+          いよいよモデルの中身です。まず、各送電線を
+          <a href="../a-grid-fundamentals/03-impedance-reactance.html">A-03: インピーダンスとリアクタンス</a> で学んだ
+          インピーダンス Z = R + jX（線路ごとの R・X の値）でデータ化します。
+          そして、その<strong>逆数</strong>を考えます。インピーダンスが“流れにくさ”なら、その逆数は“流れやすさ”で、これを
+          <span class="term">アドミタンス<span class="term-tooltip">インピーダンスの逆数。電流の“流れやすさ”を表す。記号 Y、Y=1/Z。</span></span> Y といいます。
+        </p>
+        <div class="math-block"
+             data-tex="Y = \dfrac{1}{Z}"
+             data-fallback="Y = 1/Z （アドミタンス = インピーダンスの逆数）"></div>
+        <p>
+          送電線では抵抗よりリアクタンスがずっと大きい（X ≫ R、A-03）ので、本ユニットではアドミタンスを
+          <strong>y = 1/X の実数の“流れやすさ”</strong>として扱い、複素数には立ち入りません。
+          たとえばリアクタンスが小さい（流れやすい）線路ほど、アドミタンス Y は大きくなります。
+        </p>
+        <p>
+          この線路ごとのアドミタンスを使って、系統全体を1つの正方行列にまとめたものが
+          <span class="term">アドミタンス行列<span class="term-tooltip">系統全体のアドミタンスを母線×母線の正方行列にまとめたもの。Yバス（Y-bus）ともいう。潮流計算やPTDFの計算に使う。</span></span>（<strong>Yバス</strong>）です。
+          母線を行と列に並べ、次のルールで組み立てます。
+        </p>
+        <ul>
+          <li><strong>対角 Y<sub>ii</sub></strong>：母線 i につながる<strong>すべての線路のアドミタンスの合計</strong></li>
+          <li><strong>非対角 Y<sub>ij</sub></strong>：母線 i と母線 j を結ぶ<strong>線路のアドミタンス ×（−1）</strong>。線路がなければ <strong>0</strong></li>
+        </ul>
+        <p>
+          小さな例で組み立ててみましょう。母線 1 ─ 2 ─ 3 が一直線につながり（母線1と母線3の間に直接の線路はない）、
+          線路1-2のアドミタンスが y₁₂ = 5、線路2-3が y₂₃ = 4 だとします。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 120" role="img"
+               aria-label="母線1、母線2、母線3が一直線に並び、線路1-2のアドミタンスが5、線路2-3が4。母線1と母線3の間には直接の線路がない図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 母線 -->
+            <g stroke="#1a1a2e" stroke-width="4">
+              <line x1="50" y1="40" x2="50" y2="85"></line>
+              <line x1="220" y1="40" x2="220" y2="85"></line>
+              <line x1="390" y1="40" x2="390" y2="85"></line>
+            </g>
+            <g font-size="12" text-anchor="middle" fill="#1a1a2e">
+              <text x="50" y="32">母線1</text>
+              <text x="220" y="32">母線2</text>
+              <text x="390" y="32">母線3</text>
+            </g>
+            <!-- 線路 -->
+            <line x1="54" y1="62" x2="216" y2="62" stroke="#10b981" stroke-width="2.5"></line>
+            <text x="135" y="54" font-size="11" text-anchor="middle" fill="#047857">線路1-2: y₁₂ = 5</text>
+            <line x1="224" y1="62" x2="386" y2="62" stroke="#10b981" stroke-width="2.5"></line>
+            <text x="305" y="54" font-size="11" text-anchor="middle" fill="#047857">線路2-3: y₂₃ = 4</text>
+            <text x="220" y="105" font-size="10" text-anchor="middle" fill="#4a5568">母線1と母線3の間に直接の線路はない → Y₁₃ = Y₃₁ = 0</text>
+          </svg>
+          <figcaption>図4: 3母線のパス系統。この線路アドミタンスからYバスを組み立てる</figcaption>
+        </figure>
+
+        <p>ルールに従って組み立てると、Yバスは次のようになります。</p>
+        <div class="math-block"
+             data-tex="Y = \begin{bmatrix} 5 & -5 & 0 \\ -5 & 9 & -4 \\ 0 & -4 & 4 \end{bmatrix}"
+             data-fallback="Y = [ [5, -5, 0], [-5, 9, -4], [0, -4, 4] ]"></div>
+        <p>
+          中身を確かめましょう。対角は合計です。母線1は線路1-2だけなので Y₁₁ = 5、
+          母線2は線路1-2と2-3の2本なので Y₂₂ = 5 + 4 = 9、母線3は線路2-3だけなので Y₃₃ = 4。
+          非対角は線路アドミタンスに −1 を掛けたもので、Y₁₂ = Y₂₁ = −5、Y₂₃ = Y₃₂ = −4。
+          そして母線1と母線3は直接つながっていないので Y₁₃ = Y₃₁ = <strong>0</strong> です。
+          できあがった行列が<strong>対称</strong>になること、<strong>0 の位置が「直接の線路がない母線ペア」</strong>を表すことに注目してください。
+        </p>
+        <p>
+          このアドミタンス行列こそ、<a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02</a> の潮流計算が内部で使っているものです。
+          各母線の注入が与えられると、このYバスを通じて各母線の電圧と各送電線の潮流が定まります。
+          そして <a href="../d-algorithms/01-ptdf-sensitivity.html">D-01: PTDFと感度分析</a> で「PTDFは系統全体のリアクタンス（アドミタンス行列）から計算される」と述べていたのは、
+          まさにこのYバスのことでした。<strong>C領域で作るモデルが、D領域の混雑演算の入力になる</strong>のです。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（母線とは） -->
+        <div class="exercise" data-exercise-id="c-01-ex01" data-type="choice">
+          <h3>演習 1: 母線とは何か</h3>
+          <div class="exercise-problem">
+            <p>系統モデルにおける「母線（バス）」の説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="c-01-ex01" value="1">
+              <span>発電機・送電線・変圧器などが接続する点で、回路でいう節点（ノード）に相当する</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-01-ex01" value="2">
+              <span>2つの地点を結ぶ送電線そのもの（枝）のこと</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-01-ex01" value="3">
+              <span>発電所の発電機を収める建物のこと</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-01-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "母線（バス）は、発電機・送電線・変圧器などが集まって接続する点で、回路でいう節点（ノード）に相当します。物理的には変電所内の導体（ブスバー）です。送電線は母線と母線をつなぐ枝なので選択肢2は誤り、建物そのものではないので選択肢3も誤りです。"
+        }
+        </script>
+
+        <!-- 演習2: choice（基幹系統・上位2電圧） -->
+        <div class="exercise" data-exercise-id="c-01-ex02" data-type="choice">
+          <h3>演習 2: 基幹系統と上位2電圧</h3>
+          <div class="exercise-problem">
+            <p>「基幹系統」と「上位2電圧」の説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="c-01-ex02" value="1">
+              <span>基幹系統は、各エリアの上位2電圧（最上位電圧とその1階級下）の送電線・母線で、系統の骨格を成す</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-01-ex02" value="2">
+              <span>基幹系統は、家庭に電気を届ける最も低い電圧（100〜200V）の配電網のことである</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-01-ex02" value="3">
+              <span>上位2電圧とは、全国どのエリアでも必ず500kVと275kVの2つに固定されている</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-01-ex02",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "OCCTOの定義では、基幹系統は各エリアの上位2電圧（最上位電圧とその1階級下。最上位が250kV未満の区域はその最上位電圧）の送電線・母線で、系統の骨格を成します。配電（低圧）ではないので選択肢2は誤り。上位2電圧の具体的な値はエリアで異なり（500/275kVや275/154kVなど）、全国一律ではないので選択肢3も誤りです。"
+        }
+        </script>
+
+        <!-- 演習3: matrix（Yバスの組み立て） -->
+        <div class="exercise" data-exercise-id="c-01-ex03" data-type="matrix">
+          <h3>演習 3: アドミタンス行列（Yバス）を組み立てる</h3>
+          <div class="exercise-problem">
+            <p>
+              母線 1 ─ 2 ─ 3 が一直線につながる系統がある（母線1と母線3の間に直接の送電線はない）。
+              線路1-2のアドミタンスは y₁₂ = 2、線路2-3は y₂₃ = 6 である。
+              アドミタンス行列（Yバス）の各要素を求めて表を埋めよ。
+            </p>
+            <p style="font-size:var(--font-size-sm); color:var(--color-text-light)">
+              ルール：対角は「その母線につながる線路のアドミタンスの合計」、
+              非対角は「2つの母線を結ぶ線路のアドミタンス ×（−1）、線路がなければ 0」。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <table class="matrix-input">
+              <thead>
+                <tr><th></th><th>母線1</th><th>母線2</th><th>母線3</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>母線1</th>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="0" data-col="0" aria-label="1行1列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="0" data-col="1" aria-label="1行2列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="0" data-col="2" aria-label="1行3列"></td>
+                </tr>
+                <tr>
+                  <th>母線2</th>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="1" data-col="0" aria-label="2行1列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="1" data-col="1" aria-label="2行2列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="1" data-col="2" aria-label="2行3列"></td>
+                </tr>
+                <tr>
+                  <th>母線3</th>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="2" data-col="0" aria-label="3行1列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="2" data-col="1" aria-label="3行2列"></td>
+                  <td><input type="number" step="any" inputmode="decimal" data-row="2" data-col="2" aria-label="3行3列"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-01-ex03",
+          "type": "matrix",
+          "correct": [[2, -2, 0], [-2, 8, -6], [0, -6, 6]],
+          "tolerance": 0.01,
+          "explanation": "対角（合計）: 母線1は線路1-2のみなので Y11=2、母線2は線路1-2と2-3なので Y22=2+6=8、母線3は線路2-3のみなので Y33=6。非対角（線路アドミタンス×-1）: Y12=Y21=-2、Y23=Y32=-6。母線1と母線3は直接つながっていないので Y13=Y31=0。行列は対称になり、0は『直接の線路がない母線ペア』を表します。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/institution/keitoujouhou/"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「系統情報サービス等」</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/grid/business/documents/NF_setsuzokuriyou_20240701.pdf"
+               target="_blank" rel="noopener noreferrer">OCCTO「系統の接続および利用ルールについて 〜ノンファーム型接続〜」（基幹系統＝上位2電圧の定義を含む）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション（C-01は領域Cの最初のユニット） -->
+    <nav class="unit-nav">
+      <a href="#" class="unit-nav-prev is-disabled" aria-hidden="true" tabindex="-1">&larr;</a>
+      <a href="../d-algorithms/index.html" class="unit-nav-next">次の領域へ: D 混雑演算のアルゴリズム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>
