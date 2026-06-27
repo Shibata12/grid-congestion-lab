@@ -55,7 +55,7 @@ const SITE_STRUCTURE = {
     ],
   },
   d: {
-    name: '混雑演算のアルゴリズム',
+    name: '混雑計算のアルゴリズム',
     folder: 'd-algorithms',
     summary: '潮流計算、PTDF、N-1基準、再給電など、混雑を解消するための演算手法を学ぶ。',
     units: [

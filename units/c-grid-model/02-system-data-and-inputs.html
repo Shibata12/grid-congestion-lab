@@ -61,7 +61,7 @@
         <p>
           C-01で作ったのは、系統の「かたち」を表す器でした。しかし器だけでは計算できません。
           実際の運用では、<strong>いつ・どんな構成で・どれだけ発電し消費するか</strong>というデータが入って、
-          はじめて潮流計算（<a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02</a>）や混雑演算（領域B・D）が動きます。
+          はじめて潮流計算（<a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02</a>）や混雑計算（領域B・D）が動きます。
         </p>
         <p>
           F-02で見た<strong>3つの計画機能</strong>が、まさにこの入力データにあたります。
@@ -72,7 +72,7 @@
 
         <figure class="diagram">
           <svg viewBox="0 0 460 220" role="img"
-               aria-label="系統構成計画・作業停止計画・需給計画の3つの計画が、系統モデル（Yバスと各母線の注入）に反映され、潮流計算・混雑演算（N-1を含む）の入力になることを示す図"
+               aria-label="系統構成計画・作業停止計画・需給計画の3つの計画が、系統モデル（Yバスと各母線の注入）に反映され、潮流計算・混雑計算（N-1を含む）の入力になることを示す図"
                xmlns="http://www.w3.org/2000/svg">
             <defs>
               <marker id="c2-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
@@ -107,10 +107,10 @@
             <!-- 下へ: 潮流計算・N-1 -->
             <line x1="400" y1="120" x2="400" y2="150" stroke="#4a5568" stroke-width="1.5" marker-end="url(#c2-ah)"></line>
             <rect x="300" y="152" width="150" height="50" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.3"></rect>
-            <text x="375" y="173" font-size="11" text-anchor="middle" fill="#1a1a2e">潮流計算・混雑演算</text>
+            <text x="375" y="173" font-size="11" text-anchor="middle" fill="#1a1a2e">潮流計算・混雑計算</text>
             <text x="375" y="190" font-size="10" text-anchor="middle" fill="#b45309">（N-1解析を含む）</text>
           </svg>
-          <figcaption>図1: 3つの計画が系統モデル（Yバスと各母線の注入）に反映され、潮流計算・混雑演算の入力になる</figcaption>
+          <figcaption>図1: 3つの計画が系統モデル（Yバスと各母線の注入）に反映され、潮流計算・混雑計算の入力になる</figcaption>
         </figure>
       </section>
 
@@ -273,7 +273,7 @@
           ループが1本切れてパスになりましたが、母線1と母線3は<strong>母線2を経由してまだつながっています</strong>。
           このように1回線が止まっても系統が維持される（過負荷にならない）かを確認するのがN-1基準でした。
           各想定故障についてこのようにYバスを作り直し、潮流を再計算して過負荷の有無を調べるのが
-          <strong>N-1解析の中身</strong>であり、領域Dの混雑演算へとつながっていきます。
+          <strong>N-1解析の中身</strong>であり、領域Dの混雑計算へとつながっていきます。
         </p>
       </section>
 
@@ -423,7 +423,7 @@
     <!-- 前後ナビゲーション -->
     <nav class="unit-nav">
       <a href="01-grid-model-structure.html" class="unit-nav-prev">&larr; 母線・送電線・系統モデルの構造</a>
-      <a href="../d-algorithms/index.html" class="unit-nav-next">次の領域へ: D 混雑演算のアルゴリズム &rarr;</a>
+      <a href="../d-algorithms/index.html" class="unit-nav-next">次の領域へ: D 混雑計算のアルゴリズム &rarr;</a>
     </nav>
 
   </main>
