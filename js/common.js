@@ -13,6 +13,24 @@
 (function () {
   'use strict';
 
+  /* ------------------------------------------------------------
+     Google Analytics (gtag.js) — 全ページ共通で読み込む。
+     file:// では計測しない（オフライン方針 / DESIGN 2.4）。
+     ------------------------------------------------------------ */
+  (function initAnalytics() {
+    var GA_ID = 'G-VBZC8FEWJK';
+    if (location.protocol === 'file:') return;
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+    document.head.appendChild(s);
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    window.gtag = gtag;
+    gtag('js', new Date());
+    gtag('config', GA_ID);
+  })();
+
 /* ------------------------------------------------------------
    サイト構成データ（第8章 8.6）
    新ユニット追加時はこのオブジェクトを更新する（第9章 9.4）。
