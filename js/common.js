@@ -26,8 +26,8 @@ const SITE_STRUCTURE = {
     folder: 'a-grid-fundamentals',
     summary: '電力系統を理解するための物理法則。オームの法則、キルヒホッフの法則、潮流の基礎を扱う。',
     units: [
-      { id: 'a-01', title: 'キルヒホッフの法則', file: '01-kirchhoff.html', exerciseCount: 4,
-        summary: '電流則(KCL)と電圧則(KVL)を、系統解析の出発点として理解する。' },
+      { id: 'a-01', title: 'オームの法則とキルヒホッフの法則', file: '01-kirchhoff.html', exerciseCount: 5,
+        summary: 'オームの法則(V=R·I)と、キルヒホッフの電流則(KCL)・電圧則(KVL)を、系統解析の出発点として理解する。' },
       { id: 'a-02', title: '潮流計算の基礎', file: '02-power-flow-basics.html', exerciseCount: 3,
         summary: '母線への注入と、放射状・ループ系統での潮流の決まり方を学ぶ。発電計画値が潮流計算の入力になる。' },
       { id: 'a-03', title: 'インピーダンスとリアクタンス', file: '03-impedance-reactance.html', exerciseCount: 3,
