@@ -117,6 +117,8 @@ const SITE_STRUCTURE = {
         summary: 'SCUC/SCED・混雑計算・状態推定など、次期中給システムの機能構成と、混雑計算が最適化の前処理として動く構造を公開資料に基づき概観する。' },
       { id: 'f-03', title: '現行と次期中給の比較（再エネ抑制と混雑処理）', file: '03-current-vs-next-dispatch.html', exerciseCount: 3,
         summary: '再エネ抑制・混雑処理を、現行（エリア中心のルールベース）と次期中給（全国一括のSCUC/SCED最適化）で比較し、段階的な移行（二段階構成）を学ぶ。' },
+      { id: 'f-04', title: '中給システムの演算タイミングと時間断面', file: '04-computation-timing.html', exerciseCount: 3,
+        summary: '30分コマ・ゲートクローズの時間軸の上に、予測・混雑計算・SCUC（早め）・SCED（直前）がいつ・どのコマを対象に走るかを整理する。' },
     ],
   },
 };
