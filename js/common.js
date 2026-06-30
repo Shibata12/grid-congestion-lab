@@ -115,6 +115,8 @@ const SITE_STRUCTURE = {
         summary: '発電計画値→潮流計算→混雑判定→再給電という一連の流れを、運用の時間軸の中で俯瞰する。' },
       { id: 'f-02', title: '次期中給システムの機能構成', file: '02-next-gen-dispatch-system.html', exerciseCount: 3,
         summary: 'SCUC/SCED・混雑計算・状態推定など、次期中給システムの機能構成と、混雑計算が最適化の前処理として動く構造を公開資料に基づき概観する。' },
+      { id: 'f-03', title: '現行と次期中給の比較（再エネ抑制と混雑処理）', file: '03-current-vs-next-dispatch.html', exerciseCount: 3,
+        summary: '再エネ抑制・混雑処理を、現行（エリア中心のルールベース）と次期中給（全国一括のSCUC/SCED最適化）で比較し、段階的な移行（二段階構成）を学ぶ。' },
     ],
   },
 };

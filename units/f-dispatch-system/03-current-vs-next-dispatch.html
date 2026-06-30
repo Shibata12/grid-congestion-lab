@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F-03: 現行と次期中給の比較（再エネ抑制と混雑処理） - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css"
+        crossorigin="anonymous">
+</head>
+<body data-domain="f" data-unit="f-03">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">F: 中央給電指令所システム</a> &gt;
+      <span>現行と次期中給の比較</span>
+    </nav>
+
+    <article>
+      <h1>F-03: 現行と次期中給の比較（再エネ抑制と混雑処理）</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="../e-market/06-renewable-curtailment.html">E-06: 再エネ出力制御のしくみ</a> では、再エネ抑制と混雑処理の
+        <strong>「これまで（現行）」</strong>を整理しました。本ユニットでは、それが
+        <a href="02-next-gen-dispatch-system.html">F-02: 次期中給システム</a>・<a href="../d-algorithms/03-scuc-sced-overview.html">D-03: SCUC/SCED</a>
+        で学んだ<strong>「これから（次期）」</strong>でどう変わるかを<strong>比較</strong>します。
+        ひとことで言えば、<strong>「エリア中心のルールベース」から「全国一括の数理最適化」へ</strong>、という変化です。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          送配電網協議会・経済産業省（同時市場検討会）が公開している<strong>方向性</strong>に基づいて比較します。
+          再エネ抑制の低減量など<strong>定量的な効果は断定せず</strong>、考え方の違いの整理に絞ります。制度・計画は今後の検討で変わり得ます。
+          参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 何を比べるのか</a></li>
+          <li><a href="#section-2">2. 現行方式（これまで）の特徴</a></li>
+          <li><a href="#section-3">3. 次期中給方式（これから）の特徴</a></li>
+          <li><a href="#section-4">4. 何が変わる・良くなるか</a></li>
+          <li><a href="#section-5">5. 移行は段階的に</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 何を比べるのか</h2>
+        <p>
+          E-06で見たとおり、再エネが抑制される理由には<strong>①供給過剰（需給バランス）</strong>と<strong>②系統混雑（送電制約）</strong>の2つがあり、
+          現行では<a href="../e-market/04-priority-dispatch.html">優先給電ルール（E-04）</a>の順序や、混雑ごとの
+          <a href="../d-algorithms/02-redispatch.html">再給電（D-02）</a>・抑制を組み合わせて処理していました。
+        </p>
+        <p>
+          一方、<a href="02-next-gen-dispatch-system.html">F-02</a>・<a href="../d-algorithms/03-scuc-sced-overview.html">D-03</a> で見た次期中給システムは、
+          <strong>SCUC／SCED</strong>という数理最適化で需給と混雑を解きます。同じ「再エネ抑制と混雑処理」を、現行と次期は<strong>違うやり方</strong>で行うのです。
+          本ユニットでは、両者を次の3つの軸で比べます。
+        </p>
+        <ul>
+          <li><strong>決め方</strong>：ルールの順序で逐次決めるのか、数理最適化でまとめて決めるのか</li>
+          <li><strong>対象範囲</strong>：各エリア中心か、全国一括か</li>
+          <li><strong>ねらい</strong>：再エネをどれだけ活用できるか（抑制をどれだけ減らせるか）</li>
+        </ul>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 現行方式（これまで）の特徴</h2>
+        <p>
+          現行は、<strong>あらかじめ決めたルールに沿って逐次的に</strong>処理する方式です。
+          供給過剰なら優先給電ルール（E-04）の順序で抑制し、特定の送電線が混雑すれば、
+          <a href="../d-algorithms/01-ptdf-sensitivity.html">PTDF（D-01）</a>で効く電源を選んで抑制・再給電します。
+        </p>
+        <p>
+          処理は基本的に<strong>各エリアのシステムが中心</strong>に行い、エリアをまたぐ調整は連系線を介した広域融通で補います
+          （再エネ抑制を減らすため、余る地域から足りない地域へ融通することも行われています）。
+        </p>
+        <ul>
+          <li><strong>長所</strong>：ルールが明確で<strong>透明・シンプル</strong>。動きが分かりやすい。</li>
+          <li><strong>短所</strong>：エリアごと・逐次の判断が中心になりやすく、<strong>全体（全国）として最も安い組み合わせ</strong>を必ずしも選べない。結果として再エネ抑制が必要以上に出ることもある。</li>
+        </ul>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 次期中給方式（これから）の特徴</h2>
+        <p>
+          次期中給システムは、<strong>SCUC／SCED</strong>（D-03）で目的関数（発電コスト最小）と制約（需給バランス・潮流制約・出力上下限）を立て、
+          <strong>全国を一括して同時に最適化</strong>します。地域間連系線の混雑と各エリア地内基幹系統の混雑を<strong>同時に考慮</strong>し、
+          全国大の<a href="../d-algorithms/02-redispatch.html">メリットオーダー</a>（安い電源から使う）で需給と混雑を解きます。
+        </p>
+        <p>
+          エリアごとに別々に解くのではなく、<strong>全国を1つの問題として解く</strong>のがいちばんの違いです。
+          これにより、ある地域で混雑して再エネを抑えるより、別の地域の高い電源を下げて融通したほうが安い、といった
+          <strong>全国を見渡した選択</strong>ができるようになります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 480 210" role="img"
+               aria-label="現行はエリアA・B・Cがそれぞれ個別に最適化し連系線で融通する。次期は全国一括の最適化が全エリアをまとめて同時に解く、という対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="f3-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"></path>
+              </marker>
+            </defs>
+            <!-- 現行 -->
+            <rect x="10" y="14" width="222" height="182" rx="8" fill="#fef2f2" stroke="#ef4444" stroke-width="1.5"></rect>
+            <text x="121" y="34" font-size="12.5" text-anchor="middle" font-weight="700" fill="#dc2626">現行：エリア中心</text>
+            <g font-size="10.5" text-anchor="middle">
+              <rect x="26" y="50" width="58" height="46" rx="6" fill="#fff" stroke="#94a3b8"></rect>
+              <text x="55" y="70" fill="#1a1a2e">エリアA</text>
+              <text x="55" y="85" font-size="8.5" fill="#4a5568">個別最適化</text>
+              <rect x="92" y="50" width="58" height="46" rx="6" fill="#fff" stroke="#94a3b8"></rect>
+              <text x="121" y="70" fill="#1a1a2e">エリアB</text>
+              <text x="121" y="85" font-size="8.5" fill="#4a5568">個別最適化</text>
+              <rect x="158" y="50" width="58" height="46" rx="6" fill="#fff" stroke="#94a3b8"></rect>
+              <text x="187" y="70" fill="#1a1a2e">エリアC</text>
+              <text x="187" y="85" font-size="8.5" fill="#4a5568">個別最適化</text>
+            </g>
+            <!-- 融通の点線 -->
+            <line x1="84" y1="73" x2="92" y2="73" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#f3-ah)"></line>
+            <line x1="150" y1="73" x2="158" y2="73" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3 2" marker-end="url(#f3-ah)"></line>
+            <text x="121" y="124" font-size="9.5" text-anchor="middle" fill="#4a5568">連系線で融通して補う</text>
+            <text x="121" y="150" font-size="10" text-anchor="middle" fill="#1a1a2e">ルールに沿って逐次処理</text>
+            <text x="121" y="172" font-size="9" text-anchor="middle" fill="#b91c1c">全体最適とは限らない</text>
+            <!-- 次期 -->
+            <rect x="248" y="14" width="222" height="182" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.6"></rect>
+            <text x="359" y="34" font-size="12.5" text-anchor="middle" font-weight="700" fill="#4338ca">次期：全国一括</text>
+            <rect x="266" y="50" width="186" height="60" rx="8" fill="#fff" stroke="#6366f1" stroke-width="1.4"></rect>
+            <text x="359" y="70" font-size="11" text-anchor="middle" font-weight="700" fill="#4338ca">全国一括 SCUC／SCED</text>
+            <g font-size="9.5" text-anchor="middle" fill="#1a1a2e">
+              <text x="300" y="92">A</text><text x="330" y="92">B</text><text x="360" y="92">C</text><text x="395" y="92">…</text>
+              <text x="359" y="104" font-size="8.5" fill="#4a5568">全エリアをまとめて同時に</text>
+            </g>
+            <text x="359" y="134" font-size="10" text-anchor="middle" fill="#1a1a2e">連系線と地内基幹の混雑を同時考慮</text>
+            <text x="359" y="156" font-size="10" text-anchor="middle" fill="#1a1a2e">全国大メリットオーダーで最適化</text>
+            <text x="359" y="178" font-size="9" text-anchor="middle" fill="#4338ca">全体を見渡した選択ができる</text>
+          </svg>
+          <figcaption>図1: 現行（エリアごとに個別最適化＋融通）と、次期（全国を一括して同時最適化）の違い</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 何が変わる・良くなるか</h2>
+        <p>3つの軸で、現行から次期への変化を整理します。</p>
+        <ul>
+          <li><strong>決め方</strong>：優先給電ルールの順序＋個別判断（ルールベース・逐次） <strong>→</strong> SCUC／SCEDによる数理最適化（まとめて解く）</li>
+          <li><strong>対象範囲</strong>：各エリア中心（＋連系線の融通） <strong>→</strong> 全国一括同時（連系線と地内基幹系統の混雑を同時に考慮）</li>
+          <li><strong>メリットオーダー</strong>：エリア内が中心 <strong>→</strong> 全国大メリットオーダー（より安い組み合わせを選べる）</li>
+          <li><strong>再エネ活用</strong>：エリアごとに処理し、融通で抑制を減らす <strong>→</strong> 全国最適化で、抑制をさらに減らすことをねらう</li>
+          <li><strong>計算負荷</strong>：比較的軽い <strong>→</strong> 重い（とくにSCUCの整数最適化）。そこで<strong>混雑計算を前処理</strong>に置いて負荷を抑える（次節）</li>
+        </ul>
+        <p>
+          要点は、<strong>「全国を1つの問題として最適化することで、より安く・再エネをより多く活かせる余地が広がる」</strong>ことです。
+          一方で計算は重くなるため、次に見るような工夫（段階的な移行・前処理）がセットになっています。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 150" role="img"
+               aria-label="現行と次期を、決め方・範囲・再エネ活用・計算負荷の観点で対比した表形式の図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 見出し -->
+            <rect x="10" y="12" width="150" height="26" rx="4" fill="#f1f5f9" stroke="#cbd5e1"></rect>
+            <text x="85" y="29" font-size="10.5" text-anchor="middle" fill="#4a5568">観点</text>
+            <rect x="162" y="12" width="142" height="26" rx="4" fill="#fef2f2" stroke="#ef4444"></rect>
+            <text x="233" y="29" font-size="10.5" text-anchor="middle" font-weight="700" fill="#dc2626">現行</text>
+            <rect x="306" y="12" width="144" height="26" rx="4" fill="#eef2ff" stroke="#6366f1"></rect>
+            <text x="378" y="29" font-size="10.5" text-anchor="middle" font-weight="700" fill="#4338ca">次期中給</text>
+            <!-- 行 -->
+            <g font-size="9.5" fill="#1a1a2e">
+              <text x="18" y="56">決め方</text>
+              <text x="170" y="56" fill="#4a5568">ルールで逐次</text>
+              <text x="314" y="56" fill="#1a1a2e">数理最適化</text>
+              <text x="18" y="80">範囲</text>
+              <text x="170" y="80" fill="#4a5568">各エリア中心</text>
+              <text x="314" y="80" fill="#1a1a2e">全国一括同時</text>
+              <text x="18" y="104">再エネ活用</text>
+              <text x="170" y="104" fill="#4a5568">融通で低減</text>
+              <text x="314" y="104" fill="#1a1a2e">さらに低減をねらう</text>
+              <text x="18" y="128">計算負荷</text>
+              <text x="170" y="128" fill="#4a5568">軽い</text>
+              <text x="314" y="128" fill="#1a1a2e">重い（前処理で緩和）</text>
+            </g>
+            <line x1="10" y1="64" x2="450" y2="64" stroke="#e2e8f0"></line>
+            <line x1="10" y1="88" x2="450" y2="88" stroke="#e2e8f0"></line>
+            <line x1="10" y1="112" x2="450" y2="112" stroke="#e2e8f0"></line>
+          </svg>
+          <figcaption>図2: 現行と次期中給の比較（観点別）</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 移行は段階的に</h2>
+        <p>
+          現行から次期へは、<strong>いきなり全部を切り替えるわけではありません</strong>。
+          <a href="02-next-gen-dispatch-system.html">F-02</a> で見たとおり、次期中給システムの初期運用では<strong>二段階</strong>の構成がとられます。
+          まず<strong>混雑計算を「前処理」</strong>として行い、現行の優先給電ルール・再給電ルールを反映しておく。
+          そのうえで<strong>SCUC／SCEDで最適化</strong>します。前処理で問題を整理することで、重い最適化の計算負荷を抑えられます。
+        </p>
+        <p>
+          つまり、現行で積み上げてきた<strong>ルールの知見をいったん引き継ぎつつ</strong>、最適化を組み合わせる。
+          そして将来は、混雑計算と需給を<strong>同時に</strong>最適化する形へと発展させていく――という段階的な移行です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 130" role="img"
+               aria-label="次期中給の二段階構成。混雑計算（前処理、現行の優先給電・再給電ルールを反映）の後にSCUC/SCEDの最適化を行い、給電計画につながる流れの図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="f3-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <g text-anchor="middle">
+              <rect x="14" y="34" width="160" height="62" rx="8" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.6"></rect>
+              <text x="94" y="58" font-size="12" font-weight="700" fill="#b45309">混雑計算（前処理）</text>
+              <text x="94" y="76" font-size="9.5" fill="#1a1a2e">現行の優先給電・</text>
+              <text x="94" y="89" font-size="9.5" fill="#1a1a2e">再給電ルールを反映</text>
+              <line x1="176" y1="65" x2="206" y2="65" stroke="#4a5568" stroke-width="1.5" marker-end="url(#f3-b)"></line>
+              <rect x="208" y="34" width="160" height="62" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.6"></rect>
+              <text x="288" y="58" font-size="12" font-weight="700" fill="#4338ca">SCUC／SCED</text>
+              <text x="288" y="78" font-size="9.5" fill="#1a1a2e">全国一括で数理最適化</text>
+              <line x1="370" y1="65" x2="400" y2="65" stroke="#4a5568" stroke-width="1.5" marker-end="url(#f3-b)"></line>
+              <rect x="402" y="40" width="52" height="50" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.5"></rect>
+              <text x="428" y="62" font-size="9.5" fill="#15803d">給電</text>
+              <text x="428" y="76" font-size="9.5" fill="#15803d">計画</text>
+            </g>
+            <text x="230" y="118" font-size="9.5" text-anchor="middle" fill="#4a5568">現行ルールを引き継ぎつつ最適化を組み合わせる（将来は同時最適化へ）</text>
+          </svg>
+          <figcaption>図3: 段階的な移行。初期は混雑計算（前処理）で現行ルールを反映し、SCUC／SCEDで最適化する</figcaption>
+        </figure>
+
+        <p>
+          こうして、本サイトで学んできた現行のしくみ（優先給電ルール・再給電・ノンファーム）と、次期の最適化（SCUC／SCED）は、
+          対立するものではなく<strong>地続き</strong>でつながっています。次のユニットでは、その次期中給システムが
+          <strong>「どんな演算を、いつ、どの時間断面（コマ）に対して行うのか」</strong>という演算タイミングを見ていきます。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（決め方の違い） -->
+        <div class="exercise" data-exercise-id="f-03-ex01" data-type="choice">
+          <h3>演習 1: 決め方の違い</h3>
+          <div class="exercise-problem">
+            <p>現行方式と次期中給方式の「決め方」の違いとして、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="f-03-ex01" value="1">
+              <span>現行は優先給電ルールの順序などルールに沿って逐次決め、次期はSCUC／SCEDの数理最適化でまとめて決める</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-03-ex01" value="2">
+              <span>現行はSCUC／SCEDの数理最適化で、次期は優先給電ルールに沿って逐次決める</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-03-ex01" value="3">
+              <span>現行も次期も、送電線の容量を運用で引き上げて混雑を解消する点は同じである</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-03-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "現行は優先給電ルールの順序やPTDFで効く電源を選ぶなど、決められたルールに沿って逐次的に処理します。次期中給はSCUC／SCEDという数理最適化で、需給と混雑をまとめて解きます。選択肢2は両者が逆、選択肢3は誤り（送電容量は設備の制約で運用では引き上げられません）。"
+        }
+        </script>
+
+        <!-- 演習2: multi-choice（次期の特徴・利点） -->
+        <div class="exercise" data-exercise-id="f-03-ex02" data-type="multi-choice">
+          <h3>演習 2: 次期中給方式の特徴・利点</h3>
+          <div class="exercise-problem">
+            <p>次期中給方式（SCUC／SCED）の特徴・利点として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="f-03-ex02" value="1">
+              <span>全国を一括して同時に最適化し、連系線と各エリア地内基幹系統の混雑を同時に考慮する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-03-ex02" value="2">
+              <span>全国大のメリットオーダーで、より安い電源の組み合わせを選べる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-03-ex02" value="3">
+              <span>全国を見渡した最適化により、再エネの抑制をさらに減らすことをねらえる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-03-ex02" value="4">
+              <span>優先給電ルールや混雑計算を完全に廃止し、送電線を新設して混雑を解消する</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-03-ex02",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1は全国一括同時最適化（連系線＋地内基幹の混雑を同時考慮）、2は全国大メリットオーダー、3は再エネ抑制低減のねらいで、いずれも公開資料で示された次期中給の特徴・方向性です。4は誤りで、次期でも初期運用は混雑計算を前処理として現行ルールを反映する二段階であり、優先給電ルールや混雑計算を廃止するわけではありません。送電線の新設は時間のかかる設備形成の話で、運用の最適化とは別です。"
+        }
+        </script>
+
+        <!-- 演習3: choice（移行の段階性） -->
+        <div class="exercise" data-exercise-id="f-03-ex03" data-type="choice">
+          <h3>演習 3: 移行のしかた</h3>
+          <div class="exercise-problem">
+            <p>現行から次期中給システムへの移行のしかたとして、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="f-03-ex03" value="1">
+              <span>いきなり全切替するのではなく、初期は混雑計算を前処理として現行ルールを反映し、SCUC／SCEDで最適化する二段階で進める</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-03-ex03" value="2">
+              <span>現行のルールや知見はいっさい使わず、まったく無関係に作り直す</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-03-ex03" value="3">
+              <span>計算負荷は問題にならないので、最初から全国の全断面を同時に最適化すれば十分である</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-03-ex03",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "移行は段階的です。次期中給の初期運用では、まず混雑計算を前処理として現行の優先給電・再給電ルールを反映し、そのうえでSCUC／SCEDで最適化する二段階の構成がとられます（F-02）。現行の知見を引き継ぐ点で選択肢2は誤り。SCUC／SCEDは計算が重く、特に前処理で負荷を抑える工夫が必要なので選択肢3も誤りです。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/pdf/008_02_00.pdf"
+               target="_blank" rel="noopener noreferrer">一般社団法人 送配電網協議会「次期中給システム開発に関する検討状況」（経済産業省 次世代電力系統ワーキンググループ 第8回 資料2、2026年3月16日。全国一括同時最適化・全国大メリットオーダー・二段階構成）</a>
+          </li>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/energy_environment/doji_shijo_kento/pdf/20251015_1.pdf"
+               target="_blank" rel="noopener noreferrer">経済産業省「同時市場の在り方等に関する検討会 第二次中間取りまとめ」（2025年10月15日。SCUC/SCEDによるメリットオーダーの追求）</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/category/saving_and_new/saiene/grid/08_syuturyokuseigyo.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「なるほど！グリッド：出力制御について」（現行の再エネ出力制御）</a>
+          </li>
+        </ul>
+      </section>
+
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="02-next-gen-dispatch-system.html" class="unit-nav-prev">&larr; 次期中給システムの機能構成</a>
+      <a href="../../index.html" class="unit-nav-next">トップへ戻る &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex/dist/katex.min.js"
+          crossorigin="anonymous"></script>
+</body>
+</html>
