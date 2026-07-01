@@ -458,6 +458,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a" id="term-var-compensation">
+        <dt>調相設備（コンデンサ・リアクトル）</dt>
+        <dd>
+          <p>無効電力を調整して電圧を保つための設備。進相用コンデンサは無効電力を供給して電圧を持ち上げ、分路リアクトルは無効電力を吸収して電圧を下げる。発電機の励磁（AVR）も無効電力を出し入れして電圧を支える。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="a,d" id="term-power-flow">
         <dt>潮流</dt>
         <dd>
@@ -484,6 +494,16 @@
           <p>需要を増やしたり減らしたりして需給調整に活用すること。発電だけでなく需要側も調整力の提供者になりうる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/03-balancing-market.html">E-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a" id="term-power-triangle">
+        <dt>電力の三角形</dt>
+        <dd>
+          <p>有効電力Pを底辺、無効電力Qを縦、皮相電力Sを斜辺とする直角三角形。S=√(P²+Q²)、力率=P/S。A-03のインピーダンス三角形（Z=√(R²+X²)）と同じ形で、電力の3要素の関係を表す。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
           </p>
         </dd>
       </div>
@@ -528,6 +548,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a" id="term-apparent-power">
+        <dt>皮相電力（S）</dt>
+        <dd>
+          <p>有効電力Pと無効電力Qを合わせた「見かけ上」の電力。S=√(P²+Q²)。記号S、単位はVA／MVA。送電線や変圧器の容量はこのSで決まるため、無効電力が大きい（力率が悪い）と送れる有効電力が減る。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-firm">
         <dt>ファーム型接続</dt>
         <dd>
@@ -568,6 +598,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a" id="term-reactive-power">
+        <dt>無効電力（Q）</dt>
+        <dd>
+          <p>交流で電源とリアクタンス（コイル・コンデンサ）の間を行き来し、正味の仕事をしない電力。記号Q、単位はバール（var／Mvar）。電圧を支える役割を持ち、不足すると電圧が下がる。遠くへ送れない（局所的）ため、各地の調相設備や発電機のAVRで供給する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="d,e" id="term-merit-order">
         <dt>メリットオーダー</dt>
         <dd>
@@ -588,6 +628,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a" id="term-active-power">
+        <dt>有効電力（P）</dt>
+        <dd>
+          <p>実際に仕事（熱・光・動力）をする電力。記号P、単位はワット（W／MW）。無効電力Qと直角に合成すると皮相電力 S=√(P²+Q²) になり、皮相電力に対する割合 P/S が力率。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-priority-dispatch">
         <dt>優先給電ルール</dt>
         <dd>
@@ -604,6 +654,16 @@
           <p>交流における電流の流れにくさのうち、電流の変化を妨げる成分。コイル（インダクタンス）に生じ、周波数が高いほど大きい（X=2πfL）。抵抗と違い、それ自体は電力を消費しない。送電線ではリアクタンスが抵抗より大きく（X≫R）、潮流分配では“電気的な距離”として働く（潮流はリアクタンスに反比例して分配される）。記号X、単位はオーム（Ω）。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/a-grid-fundamentals/03-impedance-reactance.html">A-03</a>、<a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a" id="term-power-factor">
+        <dt>力率</dt>
+        <dd>
+          <p>皮相電力Sに対する有効電力Pの割合。力率＝P/S＝cosθ。1に近いほど、同じ設備容量でより多くの有効電力を送れる。調相設備で無効電力を補い力率を改善すると、送れる有効電力を増やせる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
           </p>
         </dd>
       </div>

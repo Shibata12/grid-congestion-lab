@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A-04: 有効電力・無効電力と電圧 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="a" data-unit="a-04">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">A: 系統の基礎</a> &gt;
+      <span>有効電力・無効電力と電圧</span>
+    </nav>
+
+    <article>
+      <h1>A-04: 有効電力・無効電力と電圧</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="03-impedance-reactance.html">A-03: インピーダンスとリアクタンス</a> で「理想的なコイルは電力を消費しない」と述べ、
+        そこで生じる<strong>無効電力</strong>を「後続ユニットで扱う」と預けていました。本ユニットがその回収です。
+        有効電力・無効電力・皮相電力の関係（<strong>電力の三角形</strong>）と力率を押さえ、
+        無効電力が<strong>電圧を支える</strong>こと、そして電圧・無効電力の制約が
+        <strong>熱容量とは別の"送電の上限（混雑要因）"</strong>になりうることを理解します。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          本ユニットは<strong>概念的な理解</strong>を重視し、複素数を使った厳密な計算には踏み込みません。
+          無効電力は、A-03のインピーダンス三角形と対応する<strong>「電力の三角形」</strong>として扱います。
+          電圧安定度の動的（時間変化）な厳密理論は本ユニットの範囲外とし、
+          「無効電力と電圧の関係」を定性的に押さえることを目標とします。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 3種類の電力：有効・無効・皮相と力率</a></li>
+          <li><a href="#section-2">2. 無効電力の正体：どこで生じ、何が要るのか</a></li>
+          <li><a href="#section-3">3. 無効電力と電圧：電圧を支える力と、その局所性</a></li>
+          <li><a href="#section-4">4. 電圧・無効電力による混雑</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 3種類の電力：有効・無効・皮相と力率</h2>
+        <p>
+          <a href="03-impedance-reactance.html">A-03</a> で、抵抗は電気エネルギーを熱に変えて<strong>消費</strong>する一方、
+          理想的なリアクタンス（コイル）はエネルギーを磁界にいったん蓄えて<strong>また回路へ返す</strong>ので、それ自体は電力を消費しない、と学びました。
+          この「返される・行ったり来たりするだけの電力」が
+          <span class="term">無効電力<span class="term-tooltip">交流でリアクタンスとの間を行き来し、正味の仕事をしない電力。記号 Q、単位はバール（var）。電圧の維持に寄与する。</span></span>です。交流の電力は、次の3つに分けて捉えます。
+        </p>
+        <ul>
+          <li><strong><span class="term">有効電力<span class="term-tooltip">実際に仕事（熱・光・動力）をする電力。記号 P、単位はワット（W／MW）。</span></span> P</strong>：実際に仕事をする電力（熱・光・モーターの回転など）。単位は W／MW。</li>
+          <li><strong>無効電力 Q</strong>：仕事はしないが、電源とリアクタンスの間を行き来する電力。単位は <strong>var（バール）</strong>／Mvar。</li>
+          <li><strong><span class="term">皮相電力<span class="term-tooltip">有効電力と無効電力を合わせた「見かけ上」の電力。S=√(P²+Q²)。送電線や変圧器の容量はこのSで決まる。記号 S、単位はVA／MVA。</span></span> S</strong>：両者を合わせた「見かけ上」の電力。送電線や変圧器が実際に負担するのはこのSです。単位は VA／MVA。</li>
+        </ul>
+        <p>
+          ここが A-03 ときれいに対応します。A-03 では抵抗 R とリアクタンス X を<strong>直角な2成分</strong>として合成し、
+          斜辺がインピーダンス Z（Z=√(R²+X²)）でした。電力もまったく同じ形で、有効電力 P と無効電力 Q を直角に合成した斜辺が皮相電力 S になります。これを
+          <span class="term">電力の三角形<span class="term-tooltip">有効電力Pを底辺、無効電力Qを縦、皮相電力Sを斜辺とする直角三角形。A-03のインピーダンス三角形と対応する。</span></span>といいます。
+        </p>
+        <div class="math-block"
+             data-tex="S = \sqrt{P^2 + Q^2}"
+             data-fallback="S = √(P² + Q²)"></div>
+        <p>
+          そして、皮相電力 S のうち<strong>どれだけが有効電力 P か</strong>の割合を
+          <span class="term">力率<span class="term-tooltip">皮相電力Sに対する有効電力Pの割合。力率 = P/S = cosθ。1に近いほど無駄なく送れる。</span></span>（りきりつ）といい、次で表します。
+        </p>
+        <div class="math-block"
+             data-tex="\text{力率} = \dfrac{P}{S} = \cos\theta"
+             data-fallback="力率 = P / S = cosθ"></div>
+        <p>
+          たとえば、有効電力 <strong>P = 80 MW</strong>、無効電力 <strong>Q = 60 Mvar</strong> の負荷を考えると、
+          皮相電力は S = √(80² + 60²) = √(6400 + 3600) = √10000 = <strong>100 MVA</strong>、
+          力率は 80 ÷ 100 = <strong>0.8</strong> です。力率が 1 に近いほど、同じ S でより多くの有効電力を送れます。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 360 230" role="img"
+               aria-label="有効電力P=80MWを底辺、無効電力Q=60Mvarを縦、皮相電力S=100MVAを斜辺とする直角三角形（電力の三角形）。力率は0.8"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 三角形 O(60,190) P(220,190) Q(220,70): P=8→160px, Q=6→120px, S=10→200px -->
+            <polygon points="60,190 220,190 220,70" fill="#ecfdf5" stroke="#10b981" stroke-width="2"></polygon>
+            <!-- 底辺 P -->
+            <line x1="60" y1="190" x2="220" y2="190" stroke="#16a34a" stroke-width="3"></line>
+            <!-- 縦 Q -->
+            <line x1="220" y1="190" x2="220" y2="70" stroke="#3b82f6" stroke-width="3"></line>
+            <!-- 斜辺 S -->
+            <line x1="60" y1="190" x2="220" y2="70" stroke="#4338ca" stroke-width="3"></line>
+            <!-- 直角マーク at (220,190) -->
+            <polyline points="208,190 208,178 220,178" fill="none" stroke="#4a5568" stroke-width="1.3"></polyline>
+            <!-- ラベル -->
+            <text x="140" y="208" font-size="12" text-anchor="middle" fill="#16a34a">有効電力 P = 80 MW</text>
+            <text x="230" y="134" font-size="12" text-anchor="start" fill="#3b82f6">無効電力 Q = 60 Mvar</text>
+            <text x="126" y="120" font-size="12" text-anchor="end" fill="#4338ca">S = 100 MVA</text>
+            <text x="150" y="55" font-size="11" text-anchor="middle" fill="#1a1a2e">力率 = P/S = 0.8</text>
+          </svg>
+          <figcaption>図1: 電力の三角形。P と Q を直角に合成した斜辺が皮相電力 S（A-03のインピーダンス三角形と同じ形）</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 無効電力の正体：どこで生じ、何が要るのか</h2>
+        <p>
+          無効電力は、<strong>コイル（誘導性）</strong>と<strong>コンデンサ（容量性）</strong>という、向きの逆な2種類の要素から生じます。
+          この2つは無効電力について<strong>正反対</strong>の働きをします。
+        </p>
+        <ul>
+          <li><strong>コイル（誘導性）</strong>：無効電力を<strong>消費（吸収）</strong>する。モーター・変圧器など、巻き線を持つ機器が代表。</li>
+          <li><strong>コンデンサ（容量性）</strong>：無効電力を<strong>供給</strong>する。</li>
+        </ul>
+        <p>
+          現実の電力系統では、工場のモーターをはじめ<strong>誘導性の負荷が多い</strong>ため、系統全体として無効電力が「必要」（不足しがち）になります。
+          この不足を補い、電圧を適正に保つために、各地の変電所などに置く設備が
+          <span class="term">調相設備<span class="term-tooltip">無効電力を調整して電圧を保つための設備。進相用のコンデンサ（無効電力を供給）と、分路リアクトル（無効電力を吸収）がある。</span></span>です。
+          <strong>コンデンサ</strong>（進相設備）で無効電力を供給して電圧を持ち上げ、電圧が高すぎるときは<strong>リアクトル</strong>で無効電力を吸収して下げます。
+          発電機も、励磁（AVR＝自動電圧調整）によって無効電力を出し入れし、電圧を保つ重要な担い手です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 170" role="img"
+               aria-label="コイル（モーター・変圧器など誘導性負荷）は無効電力を吸収し、コンデンサ（進相設備）は無効電力を供給するという、正反対の働きを示す対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 左: コイル（吸収） -->
+            <rect x="20" y="30" width="180" height="110" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.4"></rect>
+            <text x="110" y="52" font-size="12" text-anchor="middle" font-weight="700" fill="#1d4ed8">コイル（誘導性）</text>
+            <text x="110" y="70" font-size="10" text-anchor="middle" fill="#4a5568">モーター・変圧器 など</text>
+            <!-- コイル記号 -->
+            <path d="M60,100 q10,-18 20,0 q10,-18 20,0 q10,-18 20,0" fill="none" stroke="#1d4ed8" stroke-width="2"></path>
+            <text x="110" y="128" font-size="12" text-anchor="middle" font-weight="700" fill="#dc2626">無効電力を吸収</text>
+            <!-- 右: コンデンサ（供給） -->
+            <rect x="240" y="30" width="180" height="110" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="1.4"></rect>
+            <text x="330" y="52" font-size="12" text-anchor="middle" font-weight="700" fill="#15803d">コンデンサ（容量性）</text>
+            <text x="330" y="70" font-size="10" text-anchor="middle" fill="#4a5568">進相設備（調相）</text>
+            <!-- コンデンサ記号 -->
+            <line x1="315" y1="90" x2="315" y2="112" stroke="#15803d" stroke-width="2.5"></line>
+            <line x1="345" y1="90" x2="345" y2="112" stroke="#15803d" stroke-width="2.5"></line>
+            <line x1="300" y1="101" x2="315" y2="101" stroke="#15803d" stroke-width="2"></line>
+            <line x1="345" y1="101" x2="360" y2="101" stroke="#15803d" stroke-width="2"></line>
+            <text x="330" y="128" font-size="12" text-anchor="middle" font-weight="700" fill="#16a34a">無効電力を供給</text>
+          </svg>
+          <figcaption>図2: コイルは無効電力を吸収し、コンデンサは供給する。調相設備はこれを使って電圧を調整する</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 無効電力と電圧：電圧を支える力と、その局所性</h2>
+        <p>
+          無効電力の最も大切な役割は、<strong>電圧を支える</strong>ことです。ある地点で無効電力が
+          <strong>不足すると電圧は下がり</strong>、<strong>余ると電圧は上がります</strong>。
+          電圧を適正な範囲（たとえば定格の±数%）に保つには、無効電力の需給を各地でバランスさせる必要があります。
+        </p>
+        <p>
+          ここで、A領域や <a href="../e-market/02-simultaneous-balancing.html">E-02: 計画値同時同量</a> で扱う
+          <strong>有効電力と周波数</strong>の関係と対比すると、見通しがよくなります。
+        </p>
+        <ul>
+          <li><strong>有効電力 P の需給バランス → 周波数</strong>（全国で1つ。系統全体で共通）</li>
+          <li><strong>無効電力 Q の需給バランス → 電圧</strong>（<strong>場所ごと</strong>に決まる。局所的）</li>
+        </ul>
+        <p>
+          決定的な違いは<strong>局所性</strong>です。無効電力は<strong>遠くへ送れません</strong>。
+          無効電力を送電線（リアクタンス X が大きい、A-03）で長距離送ろうとすると、その途中でさらに電圧が下がってしまい、
+          送るほど電圧維持が苦しくなります。だから無効電力は「困っている場所の<strong>近く</strong>で供給する」のが原則で、
+          各地の変電所の調相設備や、その地域の発電機のAVRが電圧を支えます。
+          一方、<strong>有効電力は遠くの発電所からでも送れる</strong>（A-02）——ここが両者の大きな違いです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 180" role="img"
+               aria-label="送電端から受電端へ送電線（リアクタンス）を通じて送ると、無効電力の流れによって受電端の電圧が送電端より下がる様子。無効電力は近くの調相設備で補う"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="a4-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 送電端 母線 -->
+            <line x1="50" y1="45" x2="50" y2="110" stroke="#1a1a2e" stroke-width="4"></line>
+            <text x="50" y="35" font-size="11" text-anchor="middle" fill="#1a1a2e">送電端</text>
+            <text x="50" y="128" font-size="12" text-anchor="middle" font-weight="700" fill="#16a34a">電圧 高</text>
+            <!-- 受電端 母線 -->
+            <line x1="360" y1="45" x2="360" y2="110" stroke="#1a1a2e" stroke-width="4"></line>
+            <text x="360" y="35" font-size="11" text-anchor="middle" fill="#1a1a2e">受電端</text>
+            <text x="330" y="128" font-size="12" text-anchor="middle" font-weight="700" fill="#dc2626">電圧 低</text>
+            <!-- 送電線（リアクタンス X） -->
+            <line x1="54" y1="77" x2="356" y2="77" stroke="#4a5568" stroke-width="2" marker-end="url(#a4-ah)"></line>
+            <text x="205" y="68" font-size="11" text-anchor="middle" fill="#4a5568">送電線（リアクタンス X）を通ると電圧が降下</text>
+            <!-- 調相設備（受電端の近く） -->
+            <line x1="360" y1="110" x2="360" y2="140" stroke="#15803d" stroke-width="1.8"></line>
+            <line x1="350" y1="140" x2="370" y2="140" stroke="#15803d" stroke-width="2.5"></line>
+            <line x1="350" y1="148" x2="370" y2="148" stroke="#15803d" stroke-width="2.5"></line>
+            <text x="250" y="165" font-size="10" text-anchor="start" fill="#15803d">近くの調相設備で無効電力を補い電圧を支える</text>
+          </svg>
+          <figcaption>図3: 無効電力は遠くへ送ると電圧が下がる（局所的）。困っている場所の近くで供給するのが原則</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 電圧・無効電力による混雑</h2>
+        <p>
+          <a href="../b-congestion/01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a> で、送電容量は
+          「熱的制約や、系統の<strong>安定度・電圧</strong>などから決まる」と述べました。ここがその回収です。
+          混雑（送電の上限）は、熱容量だけで決まるわけではありません。
+        </p>
+        <p>
+          第一に、送電線や変圧器が負担するのは皮相電力 S です。無効電力 Q が大きい（<strong>力率が悪い</strong>）と、
+          同じ S の設備でも送れる有効電力 P が減ってしまいます（P = S × 力率）。逆に、調相設備で
+          <strong>力率を改善すれば、同じ設備でより多くの有効電力を送れます</strong>。
+        </p>
+        <div class="math-block"
+             data-tex="P = S \times \text{力率}"
+             data-fallback="P = S × 力率（力率が良いほど、同じ設備で送れる有効電力Pが大きい）"></div>
+        <p>
+          第二に、より本質的なのが<strong>電圧の制約</strong>です。送電を増やしていくと、受電端の電圧が維持できなくなる限界に達します。
+          このとき、たとえ<strong>熱容量にはまだ余裕があっても</strong>、電圧を保てないためにそれ以上送れません（電圧安定度の限界）。
+          これも立派な"送電の上限"＝混雑要因です。
+        </p>
+        <p>
+          <a href="../d-algorithms/03-scuc-sced-overview.html">D-03</a> の潮流制約は、主に有効電力と熱容量の話でした。
+          しかし実際の系統（交流）では、こうした<strong>電圧・無効電力の制約</strong>も送電の上限を決めます。
+          有効電力の潮流だけを見る近似（DC潮流）と、電圧まで含めて見る計算（AC潮流）がどう違い、
+          いつその違いが効くのかは、<a href="../c-grid-model/index.html">C領域</a>の後続ユニットで扱います。
+          ここでは「<strong>混雑は熱容量だけでなく、電圧・無効電力の面でも生じる</strong>」ことを押さえてください。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 440 180" role="img"
+               aria-label="送電量を増やしていくと、熱容量の上限に達する前に、電圧で決まる上限（より低い）に先にぶつかることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 軸 -->
+            <line x1="60" y1="20" x2="60" y2="140" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="60" y1="140" x2="410" y2="140" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="60" y="158" font-size="10" text-anchor="middle" fill="#4a5568">送電量</text>
+            <!-- 熱容量の上限（高い） -->
+            <line x1="60" y1="34" x2="410" y2="34" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6 4"></line>
+            <text x="405" y="28" font-size="11" text-anchor="end" fill="#dc2626">熱容量の上限</text>
+            <!-- 電圧で決まる上限（より低い） -->
+            <line x1="60" y1="78" x2="410" y2="78" stroke="#d97706" stroke-width="1.5" stroke-dasharray="6 4"></line>
+            <text x="405" y="72" font-size="11" text-anchor="end" fill="#b45309">電圧で決まる上限（先にぶつかる）</text>
+            <!-- 実際に送れる範囲のバー -->
+            <rect x="150" y="78" width="70" height="62" fill="#fef3c7" stroke="#d97706"></rect>
+            <text x="185" y="120" font-size="10" text-anchor="middle" fill="#92400e">ここまで</text>
+            <text x="185" y="133" font-size="10" text-anchor="middle" fill="#92400e">しか送れない</text>
+          </svg>
+          <figcaption>図4: 熱容量に余裕があっても、電圧で決まる上限に先にぶつかることがある。これも混雑（送電の上限）</figcaption>
+        </figure>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（力率） -->
+        <div class="exercise" data-exercise-id="a-04-ex01" data-type="numeric">
+          <h3>演習 1: 力率を求める</h3>
+          <div class="exercise-problem">
+            <p>
+              ある負荷の有効電力は P = 80 MW、無効電力は Q = 60 Mvar である。
+              この負荷の力率はいくらか（電力の三角形から求めよ）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              力率:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal">
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-04-ex01",
+          "type": "numeric",
+          "correct": 0.8,
+          "tolerance": 0.01,
+          "explanation": "まず皮相電力 S = √(P² + Q²) = √(80² + 60²) = √(6400 + 3600) = √10000 = 100 MVA。力率 = P / S = 80 / 100 = 0.8 です。P と Q を直角に合成する『電力の三角形』は、A-03のインピーダンス三角形（Z=√(R²+X²)）と同じ形になっています（80-60-100 は 8-6-10 の直角三角形）。"
+        }
+        </script>
+
+        <!-- 演習2: multi-choice（無効電力と電圧の性質） -->
+        <div class="exercise" data-exercise-id="a-04-ex02" data-type="multi-choice">
+          <h3>演習 2: 無効電力と電圧の性質</h3>
+          <div class="exercise-problem">
+            <p>有効電力・無効電力・電圧について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="a-04-ex02" value="1">
+              <span>ある地点で無効電力が不足すると、その地点の電圧は下がる傾向がある</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-04-ex02" value="2">
+              <span>理想的なコイル（リアクタンス）は有効電力を消費しないが、無効電力をやり取りする</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-04-ex02" value="3">
+              <span>無効電力は有効電力と同じように、遠くの発電所から長距離を送るのに向いている</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-04-ex02" value="4">
+              <span>コンデンサ（進相設備）は無効電力を供給し、電圧を持ち上げるのに使える</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-04-ex02",
+          "type": "multi-choice",
+          "correct": ["1", "2", "4"],
+          "explanation": "1は無効電力と電圧の関係（不足→電圧低下）、2はA-03で学んだリアクタンスの性質（有効電力は消費せず無効電力をやり取り）、4はコンデンサ（進相設備）が無効電力を供給して電圧を上げること。いずれも正しい。3は誤りで、無効電力は長距離送電に向きません（送電線のリアクタンスで途中の電圧が下がってしまうため、近くで供給するのが原則）。有効電力は遠くへ送れる点と対照的です。"
+        }
+        </script>
+
+        <!-- 演習3: choice（電圧・無効電力による混雑） -->
+        <div class="exercise" data-exercise-id="a-04-ex03" data-type="choice">
+          <h3>演習 3: 電圧の面での送電の上限</h3>
+          <div class="exercise-problem">
+            <p>
+              ある送電線は、熱容量（熱的制約）にはまだ余裕があるのに、これ以上送電を増やせないことがある。
+              その理由として最も適切なものはどれか。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-04-ex03" value="1">
+              <span>送電を増やすと受電端の電圧が維持できなくなり、電圧の面で送電が制限されるため</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-04-ex03" value="2">
+              <span>熱容量に余裕がある限り、電圧とは無関係にいくらでも送電できるため、上限はない</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-04-ex03" value="3">
+              <span>無効電力は電圧とは無関係で、送電量の上限とはまったく関係しないため</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-04-ex03",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "送電量を増やすと受電端の電圧が維持できなくなる限界（電圧安定度の限界）に達し、熱容量に余裕があっても送電が制限されます。これも送電の上限＝混雑要因です。したがって選択肢2は誤り（熱容量に余裕でも電圧で制限されうる）。無効電力は電圧を支える主役なので選択肢3も誤りです。混雑は熱容量だけでなく、電圧・無効電力の面でも生じます。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="03-impedance-reactance.html" class="unit-nav-prev">&larr; インピーダンスとリアクタンス</a>
+      <a href="../b-congestion/index.html" class="unit-nav-next">次の領域へ: B 系統混雑 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>
