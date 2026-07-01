@@ -513,10 +513,32 @@ function setupGlossary() {
 }
 
 /* ============================================================
+   フッターのアクセス解析注記（第2章 2.4）
+   Google Analytics（Cookie 使用）の利用を全ページのフッターに明記する。
+   footer は各HTMLに静的に置かれるため、注記はここで一元的に挿入し、
+   追加漏れ（ページごとのドリフト）を防ぐ（ヘッダー生成と同じ方針）。
+   ============================================================ */
+function renderFooterNote() {
+  const footer = document.querySelector('.site-footer');
+  if (!footer || footer.querySelector('.footer-privacy')) return;
+  const link = el('a', {
+    href: 'https://policies.google.com/privacy',
+    target: '_blank',
+    rel: 'noopener noreferrer',
+  }, 'Google のプライバシーポリシー');
+  const note = el('p', { class: 'footer-privacy' }, [
+    'このサイトは、公開版でのアクセス状況の把握に Google アナリティクス（Cookie を使用）を利用します。',
+    'ローカル（file://）での閲覧時は計測しません。詳しくは ', link, ' をご覧ください。',
+  ]);
+  footer.appendChild(note);
+}
+
+/* ============================================================
    初期化
    ============================================================ */
 function init() {
   buildHeader();
+  renderFooterNote();      // 全ページのフッターにアクセス解析の注記を挿入
   renderTopPage();         // .domain-cards があるときのみ動作
   renderDomainTopPage();   // .unit-list があるときのみ動作
   renderMath();            // .math-block があるときのみ動作

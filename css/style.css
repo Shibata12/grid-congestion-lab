@@ -264,6 +264,14 @@ section { margin-bottom: var(--space-2xl); }
   padding: var(--space-xl) var(--space-md);
 }
 .site-footer p { margin: 0 0 var(--space-sm); }
+.footer-privacy {
+  max-width: 42rem;
+  margin: var(--space-md) auto 0;
+  font-size: var(--font-size-xs);
+  line-height: 1.7;
+}
+.footer-privacy a { color: var(--color-text-light); text-decoration: underline; }
+.footer-privacy a:hover { color: var(--color-primary); }
 
 /* ------------------------------------------------------------
    トップページ
