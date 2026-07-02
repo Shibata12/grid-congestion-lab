@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D-04: 想定故障計算とLODF - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="d" data-unit="d-04">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">D: 混雑計算のアルゴリズム</a> &gt;
+      <span>想定故障計算とLODF</span>
+    </nav>
+
+    <article>
+      <h1>D-04: 想定故障計算とLODF</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="../b-congestion/01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a> で、
+        並列2回線の1回線が止まると潮流が残りの回線へ移る（<strong>転流</strong>）ことを学びました。
+        本ユニットは、この「止まったら、どこへ・どれだけ移るか」に
+        <span class="term">LODF<span class="term-tooltip">Line Outage Distribution Factor。ある線路が停止したとき、そこに流れていた潮流が別の線路へ上乗せされる割合。線形性により固定の値として事前に計算できる。</span></span>という<strong>割合の名前</strong>を付けて、
+        N-1の混雑チェックを<strong>足し算だけ</strong>で回せるようにする話です。
+        新しく覚える式は1本だけ。「事故後の潮流 ＝ 事故前の潮流 ＋ LODF × 停止した線路の潮流」——これでN-1違反を判定できるようになります。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>（それぞれ1行で思い出せればOKです）：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../b-congestion/01-congestion-and-n1.html">B-01</a>：1回線が停止すると、その潮流は消えずに残りへ移る（転流）</li>
+          <li><a href="01-ptdf-sensitivity.html">D-01</a>：「割合の係数」を事前に持っておくと、潮流の変化が掛け算で分かる（PTDF）</li>
+          <li><a href="../c-grid-model/04-dc-and-ac-power-flow.html">C-04</a>：DC潮流は線形なので、潮流の変化は足し算できる</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：LODFの導出（Yバスからの計算式）には踏み込まず、<strong>意味と使い方</strong>に絞ります。
+          数値はDC潮流（C-04）の範囲です。一般的な系統解析の標準的な内容のため、参考資料はありません。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 中給は毎日「もしも」を大量にチェックしている</a></li>
+          <li><a href="#section-2">2. 停止した潮流はどこへ行くか：LODF</a></li>
+          <li><a href="#section-3">3. 「割合の表」を先に作る：N-1の高速チェック</a></li>
+          <li><a href="#section-4">4. SCUC/SCEDの「Security」の完成形</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 中給は毎日「もしも」を大量にチェックしている</h2>
+        <p>
+          B-01のN-1基準は、「<strong>どの設備が1つ止まっても</strong>、残りが過負荷にならないこと」でした。
+          これを確認するには、「この線路が止まったら？」「あの変圧器が止まったら？」という
+          想定故障を<strong>1つずつ仮定して</strong>、そのたびに潮流を調べる必要があります。
+        </p>
+        <p>
+          問題はその<strong>量</strong>です。翌日の計画なら30分コマが48個（<a href="../f-dispatch-system/04-computation-timing.html">F-04</a>）、
+          想定故障は基幹系統だけでも数多くあり、そのそれぞれで全線路の潮流を確かめます。
+          つまり「コマの数 × 想定故障の数 × 線路の数」のチェックを、毎日繰り返すことになります。
+        </p>
+        <p>
+          <a href="../c-grid-model/02-system-data-and-inputs.html">C-02: 系統データと混雑計算のインプット</a> では、
+          その1回分のやり方として「停止した線路をYバスから除いて（作り直して）、潮流を計算し直す」方法を学びました。
+          これは正攻法ですが、故障の数だけYバスを作り直して解き直すのは、計算として重い作業です。
+          幸い、DC潮流の世界には<strong>近道</strong>があります。それが本ユニットの主役、LODFです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="正攻法は想定故障ごとにYバスを作り直して潮流計算をやり直す。近道は事前にLODFの表を1回計算しておき、あとはどの故障も足し算でチェックする、という対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="30" width="200" height="125" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="120" y="52" font-size="11" text-anchor="middle" fill="#4a5568" font-weight="bold">正攻法（C-02の方法）</text>
+            <text x="35" y="78" font-size="9.5" fill="#1a1a2e">故障1 → Yバス作り直し → 解き直し</text>
+            <text x="35" y="100" font-size="9.5" fill="#1a1a2e">故障2 → Yバス作り直し → 解き直し</text>
+            <text x="35" y="122" font-size="9.5" fill="#1a1a2e">故障3 → …（故障の数だけ繰り返し）</text>
+            <text x="35" y="144" font-size="9.5" fill="#dc2626">→ 正確だが、量が多いと重い</text>
+            <rect x="240" y="30" width="200" height="125" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="340" y="52" font-size="11" text-anchor="middle" fill="#d97706" font-weight="bold">近道（本ユニット：LODF）</text>
+            <text x="255" y="78" font-size="9.5" fill="#1a1a2e">事前に「割合の表」を1回だけ計算</text>
+            <text x="255" y="100" font-size="9.5" fill="#1a1a2e">あとは、どの故障も</text>
+            <text x="255" y="122" font-size="9.5" fill="#1a1a2e">事故後潮流 ＝ 足し算 で即チェック</text>
+            <text x="255" y="144" font-size="9.5" fill="#d97706">→ 大量のチェックが速い</text>
+            <text x="230" y="180" font-size="10" text-anchor="middle" fill="#4a5568">N-1チェック＝「コマの数 × 想定故障の数 × 線路の数」を毎日</text>
+          </svg>
+          <figcaption>図1: N-1チェックの2つのやり方。LODFは「割合の表」を先に作っておく近道</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 停止した潮流はどこへ行くか：LODF</h2>
+        <p>
+          まず具体例から始めます。2つの母線の間に、<strong>線路k</strong>（100 MW が流れている）と、
+          2本の<strong>迂回路</strong>（①には 50 MW、②には 30 MW）があるとします。
+          ここで線路kが停止すると、B-01で学んだとおり、kが運んでいた 100 MW は消えてなくなりません。
+          <strong>残った迂回路①と②が引き受けます</strong>。
+        </p>
+        <p>
+          では、①と②にどう分かれるのでしょうか。ここは
+          <a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02: 潮流計算の基礎</a> と同じ発想で、
+          <strong>リアクタンス（電気的な距離）に反比例</strong>して分かれます。
+          いま①に60%、②に40%が行くとしましょう。①には 60 MW、②には 40 MW が<strong>上乗せ</strong>され、
+          事故後の潮流は ①が 50 + 60 = <strong>110 MW</strong>、②が 30 + 40 = <strong>70 MW</strong> になります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="事故前は線路kに100MW、迂回路①に50MW、迂回路②に30MWが流れている。線路kが停止すると、100MWの60%が迂回路①に、40%が迂回路②に上乗せされ、①は110MW、②は70MWになる図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="d4-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 事故前 -->
+            <text x="115" y="20" font-size="12" text-anchor="middle" fill="#1a1a2e">事故前</text>
+            <line x1="40" y1="40" x2="40" y2="150" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="190" y1="40" x2="190" y2="150" stroke="#1a1a2e" stroke-width="4"></line>
+            <path d="M44,60 Q115,38 186,60" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#d4-ah)"></path>
+            <text x="115" y="44" font-size="9.5" text-anchor="middle" fill="#16a34a">迂回路①: 50</text>
+            <line x1="44" y1="95" x2="186" y2="95" stroke="#16a34a" stroke-width="2.5" marker-end="url(#d4-ah)"></line>
+            <text x="115" y="88" font-size="9.5" text-anchor="middle" fill="#16a34a">線路k: 100</text>
+            <path d="M44,130 Q115,152 186,130" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#d4-ah)"></path>
+            <text x="115" y="166" font-size="9.5" text-anchor="middle" fill="#16a34a">迂回路②: 30</text>
+            <!-- 矢印 -->
+            <text x="222" y="100" font-size="20" fill="#4a5568">⇒</text>
+            <!-- 事故後 -->
+            <text x="355" y="20" font-size="12" text-anchor="middle" fill="#1a1a2e">線路k の停止後</text>
+            <line x1="280" y1="40" x2="280" y2="150" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="430" y1="40" x2="430" y2="150" stroke="#1a1a2e" stroke-width="4"></line>
+            <path d="M284,60 Q355,38 426,60" fill="none" stroke="#dc2626" stroke-width="3" marker-end="url(#d4-ah)"></path>
+            <text x="355" y="44" font-size="9.5" text-anchor="middle" fill="#dc2626">①: 50+60＝110</text>
+            <line x1="284" y1="95" x2="426" y2="95" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4 4"></line>
+            <text x="355" y="88" font-size="9.5" text-anchor="middle" fill="#94a3b8">線路k: 停止 ×</text>
+            <path d="M284,130 Q355,152 426,130" fill="none" stroke="#d97706" stroke-width="2.5" marker-end="url(#d4-ah)"></path>
+            <text x="355" y="166" font-size="9.5" text-anchor="middle" fill="#d97706">②: 30+40＝70</text>
+            <text x="230" y="192" font-size="10" text-anchor="middle" fill="#4a5568">kの100 MWが、①に60%・②に40%の割合で上乗せされる</text>
+          </svg>
+          <figcaption>図2: 停止した線路の潮流は、残りの迂回路へ割合を持って上乗せされる</figcaption>
+        </figure>
+
+        <p>
+          ここで大事なのは、この「<strong>60%</strong>」という割合が、系統のつながり方とリアクタンスだけで決まる
+          <strong>固定の値</strong>だということです（潮流が何MWかには依りません——DC潮流が線形だからです。C-04）。
+          この割合に付けた名前が <strong>LODF</strong>（Line Outage Distribution Factor）です。
+        </p>
+        <div class="math-block"
+             data-tex="\text{LODF} = \dfrac{\text{その線路に上乗せされる潮流}}{\text{停止した線路の（事故前の）潮流}}"
+             data-fallback="LODF = その線路に上乗せされる潮流 ÷ 停止した線路の（事故前の）潮流"></div>
+        <p>
+          LODFが分かっていれば、事故後の潮流は次の1本の式で求められます。これが本ユニットで覚える唯一の式です。
+        </p>
+        <div class="math-block"
+             data-tex="\text{事故後の潮流} = \text{事故前の潮流} + \text{LODF} \times \text{停止した線路の潮流}"
+             data-fallback="事故後の潮流 = 事故前の潮流 + LODF × 停止した線路の潮流"></div>
+        <p>
+          先ほどの迂回路①なら、50 + 0.6 × 100 = <strong>110 MW</strong>。
+          もし①の送電容量が 105 MW なら、110 &gt; 105 なので<strong>N-1違反</strong>と判定できます。
+          B-01の混雑判定（潮流 &gt; 容量）を、事故後の潮流に当てはめただけです。
+        </p>
+        <p>
+          そして、B-01の<strong>並列2回線</strong>を思い出してください。あのときは迂回路が
+          <strong>1本しかなかった</strong>ので、停止した回線の潮流は全部（100%）が残り1回線へ移りました。
+          つまりあれは <strong>LODF ＝ 1.0 の特別な場合</strong>だったのです。
+          式で書けば 80 + 1.0 × 80 = 160 MW——B-01で「転流して160 MW」と言ったことと、ぴったり一致します。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 175" role="img"
+               aria-label="並列2回線で1回線が停止すると迂回路は残り1本しかないためLODFは1.0となり、残り回線の潮流は80+1.0×80=160MWになる図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="d4-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <text x="115" y="20" font-size="12" text-anchor="middle" fill="#1a1a2e">平常時</text>
+            <line x1="40" y1="35" x2="40" y2="115" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="190" y1="35" x2="190" y2="115" stroke="#1a1a2e" stroke-width="4"></line>
+            <path d="M44,55 Q115,35 186,55" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#d4-ah2)"></path>
+            <text x="115" y="40" font-size="9.5" text-anchor="middle" fill="#16a34a">回線1: 80</text>
+            <path d="M44,90 Q115,110 186,90" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#d4-ah2)"></path>
+            <text x="115" y="108" font-size="9.5" text-anchor="middle" fill="#16a34a">回線2: 80</text>
+            <text x="222" y="80" font-size="20" fill="#4a5568">⇒</text>
+            <text x="355" y="20" font-size="12" text-anchor="middle" fill="#1a1a2e">回線2 停止後</text>
+            <line x1="280" y1="35" x2="280" y2="115" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="430" y1="35" x2="430" y2="115" stroke="#1a1a2e" stroke-width="4"></line>
+            <path d="M284,55 Q355,35 426,55" fill="none" stroke="#dc2626" stroke-width="3" marker-end="url(#d4-ah2)"></path>
+            <text x="355" y="40" font-size="9.5" text-anchor="middle" fill="#dc2626">回線1: 80+1.0×80＝160</text>
+            <path d="M284,90 Q355,110 426,90" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4 4"></path>
+            <text x="355" y="108" font-size="9.5" text-anchor="middle" fill="#94a3b8">回線2: 停止 ×</text>
+            <text x="230" y="145" font-size="10" text-anchor="middle" fill="#4a5568">迂回路が1本だけなら、上乗せの割合は100%（LODF＝1.0）</text>
+            <text x="230" y="163" font-size="10" text-anchor="middle" fill="#4a5568">B-01の「転流」は、LODF＝1.0 の特別な場合だった</text>
+          </svg>
+          <figcaption>図3: B-01の並列2回線をLODFの式で見直すと、LODF＝1.0の特別な場合と分かる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 「割合の表」を先に作る：N-1の高速チェック</h2>
+        <p>
+          LODFは潮流の値に依らない固定の割合なので、系統の構成（トポロジー、C-02）が決まった時点で、
+          「<strong>どの線路が止まったら、どの線路に何%上乗せされるか</strong>」の表を<strong>先に1回だけ</strong>計算しておけます。
+        </p>
+        <p>
+          あとは、コマごと・想定故障ごとのチェックが<strong>掛け算と足し算だけ</strong>になります。
+          事故前の潮流（これは平常時の潮流計算で分かっています）に、LODF × 停止線路の潮流を足して、容量と比べる——それだけです。
+          Yバスを故障ごとに作り直して解き直す必要はありません
+          （C-02で学んだ「作り直し」は、系統の構成が変わってLODFの表そのものを更新するときに登場します。役割分担です）。
+        </p>
+        <p>
+          お気づきのとおり、これは <a href="01-ptdf-sensitivity.html">D-01: PTDFと感度分析</a> とまったく同じ発想です。
+          <strong>PTDF</strong>は「<strong>注入が変わったら</strong>、潮流はどれだけ変わるか」の係数、
+          <strong>LODF</strong>は「<strong>線路が止まったら</strong>、潮流はどれだけ変わるか」の係数。
+          どちらも、DC潮流の線形性（C-04）がくれた<strong>固定の割合係数（感度係数）の兄弟</strong>です。
+        </p>
+        <p>
+          こうしてN-1違反が<strong>事前に</strong>見つかったら、どうするのでしょうか。
+          事故が起きてからでは間に合わないので、<strong>平常時の潮流のほうを下げて</strong>おきます。
+          その手段が、すでに学んだ再給電（<a href="02-redispatch.html">D-02</a>）や
+          出力制御（<a href="../e-market/06-renewable-curtailment.html">E-06</a>）です。
+          B-01で「N-1のために平常時は容量いっぱいまで流せない」と言ったことの、計算面での正体がこれです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. SCUC/SCEDの「Security」の完成形</h2>
+        <p>
+          最後に、<a href="03-scuc-sced-overview.html">D-03: SCUC/SCEDの概要</a> とのつながりです。
+          D-03では潮流制約を「各送電線の（平常時の）潮流 ≤ 容量」と書きました。
+          実は <strong>Security Constrained</strong> の本来の意味はもう一歩先にあります——
+          「<strong>どの想定故障の後でも</strong>、潮流 ≤ 容量」。つまりN-1後の潮流まで含めて制約するのです。
+        </p>
+        <p>
+          これができるのもLODFのおかげです。事故後の潮流は「事故前の潮流 ＋ LODF × 停止線路の潮流」という
+          <strong>足し算の式</strong>で書けるので、平常時の制約と同じ形で最適化にそのまま入れられます。
+          これでD領域の道具が一通りそろいました。
+          PTDF（D-01）で潮流を係数で表し、再給電（D-02）で動かし方を知り、SCUC/SCED（D-03）で最適に決め、
+          LODF（D-04）で<strong>N-1まで見張る</strong>——混雑計算の背骨は、この4つでできています。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（LODF式の適用） -->
+        <div class="exercise" data-exercise-id="d-04-ex01" data-type="numeric">
+          <h3>演習 1: 事故後の潮流を求める</h3>
+          <div class="exercise-problem">
+            <p>
+              線路kには事故前 100 MW、線路ℓには事故前 60 MW が流れている。
+              線路kが停止したときの線路ℓへのLODFは 0.6 である。
+              線路kが停止した後、線路ℓに流れる潮流は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              事故後の線路ℓの潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-04-ex01",
+          "type": "numeric",
+          "correct": 120,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "事故後の潮流 = 事故前の潮流 + LODF × 停止した線路の潮流 = 60 + 0.6 × 100 = 120 MW。もし線路ℓの送電容量が 110 MW なら、120 > 110 なのでこの想定故障はN-1違反であり、再給電（D-02: 再給電（リディスパッチ））などで平常時の潮流を下げておく必要があります。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（並列2回線＝LODF1.0の回収） -->
+        <div class="exercise" data-exercise-id="d-04-ex02" data-type="numeric">
+          <h3>演習 2: 並列2回線をLODFの式で</h3>
+          <div class="exercise-problem">
+            <p>
+              並列2回線に各 80 MW（合計 160 MW）が流れている。迂回路は残り1回線しかないため、
+              1回線停止時のLODFは 1.0 である。1回線が停止した後、残り回線に流れる潮流を
+              「事故後の潮流 ＝ 事故前の潮流 ＋ LODF × 停止した線路の潮流」の式で求めよ。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              残り回線の事故後の潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-04-ex02",
+          "type": "numeric",
+          "correct": 160,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "事故後の潮流 = 80 + 1.0 × 80 = 160 MW。B-01: 混雑の判定とN-1基準 の演習で「転流して160 MW」と求めた答えに、今度は式でたどり着きました。迂回路が1本しかないときは上乗せの割合が100%になる、つまりB-01の転流はLODF＝1.0の特別な場合です。"
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（LODFとN-1計算の理解） -->
+        <div class="exercise" data-exercise-id="d-04-ex03" data-type="multi-choice">
+          <h3>演習 3: LODFとN-1計算の理解</h3>
+          <div class="exercise-problem">
+            <p>LODFとN-1の計算に関する記述として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="d-04-ex03" value="1">
+              <span>LODFは、停止した線路の潮流が別の線路へ上乗せされる割合を表す</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-04-ex03" value="2">
+              <span>LODFが固定の値として事前に計算できるのは、DC潮流が線形だからである</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-04-ex03" value="3">
+              <span>N-1のチェックでは、想定故障ごとに毎回Yバスを作り直して潮流計算をやり直す以外に方法はない</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-04-ex03" value="4">
+              <span>SCUC/SCEDの「Security Constrained」には、想定故障の後の潮流を容量内に収める制約も含まれる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-04-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "4"],
+          "explanation": "1はLODFの定義、2はその根拠（C-04: DC潮流とAC潮流 で学んだ線形性）、4はSecurity Constrainedの本来の意味で、いずれも正しい。3は誤りで、LODFの表を事前に作っておけば、事故後の潮流は足し算だけで求められ、Yバスを毎回作り直す必要はありません（作り直しは、系統構成が変わってLODFの表を更新するときに使います）。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="03-scuc-sced-overview.html" class="unit-nav-prev">&larr; SCUC/SCEDの概要</a>
+      <a href="../e-market/index.html" class="unit-nav-next">次の領域へ: E 電力市場 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

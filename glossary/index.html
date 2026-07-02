@@ -141,9 +141,19 @@
       <div class="glossary-entry" data-domain="b,d" id="term-n-1">
         <dt>N-1基準</dt>
         <dd>
-          <p>N個の設備のうち任意の1つが停止しても（N−1個になっても）、残りの設備が過負荷にならず系統運用を維持できるように運用する考え方。単一設備故障基準。想定故障を1つずつ仮定して評価する。</p>
+          <p>N個の設備のうち任意の1つが停止しても（N−1個になっても）、残りの設備が過負荷にならず系統運用を維持できるように運用する考え方。単一設備故障基準。想定故障を1つずつ仮定して評価する。評価の高速な計算方法はLODFを参照。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>、<a href="../units/d-algorithms/04-contingency-analysis-and-lodf.html">D-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d,b" id="term-lodf">
+        <dt>LODF（Line Outage Distribution Factor）</dt>
+        <dd>
+          <p>ある線路が停止したとき、そこに流れていた潮流が別の線路へ上乗せされる割合。事故後の潮流＝事故前の潮流＋LODF×停止した線路の潮流。DC潮流の線形性により固定の値として事前に計算でき、N-1の混雑チェックを足し算で高速に回せる。PTDF（注入の変化に対する係数）の兄弟にあたる感度係数。並列2回線の転流はLODF＝1.0の特別な場合。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/04-contingency-analysis-and-lodf.html">D-04</a>
           </p>
         </dd>
       </div>
@@ -191,9 +201,9 @@
       <div class="glossary-entry" data-domain="d" id="term-sensitivity">
         <dt>感度（感度分析）</dt>
         <dd>
-          <p>ある入力の変化が出力に与える影響の度合い。系統では、注入の変化が各送電線の潮流をどれだけ動かすか（PTDF）を指す。混雑解消では、どの発電機を動かすと効くかを感度で見積もる。</p>
+          <p>ある入力の変化が出力に与える影響の度合い。系統では、注入の変化が各送電線の潮流をどれだけ動かすか（PTDF）や、線路の停止が他の線路の潮流をどれだけ増やすか（LODF）を指す。混雑解消では、どの発電機を動かすと効くかを感度で見積もる。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>
+            関連ユニット: <a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>、<a href="../units/d-algorithms/04-contingency-analysis-and-lodf.html">D-04</a>
           </p>
         </dd>
       </div>
@@ -431,9 +441,9 @@
       <div class="glossary-entry" data-domain="b,d" id="term-contingency">
         <dt>想定故障（コンティンジェンシー）</dt>
         <dd>
-          <p>系統の健全性を評価するために仮定する設備故障のケース。N-1基準では、送電線や変圧器などが1つ停止する想定故障を1つずつ仮定し、各ケースで過負荷が生じないか確認する。</p>
+          <p>系統の健全性を評価するために仮定する設備故障のケース。N-1基準では、送電線や変圧器などが1つ停止する想定故障を1つずつ仮定し、各ケースで過負荷が生じないか確認する。大量の想定故障を高速にチェックする方法はLODFを参照。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>、<a href="../units/d-algorithms/04-contingency-analysis-and-lodf.html">D-04</a>
           </p>
         </dd>
       </div>

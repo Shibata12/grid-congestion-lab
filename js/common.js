@@ -91,6 +91,8 @@ const SITE_STRUCTURE = {
         summary: 'PTDFを使い、需給を保ちながら複数の発電機の出力調整で混雑を解消する手順を学ぶ。' },
       { id: 'd-03', title: 'SCUC/SCEDの概要', file: '03-scuc-sced-overview.html', exerciseCount: 3,
         summary: '再給電を最適化問題として定式化する。目的関数（発電コスト最小）と制約（需給・潮流・出力上下限）、SCUCとSCEDの違い、二段階構成を学ぶ。' },
+      { id: 'd-04', title: '想定故障計算とLODF', file: '04-contingency-analysis-and-lodf.html', exerciseCount: 3,
+        summary: '停止した線路の潮流が残りへ上乗せされる割合（LODF）で、N-1の混雑チェックを足し算で高速に回す方法を学ぶ。B-01の転流の式化であり、Security Constrainedの完成形。' },
     ],
   },
   e: {
