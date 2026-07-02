@@ -41,9 +41,9 @@
       <div class="glossary-entry" data-domain="b,e" id="term-available-capacity">
         <dt>空き容量</dt>
         <dd>
-          <p>送電線にまだ流せる余裕。従来は、接続済み電源が最大出力で同時に発電すると想定して計算されるため保守的になりがちで、実際には多くの時間帯で空きがある。ノンファーム型接続は、この空きを活用する仕組み。</p>
+          <p>送電線にまだ流せる余裕。運用容量からマージンと既に決まっている利用（計画潮流）を除いた残りで、新しい取引・接続に使える分（連系線では「空容量」と表記される）。従来は、接続済み電源が最大出力で同時に発電すると想定して計算されるため保守的になりがちで、実際には多くの時間帯で空きがある。ノンファーム型接続は、この空きを活用する仕組み。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/e-market/05-non-firm-connection.html">E-05</a>
           </p>
         </dd>
       </div>
@@ -84,6 +84,16 @@
           <p>交流回路における電流の流れにくさの総合的な指標。抵抗RとリアクタンスXを、向きの違う（直角な）2成分として合成したもので、その大きさは Z=√(R²+X²) と表せる（単純な足し算ではない）。記号Z、単位はオーム（Ω）。送電線では主にリアクタンスが効くため、Zはほぼリアクタンスに近い。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/a-grid-fundamentals/03-impedance-reactance.html">A-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-operating-capacity">
+        <dt>運用容量</dt>
+        <dd>
+          <p>送電線・連系線に流せる潮流の上限として運用上用いる値。熱容量・同期安定性・電圧安定性・周波数維持の4つの面の限度のうち、最小値で決まる。連系線ではOCCTOの運用容量検討会が算出方法・算出結果を公表している。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
           </p>
         </dd>
       </div>
@@ -298,6 +308,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b" id="term-frequency-maintenance">
+        <dt>周波数維持（の限度）</dt>
+        <dd>
+          <p>連系線の事故などで系統が分断された場合でも、エリアの周波数変動を許容範囲に収められる送電量の限界。運用容量を決める4つの限度の1つ。連系線の潮流が大きいほど、失われたときの需給の急変も大きくなる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-output-control">
         <dt>出力制御（出力抑制）</dt>
         <dd>
@@ -401,9 +421,9 @@
       <div class="glossary-entry" data-domain="b" id="term-line-capacity">
         <dt>送電容量</dt>
         <dd>
-          <p>送電線に流せる潮流の上限。熱的制約・安定度・電圧などで決まる（実務では運用容量・熱容量などの区別がある）。潮流がこれを超えると過負荷（混雑）となる。</p>
+          <p>送電線に流せる潮流の上限。熱的制約・安定度・電圧などで決まる（実務では運用容量・熱容量などの区別があり、B-02で扱う）。潮流がこれを超えると過負荷（混雑）となる。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+            関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>、<a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
           </p>
         </dd>
       </div>
@@ -498,12 +518,42 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b,a" id="term-voltage-stability">
+        <dt>電圧安定性</dt>
+        <dd>
+          <p>送電を増やしていくと、受電端の電圧を維持できなくなる限界。熱容量に余裕があっても、電圧の面で送電が制限されることがある。運用容量を決める4つの限度の1つ。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="a" id="term-power-triangle">
         <dt>電力の三角形</dt>
         <dd>
           <p>有効電力Pを底辺、無効電力Qを縦、皮相電力Sを斜辺とする直角三角形。S=√(P²+Q²)、力率=P/S。A-03のインピーダンス三角形（Z=√(R²+X²)）と同じ形で、電力の3要素の関係を表す。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-synchronous-stability">
+        <dt>同期安定性</dt>
+        <dd>
+          <p>交流系統の発電機が同期（同じ周波数での歩調）を保って運転を続けられる限界。送電量が大きい状態で事故などのショックが加わると、発電機が歩調を乱して運転を続けられなくなる（脱調）おそれがある。運用容量を決める4つの限度の1つ。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-thermal-capacity">
+        <dt>熱容量</dt>
+        <dd>
+          <p>導体が発熱で傷まない範囲で送電線に流せる限界（熱的制約）。送電線そのものの物理的な上限で、運用容量を決める4つの限度の1つ。熱容量に余裕があっても、安定性や電圧の限度が先に効くことがある。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
           </p>
         </dd>
       </div>
@@ -598,6 +648,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b" id="term-margin">
+        <dt>マージン</dt>
+        <dd>
+          <p>需給ひっ迫時の融通や周波数維持など万一の事態に備え、連系線の運用容量の一部としてあらかじめ確保しておく容量。広域機関（OCCTO）が算出・確保し、公表している。平常時の取引には使えないため、空き容量の計算で差し引く。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="a" id="term-reactive-power">
         <dt>無効電力（Q）</dt>
         <dd>
@@ -674,6 +734,16 @@
           <p>閉ループ（環状の経路）を含む系統。ある地点から別の地点への送電が複数経路に分配される。各経路の潮流はリアクタンスに反比例して決まる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-interconnector">
+        <dt>連系線（地域間連系線）</dt>
+        <dd>
+          <p>エリア（一般送配電事業者の供給区域）どうしを結ぶ送電線。運用容量・マージン・空容量が公表され、エリアをまたぐ取引はこの容量の範囲で行われる。連系線で起きる混雑（連系線混雑）は、地内混雑とは異なり市場の仕組みを通じて処理される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
           </p>
         </dd>
       </div>

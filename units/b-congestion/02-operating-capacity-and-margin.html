@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B-02: 運用容量とマージン - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="b" data-unit="b-02">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">B: 系統混雑</a> &gt;
+      <span>運用容量とマージン</span>
+    </nav>
+
+    <article>
+      <h1>B-02: 運用容量とマージン</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a> では、送電線の上限を「送電容量」と総称し、
+        「実務では運用容量・熱容量などの区別がある」と留保していました。本ユニットがその回収です。
+        送電の上限である<span class="term">運用容量<span class="term-tooltip">送電線・連系線に流せる潮流の上限として運用上用いる値。熱容量・同期安定性・電圧安定性・周波数維持の4つの限度のうち最小値で決まる。</span></span>が
+        <strong>4つの限度の最小値</strong>で決まることを理解し、
+        マージン・空き容量を含めた容量の内訳を計算できるようになります。あわせて、混雑が起きる場所として
+        <strong>地内（エリア内）と連系線（エリア間）</strong>の区別を押さえます。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          運用容量・マージンの<strong>考え方の枠組み</strong>を、OCCTO（電力広域的運営推進機関）の公開資料に基づいて扱います。
+          各連系線の実際の値や具体的な算出式、同期安定性の理論（発電機の動特性）には踏み込みません。
+          参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 「送電容量」の中身：4つの限度と運用容量</a></li>
+          <li><a href="#section-2">2. マージン：なぜ容量を使い切らないのか</a></li>
+          <li><a href="#section-3">3. 空き容量：あとどれだけ流せるか</a></li>
+          <li><a href="#section-4">4. 地内混雑と連系線混雑</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 「送電容量」の中身：4つの限度と運用容量</h2>
+        <p>
+          B-01では、送電線に流せる上限を「送電容量」と総称し、「熱的制約や、系統の安定度・電圧などから決まる」とだけ述べていました。
+          実務でこの上限にあたるのが<strong>運用容量</strong>です。OCCTOの公開資料では、エリア間を結ぶ連系線について、
+          運用容量は次の<strong>4つの面の限度をすべて満たす最小値</strong>として算出される、と説明されています。
+        </p>
+        <ul>
+          <li>
+            <strong>① 熱容量</strong>：B-01で学んだ熱的制約です。導体が発熱で傷まない範囲で流せる限界で、
+            送電線そのものの物理的な上限です。
+          </li>
+          <li>
+            <strong>② <span class="term">同期安定性<span class="term-tooltip">交流系統の発電機が同期（同じ周波数での歩調）を保って運転を続けられる限界。潮流が大きいほど、事故のショックで脱調しやすくなる。</span></span></strong>：
+            交流系統では、すべての発電機が同じ周波数で足並みをそろえて回転しています（これを<strong>同期</strong>といいます）。
+            送電量が大きい状態で事故などのショックが加わると、発電機が歩調を乱して運転を続けられなくなる（<strong>脱調</strong>）おそれがあります。
+            それを避けられる送電量の限界が同期安定性の限度です。
+          </li>
+          <li>
+            <strong>③ 電圧安定性</strong>：<a href="../a-grid-fundamentals/04-active-reactive-voltage.html">A-04: 有効電力・無効電力と電圧</a> で学んだ、
+            「熱容量に余裕があっても、受電端の電圧を維持できなくなる限界」です。A-04で見た"電圧の面での送電の上限"が、
+            ここで運用容量を決める限度の1つとして正式に登場します。
+          </li>
+          <li>
+            <strong>④ 周波数維持</strong>：連系線の事故などで系統が分断されると、それまでの融通が突然失われ、
+            エリアの需給バランス（<a href="../e-market/02-simultaneous-balancing.html">E-02: 計画値同時同量</a> で学んだ周波数）が大きく乱れます。
+            その周波数変動を許容範囲に収められる送電量の限界です。
+          </li>
+        </ul>
+        <div class="math-block"
+             data-tex="\text{運用容量} = \min(\text{熱容量},\ \text{同期安定性},\ \text{電圧安定性},\ \text{周波数維持})"
+             data-fallback="運用容量 = min（熱容量, 同期安定性, 電圧安定性, 周波数維持）"></div>
+        <p>
+          たとえば、ある連系線で4つの限度が 熱容量 1200 MW・同期安定性 900 MW・電圧安定性 1050 MW・周波数維持 1100 MW と
+          算出されたなら、運用容量は最も小さい <strong>900 MW</strong>（同期安定性で決まる）です。
+          どの限度が効くか（最小になるか）は、連系線や季節・系統の状態によって異なります。
+          OCCTOでは<strong>運用容量検討会</strong>が算出方法と結果を公表しています（末尾の<a href="#references">参考資料</a>）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 215" role="img"
+               aria-label="熱容量1200MW、同期安定性900MW、電圧安定性1050MW、周波数維持1100MWの4本のバーのうち、最小の同期安定性900MWが運用容量になることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 軸 -->
+            <line x1="50" y1="30" x2="50" y2="175" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="50" y1="175" x2="440" y2="175" stroke="#cbd5e1" stroke-width="1"></line>
+            <!-- 熱容量 1200 -->
+            <rect x="70" y="55" width="64" height="120" fill="#e2e8f0" stroke="#94a3b8"></rect>
+            <text x="102" y="49" font-size="10" text-anchor="middle" fill="#4a5568">1200</text>
+            <text x="102" y="190" font-size="10" text-anchor="middle" fill="#1a1a2e">熱容量</text>
+            <!-- 同期安定性 900（最小＝運用容量） -->
+            <rect x="165" y="85" width="64" height="90" fill="#fecaca" stroke="#dc2626"></rect>
+            <text x="197" y="79" font-size="10" text-anchor="middle" fill="#dc2626">900</text>
+            <text x="197" y="190" font-size="10" text-anchor="middle" fill="#1a1a2e">同期安定性</text>
+            <text x="197" y="203" font-size="9" text-anchor="middle" fill="#dc2626">← 最小＝決定要因</text>
+            <!-- 電圧安定性 1050 -->
+            <rect x="260" y="70" width="64" height="105" fill="#e2e8f0" stroke="#94a3b8"></rect>
+            <text x="292" y="64" font-size="10" text-anchor="middle" fill="#4a5568">1050</text>
+            <text x="292" y="190" font-size="10" text-anchor="middle" fill="#1a1a2e">電圧安定性</text>
+            <!-- 周波数維持 1100 -->
+            <rect x="355" y="65" width="64" height="110" fill="#e2e8f0" stroke="#94a3b8"></rect>
+            <text x="387" y="59" font-size="10" text-anchor="middle" fill="#4a5568">1100</text>
+            <text x="387" y="190" font-size="10" text-anchor="middle" fill="#1a1a2e">周波数維持</text>
+            <!-- 運用容量の線 -->
+            <line x1="50" y1="85" x2="440" y2="85" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="6 4"></line>
+            <text x="54" y="78" font-size="11" fill="#2563eb">運用容量 = 最小値 900 MW</text>
+          </svg>
+          <figcaption>図1: 運用容量は4つの限度（MW）の最小値。この例では同期安定性が決定要因</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. マージン：なぜ容量を使い切らないのか</h2>
+        <p>
+          B-01では、N-1基準を満たすために平常時の潮流に<strong>余裕（マージン）を残す</strong>、という発想がすでに登場しました。
+          連系線では、この「余裕を取り置く」ことが制度として整えられています。それが
+          <span class="term">マージン<span class="term-tooltip">需給ひっ迫時の融通や周波数維持など万一の事態に備え、連系線の運用容量の一部としてあらかじめ確保しておく容量。広域機関（OCCTO）が算出・確保する。</span></span>です。
+        </p>
+        <p>
+          運用容量は"流せる上限"ですが、その上限まで平常時の取引で埋めてしまうと、
+          いざというとき——大きな電源の脱落や需給ひっ迫——に、<strong>エリアを越えて電力を融通する余地がなくなってしまいます</strong>。
+          そこで広域機関（OCCTO）は、周波数維持や需給ひっ迫時の融通などに備えて、
+          運用容量の一部を<strong>マージン</strong>としてあらかじめ確保し、平常時の取引には使わせない形で取り置きます。
+          マージンは「使わない容量」ではなく、<strong>「万一のために取り置く容量」</strong>です。
+        </p>
+        <p>
+          したがって、平常時の取引・送電に使える枠は「運用容量 − マージン」になります。
+          ここでもB-01と同じ構図——<strong>設備の限界いっぱいまでは使わず、信頼度のために余裕を残す</strong>——が現れています。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 空き容量：あとどれだけ流せるか</h2>
+        <p>
+          「運用容量 − マージン」の枠も、ふつうは既にだれかが使う予定で埋まりつつあります。
+          既に決まっている利用（計画潮流）を除いた残り、つまり<strong>新しい取引や接続に使える分</strong>が
+          <span class="term">空き容量<span class="term-tooltip">運用容量からマージンと既に決まっている利用（計画潮流）を除いた、新しい取引・接続に使える残りの容量。連系線では「空容量」と表記される。</span></span>です。
+        </p>
+        <div class="math-block"
+             data-tex="\text{空き容量} = \text{運用容量} - \text{マージン} - \text{計画潮流}"
+             data-fallback="空き容量 = 運用容量 − マージン − 計画潮流"></div>
+        <p>
+          たとえば運用容量 900 MW の連系線で、マージンが 100 MW、既に決まっている計画潮流が 550 MW なら、
+          空き容量は 900 − 100 − 550 = <strong>250 MW</strong> です。
+          連系線では「<strong>空容量</strong>」と表記され、OCCTOが年間・月間などの単位で算出・公表しています
+          （<a href="#references">参考資料</a>の系統情報サービス）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 150" role="img"
+               aria-label="運用容量900MWの内訳を示す横棒。マージン100MW、計画潮流550MW、空き容量250MWで構成される図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 運用容量の全体ブラケット -->
+            <line x1="40" y1="38" x2="418" y2="38" stroke="#4a5568" stroke-width="1"></line>
+            <line x1="40" y1="33" x2="40" y2="43" stroke="#4a5568" stroke-width="1"></line>
+            <line x1="418" y1="33" x2="418" y2="43" stroke="#4a5568" stroke-width="1"></line>
+            <text x="229" y="28" font-size="11" text-anchor="middle" fill="#1a1a2e">運用容量 900 MW</text>
+            <!-- マージン 100 -->
+            <rect x="40" y="55" width="42" height="40" fill="#fde68a" stroke="#d97706"></rect>
+            <text x="61" y="112" font-size="10" text-anchor="middle" fill="#d97706">マージン</text>
+            <text x="61" y="125" font-size="10" text-anchor="middle" fill="#d97706">100</text>
+            <!-- 計画潮流 550 -->
+            <rect x="82" y="55" width="231" height="40" fill="#bfdbfe" stroke="#2563eb"></rect>
+            <text x="197" y="79" font-size="11" text-anchor="middle" fill="#1a1a2e">計画潮流 550</text>
+            <!-- 空き容量 250 -->
+            <rect x="313" y="55" width="105" height="40" fill="#bbf7d0" stroke="#16a34a"></rect>
+            <text x="365" y="112" font-size="10" text-anchor="middle" fill="#16a34a">空き容量</text>
+            <text x="365" y="125" font-size="10" text-anchor="middle" fill="#16a34a">250</text>
+          </svg>
+          <figcaption>図2: 運用容量の内訳。マージンと計画潮流を除いた残りが空き容量（単位はMW）</figcaption>
+        </figure>
+
+        <p>
+          この「空き容量」は、<a href="../e-market/05-non-firm-connection.html">E-05: ノンファーム型接続</a> で学んだ
+          <strong>空き容量問題</strong>の分母にあたります。E-05では「空き容量は保守的に見積もられがちで、
+          空きゼロでも実際は流せる余地がある」ことを学びました。その"見積もりの土台"となる上限が、
+          本ユニットで学んだ運用容量です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 地内混雑と連系線混雑</h2>
+        <p>
+          最後に、混雑が<strong>どこで起きるか</strong>を整理します。B-01の混雑判定（潮流 &gt; 容量）はどの送電線にも当てはまりますが、
+          実務では場所によって2つに区別されます。
+        </p>
+        <ul>
+          <li>
+            <strong>地内混雑</strong>：エリア（一般送配電事業者の供給区域）の<strong>内側</strong>の基幹系統などで起きる混雑。
+          </li>
+          <li>
+            <strong>連系線混雑</strong>：エリアどうしを結ぶ
+            <span class="term">連系線<span class="term-tooltip">エリア（一般送配電事業者の供給区域）間を結ぶ送電線。地域間連系線。運用容量・マージン・空容量が公表され、エリアをまたぐ取引はこの容量の範囲で行われる。</span></span>（地域間連系線）で起きる混雑。
+            本ユニットで見た運用容量・マージン・空容量の公表は、この連系線でもっとも制度的に整備されています。
+          </li>
+        </ul>
+        <p>
+          この2つは、<strong>混雑の処理のしかた</strong>が違います。地内混雑は、これまで学んだとおり
+          <a href="../d-algorithms/02-redispatch.html">D-02: 再給電</a> や
+          <a href="../e-market/06-renewable-curtailment.html">E-06: 出力制御</a> といった、電源の出力を調整する方法で処理します。
+          一方、連系線混雑は、卸電力市場（スポット市場）を通じて連系線の利用を割り当てる
+          <strong>市場の仕組み（間接オークション）</strong>で処理されます。この市場面のしくみは、領域Eの後続ユニットで扱う予定です。
+          ここでは「<strong>地内は電源の調整で、連系線は市場の仕組みで処理する</strong>」という対比を押さえてください。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 185" role="img"
+               aria-label="エリアAの内側の送電線で起きる地内混雑は再給電・出力制御で処理し、エリアAとエリアBを結ぶ連系線の混雑は市場の仕組みで処理することを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- エリアA -->
+            <rect x="20" y="40" width="170" height="115" rx="10" fill="#eff6ff" stroke="#94a3b8"></rect>
+            <text x="105" y="58" font-size="11" text-anchor="middle" fill="#1a1a2e">エリアA</text>
+            <line x1="60" y1="70" x2="60" y2="135" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="150" y1="70" x2="150" y2="135" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="63" y1="85" x2="147" y2="85" stroke="#ef4444" stroke-width="2.5"></line>
+            <text x="105" y="79" font-size="9.5" text-anchor="middle" fill="#ef4444">地内系統</text>
+            <!-- エリアB -->
+            <rect x="270" y="40" width="170" height="115" rx="10" fill="#f0fdf4" stroke="#94a3b8"></rect>
+            <text x="355" y="58" font-size="11" text-anchor="middle" fill="#1a1a2e">エリアB</text>
+            <line x1="340" y1="70" x2="340" y2="135" stroke="#1a1a2e" stroke-width="4"></line>
+            <!-- 連系線 -->
+            <line x1="153" y1="115" x2="337" y2="115" stroke="#6366f1" stroke-width="3"></line>
+            <text x="245" y="107" font-size="10" text-anchor="middle" fill="#6366f1">連系線（エリア間）</text>
+            <!-- 処理の対比 -->
+            <text x="105" y="172" font-size="10" text-anchor="middle" fill="#4a5568">地内混雑 → 再給電・出力制御</text>
+            <text x="355" y="172" font-size="10" text-anchor="middle" fill="#4a5568">連系線混雑 → 市場の仕組みで処理</text>
+          </svg>
+          <figcaption>図3: 混雑が起きる場所の区別。地内は電源の調整で、連系線は市場の仕組みで処理する</figcaption>
+        </figure>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（運用容量＝最小値） -->
+        <div class="exercise" data-exercise-id="b-02-ex01" data-type="numeric">
+          <h3>演習 1: 運用容量を求める</h3>
+          <div class="exercise-problem">
+            <p>
+              ある連系線について、4つの面の限度を算出したところ、熱容量 1200 MW、同期安定性 900 MW、
+              電圧安定性 1050 MW、周波数維持 1100 MW となった。この連系線の運用容量は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              運用容量:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-02-ex01",
+          "type": "numeric",
+          "correct": 900,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "運用容量は、熱容量・同期安定性・電圧安定性・周波数維持の4つの限度をすべて満たす必要があるため、その最小値になります。min(1200, 900, 1050, 1100) = 900 MW。この例では同期安定性が決定要因で、熱容量にはまだ余裕があっても、それ以上は流せません。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（空き容量の計算） -->
+        <div class="exercise" data-exercise-id="b-02-ex02" data-type="numeric">
+          <h3>演習 2: 空き容量を求める</h3>
+          <div class="exercise-problem">
+            <p>
+              運用容量 900 MW の連系線で、マージンが 100 MW 確保されており、
+              既に決まっている利用（計画潮流）が 550 MW ある。
+              新しい取引・接続に使える空き容量は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              空き容量:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-02-ex02",
+          "type": "numeric",
+          "correct": 250,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "空き容量 = 運用容量 − マージン − 計画潮流 = 900 − 100 − 550 = 250 MW。マージンは万一の融通に備えて取り置く分なので、平常時の取引には使えず、空き容量の計算で差し引きます。"
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（運用容量・マージン・混雑の場所） -->
+        <div class="exercise" data-exercise-id="b-02-ex03" data-type="multi-choice">
+          <h3>演習 3: 運用容量・マージン・混雑の場所</h3>
+          <div class="exercise-problem">
+            <p>運用容量・マージン・混雑に関する記述として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="b-02-ex03" value="1">
+              <span>運用容量は、熱容量・同期安定性・電圧安定性・周波数維持の4つの限度のうち、最小値で決まる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-02-ex03" value="2">
+              <span>マージンは、需給ひっ迫時の融通や周波数維持など、万一の事態に備えて運用容量の一部をあらかじめ確保しておくものである</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-02-ex03" value="3">
+              <span>マージンは平常時の取引にも自由に使えるため、空き容量の計算では考慮しなくてよい</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-02-ex03" value="4">
+              <span>地内の混雑は再給電や出力制御で処理され、連系線の混雑は市場の仕組みを通じて処理される</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-02-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "4"],
+          "explanation": "1は運用容量の定義（4つの限度の最小値）、2はマージンの役割（万一に備えた取り置き）、4は地内混雑と連系線混雑の処理の違いで、いずれも正しい。3は誤りで、マージンは万一のために取り置く容量なので平常時の取引には使えず、空き容量 = 運用容量 − マージン − 計画潮流 として差し引きます。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/iinkai/unyouyouryou/index.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「運用容量検討会」（連系線の運用容量の算出方法・算出結果の公表）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/news/renkeisenriyou/index.html"
+               target="_blank" rel="noopener noreferrer">OCCTO「運用容量・マージン」（連系線の運用容量・マージンに関するお知らせ）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/institution/keitoujouhou/"
+               target="_blank" rel="noopener noreferrer">OCCTO「系統情報サービス等」（連系線の空容量等の公表）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="01-congestion-and-n1.html" class="unit-nav-prev">&larr; 混雑の判定とN-1基準</a>
+      <a href="../c-grid-model/index.html" class="unit-nav-next">次の領域へ: C 系統モデル &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

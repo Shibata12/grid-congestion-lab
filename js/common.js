@@ -61,6 +61,8 @@ const SITE_STRUCTURE = {
     units: [
       { id: 'b-01', title: '混雑の判定とN-1基準', file: '01-congestion-and-n1.html', exerciseCount: 3,
         summary: '潮流が送電容量を超えるかの判定と、単一設備故障を想定するN-1基準を学ぶ。' },
+      { id: 'b-02', title: '運用容量とマージン', file: '02-operating-capacity-and-margin.html', exerciseCount: 3,
+        summary: '運用容量が4つの限度の最小値で決まること、マージン・空き容量の内訳、地内混雑と連系線混雑の違いを学ぶ。B-01で預けた「送電容量の区別」の回収。' },
     ],
   },
   c: {
