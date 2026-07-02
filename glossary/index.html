@@ -68,6 +68,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="c,a" id="term-phase-angle">
+        <dt>位相角（電圧位相角）</dt>
+        <dd>
+          <p>交流電圧の波のタイミングのずれを角度で表したもの。同じ速さで回る針の角度のずれのイメージで、母線間の位相角の差が有効電力の潮流を生む（角度が進んだ母線から遅れた母線へ流れる）。DC潮流計算では、各母線の位相角だけが未知数になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/04-dc-and-ac-power-flow.html">C-04</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-imbalance">
         <dt>インバランス</dt>
         <dd>
@@ -94,6 +104,16 @@
           <p>送電線・連系線に流せる潮流の上限として運用上用いる値。熱容量・同期安定性・電圧安定性・周波数維持の4つの面の限度のうち、最小値で決まる。連系線ではOCCTOの運用容量検討会が算出方法・算出結果を公表している。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c" id="term-ac-power-flow">
+        <dt>AC潮流計算（交流法）</dt>
+        <dd>
+          <p>各母線の電圧の大きさと位相角を未知数とし、有効電力・無効電力の両方の収支を満たすように解く本来の潮流計算。式が非線形のため反復計算（ニュートン・ラフソン法など）で解き、収束しない場合もある。電圧分布・無効電力の流れ・送電損失まで得られる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/04-dc-and-ac-power-flow.html">C-04</a>
           </p>
         </dd>
       </div>
@@ -418,6 +438,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="c" id="term-transmission-loss">
+        <dt>送電損失</dt>
+        <dd>
+          <p>送電線の抵抗で電力の一部が熱として失われること（またはその量）。DC潮流計算では抵抗を無視するため損失は見えず、AC潮流計算で評価できる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/04-dc-and-ac-power-flow.html">C-04</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="b" id="term-line-capacity">
         <dt>送電容量</dt>
         <dd>
@@ -501,9 +531,19 @@
       <div class="glossary-entry" data-domain="a,d" id="term-power-flow-calc">
         <dt>潮流計算</dt>
         <dd>
-          <p>与えられた注入（発電計画値・需要計画値）から、各送電線の潮流と各母線の電圧を求める計算。母線数が増えると手計算は困難になり、計算機で連立方程式を解く。混雑計算の出発点となる。</p>
+          <p>与えられた注入（発電計画値・需要計画値）から、各送電線の潮流と各母線の電圧を求める計算。母線数が増えると手計算は困難になり、計算機で連立方程式を解く。混雑計算の出発点となる。方式にはDC潮流計算（近似・線形）とAC潮流計算（本来の計算・非線形）がある。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+            関連ユニット: <a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>、<a href="../units/c-grid-model/04-dc-and-ac-power-flow.html">C-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c,d" id="term-dc-power-flow">
+        <dt>DC潮流計算（直流法）</dt>
+        <dd>
+          <p>抵抗の無視（X≫R）・電圧の大きさ一定・位相角差小・有効電力のみ、という4つの仮定で潮流を線形の式（潮流＝位相角差÷リアクタンス）にした計算法。式の形が直流回路のオームの法則と同じになることが名前の由来。一発で確実に解け、重ね合わせが使えるため、PTDFや混雑計算・SCUC/SCEDの潮流制約の土台になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/04-dc-and-ac-power-flow.html">C-04</a>、<a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>
           </p>
         </dd>
       </div>

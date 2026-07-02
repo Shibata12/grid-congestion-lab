@@ -76,6 +76,8 @@ const SITE_STRUCTURE = {
         summary: '系統構成計画・作業停止計画・需給計画が系統モデル（Yバス・注入）にどう反映されるかを学ぶ。N-1解析で1回線を落とした構成の作り方にも触れる。' },
       { id: 'c-03', title: '上位系統・下位系統と集約母線', file: '03-upper-lower-and-aggregated-bus.html', exerciseCount: 3,
         summary: '上位系統（基幹）と下位系統の階層構造、下位系統を1母線に集約する境界処理（注入＝発電合計−負荷合計、Yバス上の1母線）を学ぶ。計算量削減でSCUC/SCEDを現実的に解く。' },
+      { id: 'c-04', title: 'DC潮流とAC潮流', file: '04-dc-and-ac-power-flow.html', exerciseCount: 3,
+        summary: 'これまでの潮流計算がDC潮流という近似だったことを種明かしし、4つの仮定と線形性（重ね合わせ＝PTDFの土台）、電圧まで解くAC潮流との違い・使い分けを学ぶ。A-04で預けたDC/AC潮流の回収。' },
     ],
   },
   d: {

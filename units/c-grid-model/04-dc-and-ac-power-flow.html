@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C-04: DC潮流とAC潮流 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="c" data-unit="c-04">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">C: 系統モデル</a> &gt;
+      <span>DC潮流とAC潮流</span>
+    </nav>
+
+    <article>
+      <h1>C-04: DC潮流とAC潮流</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="../a-grid-fundamentals/04-active-reactive-voltage.html">A-04: 有効電力・無効電力と電圧</a> で
+        「DC潮流とAC潮流の違いは後続で扱う」と預けていました。本ユニットがその回収です。
+        実は、本サイトでこれまで学んだ潮流計算——<a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02</a> の反比例分配、
+        <a href="01-grid-model-structure.html">C-01</a> のYバス、<a href="../d-algorithms/01-ptdf-sensitivity.html">D-01</a> のPTDF——はすべて
+        <span class="term">DC潮流計算<span class="term-tooltip">抵抗の無視・電圧一定・有効電力のみ、という近似で潮流を線形の式にした計算法。式の形が直流回路のオームの法則と同じになることが名前の由来。</span></span>という<strong>近似</strong>の上に立っていました。
+        その仮定と「線形だからできたこと」を種明かしし、電圧まで含めて解く
+        <span class="term">AC潮流計算<span class="term-tooltip">各母線の電圧の大きさと位相角を未知数とし、有効電力・無効電力の両方の収支を満たすように解く本来の潮流計算。非線形のため反復計算で解く。</span></span>との違いと使い分けを判断できるようになります。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0">
+          <strong>このユニットの範囲について</strong>：
+          式は<strong>「形」（何に比例し、何に反比例するか）</strong>に注目し、単位系の細部（単位法）には踏み込みません。
+          また、AC潮流の解法（ニュートン・ラフソン法）は名前の紹介にとどめ、その中身は扱いません。
+          いずれも一般的な電力工学の基礎知識の範囲です。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. これまでの潮流計算の正体：DC潮流という近似</a></li>
+          <li><a href="#section-2">2. DC潮流で何ができ、何が見えないか</a></li>
+          <li><a href="#section-3">3. AC潮流：電圧まで含めて解く</a></li>
+          <li><a href="#section-4">4. 使い分け：いつDCで足り、いつACが要るか</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. これまでの潮流計算の正体：DC潮流という近似</h2>
+        <p>
+          まず、これまで触れずにきた問いから始めます。<strong>そもそも、何が潮流を「押し流す」のでしょうか。</strong>
+          A-02では潮流の<em>分配</em>（リアクタンスに反比例）を学びましたが、流す力そのものは説明していませんでした。
+        </p>
+        <p>
+          交流系統の各母線の電圧は、<a href="../b-congestion/02-operating-capacity-and-margin.html">B-02</a> の同期のところで見たように、
+          <strong>同じ速さで回り続ける針</strong>にたとえられます（東日本なら1秒に50回転）。
+          針の回る速さはどの母線でも同じですが、<strong>針の角度には母線ごとに少しずつずれ</strong>があります。この角度のずれを
+          <span class="term">位相角<span class="term-tooltip">交流電圧の波のタイミングのずれを角度で表したもの。同じ速さで回る針の角度差のイメージ。母線間の位相角の差が有効電力の潮流を生む。</span></span>といいます。
+          そして、<strong>角度が進んでいる母線から遅れている母線へ、有効電力が流れます</strong>。
+          角度差が大きいほど潮流は大きく、経路のリアクタンス（A-02の「電気的な距離」）が大きいほど潮流は小さくなります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="母線1と母線2の電圧を同じ速さで回る2本の針で表し、針の角度のずれ（位相角の差）が潮流を生むことを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="c4-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"></path>
+              </marker>
+            </defs>
+            <!-- 母線1の針 -->
+            <circle cx="90" cy="85" r="45" fill="none" stroke="#94a3b8" stroke-width="1"></circle>
+            <line x1="90" y1="40" x2="90" y2="85" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3"></line>
+            <line x1="90" y1="85" x2="119" y2="51" stroke="#1a1a2e" stroke-width="2.5"></line>
+            <text x="90" y="150" font-size="11" text-anchor="middle" fill="#1a1a2e">母線1（角度が進んでいる）</text>
+            <!-- 母線2の針 -->
+            <circle cx="250" cy="85" r="45" fill="none" stroke="#94a3b8" stroke-width="1"></circle>
+            <line x1="250" y1="40" x2="250" y2="85" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="4 3"></line>
+            <line x1="250" y1="85" x2="258" y2="41" stroke="#1a1a2e" stroke-width="2.5"></line>
+            <text x="250" y="150" font-size="11" text-anchor="middle" fill="#1a1a2e">母線2（遅れている）</text>
+            <!-- 潮流の矢印 -->
+            <line x1="140" y1="85" x2="198" y2="85" stroke="#2563eb" stroke-width="2" marker-end="url(#c4-ah)"></line>
+            <text x="169" y="76" font-size="10" text-anchor="middle" fill="#2563eb">潮流 P</text>
+            <!-- 説明 -->
+            <text x="310" y="62" font-size="10" fill="#4a5568">・針は同じ速さで回る（同期）</text>
+            <text x="310" y="82" font-size="10" fill="#4a5568">・角度のずれ＝位相角の差</text>
+            <text x="310" y="102" font-size="10" fill="#4a5568">・角度差が大きいほど潮流大</text>
+            <text x="230" y="178" font-size="10" text-anchor="middle" fill="#1a1a2e">角度が進んだ母線 → 遅れた母線 へ有効電力が流れる</text>
+          </svg>
+          <figcaption>図1: 各母線の電圧は「同じ速さで回る針」。針の角度のずれ（位相角の差）が潮流を生む</figcaption>
+        </figure>
+
+        <p>
+          <strong>DC潮流計算（直流法）</strong>は、この関係を次の4つの仮定で思い切って単純化した計算法です。
+        </p>
+        <ul>
+          <li><strong>① 抵抗を無視する</strong>：<a href="../a-grid-fundamentals/03-impedance-reactance.html">A-03</a> で学んだとおり、基幹系統では X≫R。経路の流れにくさはリアクタンス X だけで表します。</li>
+          <li><strong>② 電圧の大きさは一定とみなす</strong>：どの母線の電圧も定格どおり、と仮定します（針の「長さ」は全部同じで、「角度」だけを追う）。</li>
+          <li><strong>③ 位相角の差は小さいとみなす</strong>：角度差が小さい範囲では、潮流と角度差の関係を直線（比例）で近似できます。</li>
+          <li><strong>④ 無効電力は扱わない</strong>：計算するのは有効電力の潮流だけです。</li>
+        </ul>
+        <p>
+          この4つの仮定を置くと、線路の潮流はとても簡単な式になります。
+        </p>
+        <div class="math-block"
+             data-tex="P_{12} = \dfrac{\theta_1 - \theta_2}{X_{12}}"
+             data-fallback="P12 = (θ1 − θ2) ÷ X12（潮流 = 位相角の差 ÷ リアクタンス）"></div>
+        <p>
+          潮流は<strong>位相角の差（θ₁ − θ₂）に比例し、リアクタンス X に反比例</strong>する——
+          この式の形は、<a href="../a-grid-fundamentals/01-kirchhoff.html">A-01</a> のオームの法則 I = V ÷ R とそっくりです
+          （角度差↔電圧差、X↔抵抗、P↔電流）。交流の計算なのに、形が<strong>直流回路と同じ</strong>になる。
+          これが「<strong>DC（直流法）潮流</strong>」という名前の由来です。
+          A-02の「リアクタンスに反比例して分配」も、C-01のYバスが複素数を使わず y = 1/X の実数で済んだのも、
+          すべてこのDC近似の世界の話だったのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. DC潮流で何ができ、何が見えないか</h2>
+        <p>
+          DC潮流の式は<strong>線形</strong>（比例と足し算だけでできている）です。この線形であることが、2つの大きな強みを生みます。
+        </p>
+        <p>
+          <strong>強み①：一発で確実に解ける。</strong>線形の連立方程式は、反復なしで答えが一意に求まります。
+          解けないことも、答えが複数になることもありません。だから
+          <a href="02-system-data-and-inputs.html">C-02</a> のN-1解析のように
+          <strong>大量の断面×想定故障を素早く回す</strong>計算に向いています。
+        </p>
+        <p>
+          <strong>強み②：重ね合わせができる。</strong>線形なので、複数の注入がつくる潮流は「それぞれの注入が単独でつくる潮流の足し算」になります。
+          たとえば、発電機Gだけが 100 MW 注入すると線路Lに 30 MW 流れ、発電機Hだけが 200 MW 注入すると 50 MW 流れるなら、
+          両方同時なら線路Lの潮流は 30 + 50 = <strong>80 MW</strong> です。
+        </p>
+        <div class="math-block"
+             data-tex="P_L = P_L^{(G\text{単独})} + P_L^{(H\text{単独})}"
+             data-fallback="線路Lの潮流 = Gが単独でつくる潮流 + Hが単独でつくる潮流"></div>
+        <p>
+          実はこれが、<a href="../d-algorithms/01-ptdf-sensitivity.html">D-01</a> の<strong>種明かし</strong>です。
+          PTDFが「注入1MWあたり何MW流れるか」という<strong>固定の係数</strong>として定義でき、
+          <a href="../d-algorithms/03-scuc-sced-overview.html">D-03</a> で潮流制約を「Σ PTDF × 出力 ≤ 容量」という
+          足し算の式で書けたのは、DC潮流が線形だからです。
+        </p>
+        <p>
+          一方、思い切った近似の代償として、DC潮流には<strong>見えないもの</strong>があります。
+        </p>
+        <ul>
+          <li><strong>電圧の大きさ</strong>——「一定」と仮定したので、電圧が下がるかどうかは分かりません。</li>
+          <li><strong>無効電力</strong>——そもそも扱っていません。</li>
+          <li><strong><span class="term">送電損失<span class="term-tooltip">送電線の抵抗で電力の一部が熱として失われること。DC潮流計算では抵抗を無視するため見えず、AC潮流計算で評価できる。</span></span></strong>——抵抗を無視したので、熱として失われる分はゼロ扱いです。</li>
+        </ul>
+        <p>
+          つまり、<a href="../a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a> で学んだ電圧・無効電力の混雑や、
+          <a href="../b-congestion/02-operating-capacity-and-margin.html">B-02</a> の運用容量を決める<strong>電圧安定性の限度</strong>は、
+          DC潮流では評価できません。そこで必要になるのが、次のAC潮流です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. AC潮流：電圧まで含めて解く</h2>
+        <p>
+          <strong>AC潮流計算（交流法）</strong>は、近似をやめて交流の系統を本来の姿で解く計算です。
+          未知数は各母線に<strong>2つ</strong>——<strong>電圧の大きさ</strong>と<strong>位相角</strong>（針の「長さ」と「角度」の両方）。
+          そして各母線で、<strong>有効電力Pの収支</strong>と<strong>無効電力Qの収支</strong>（A-04）の2本の式を立て、
+          すべての母線で同時に成り立つ答えを探します。
+        </p>
+        <p>
+          ただし、この式は電圧どうしの掛け算や三角関数を含む<strong>非線形</strong>の連立方程式で、DC潮流のように一発では解けません。
+          そこで「仮の答えを置く → 式とのずれを確かめる → 答えを修正する」を繰り返す<strong>反復計算</strong>で解きます
+          （代表的な手法が<strong>ニュートン・ラフソン法</strong>です。名前だけ覚えておけば十分です）。
+          反復計算には、繰り返しても答えにたどり着けない（<strong>収束しない</strong>）場合がある、という難しさもあります。
+        </p>
+        <p>
+          その代わり、AC潮流を解くと<strong>DC潮流では見えなかったものがすべて</strong>得られます。
+          各母線の電圧の大きさ（電圧を維持できるかの評価）、無効電力の流れ（調相設備の検討）、そして送電損失です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="DC潮流は未知数が位相角のみで線形・一発で解け有効電力だけが得られる。AC潮流は電圧の大きさと位相角が未知数で非線形・反復計算だが電圧・無効電力・損失まで得られる、という対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- DCパネル -->
+            <rect x="20" y="30" width="200" height="150" rx="8" fill="#eff6ff" stroke="#94a3b8"></rect>
+            <text x="120" y="52" font-size="12" text-anchor="middle" fill="#2563eb" font-weight="bold">DC潮流（近似）</text>
+            <text x="35" y="80" font-size="10" fill="#1a1a2e">・未知数: 位相角のみ</text>
+            <text x="35" y="104" font-size="10" fill="#1a1a2e">・式: 線形（足し算できる）</text>
+            <text x="35" y="128" font-size="10" fill="#1a1a2e">・解き方: 一発で解ける・速い</text>
+            <text x="35" y="152" font-size="10" fill="#1a1a2e">・得られる: 有効電力の潮流</text>
+            <!-- ACパネル -->
+            <rect x="240" y="30" width="200" height="150" rx="8" fill="#f0fdf4" stroke="#94a3b8"></rect>
+            <text x="340" y="52" font-size="12" text-anchor="middle" fill="#16a34a" font-weight="bold">AC潮流（本来の計算）</text>
+            <text x="255" y="80" font-size="10" fill="#1a1a2e">・未知数: 電圧の大きさ＋位相角</text>
+            <text x="255" y="104" font-size="10" fill="#1a1a2e">・式: 非線形</text>
+            <text x="255" y="128" font-size="10" fill="#1a1a2e">・解き方: 反復計算</text>
+            <text x="255" y="152" font-size="10" fill="#1a1a2e">・得られる: 電圧・無効電力・損失も</text>
+            <text x="230" y="200" font-size="10" text-anchor="middle" fill="#4a5568">近似して速く解くか、本来の姿を反復で解くか</text>
+          </svg>
+          <figcaption>図2: DC潮流とAC潮流の対比。速さ・確実さを取るか、電圧まで見える正確さを取るか</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 使い分け：いつDCで足り、いつACが要るか</h2>
+        <p>
+          DCとACは「どちらが正しいか」ではなく、<strong>目的に応じた役割分担</strong>で使い分けます。
+        </p>
+        <p>
+          <strong>DC潮流の出番</strong>は、有効電力の潮流を<strong>大量に・速く・確実に</strong>計算したい場面です。
+          混雑計算・PTDF（D-01）・SCUC/SCEDの潮流制約（D-03）・多数の断面×N-1のスクリーニング（C-02）がこれにあたります。
+          基幹系統は X≫R（A-03）なので、有効電力の潮流に関するDC近似の誤差は実用上許容できる範囲に収まることが多いのです。
+        </p>
+        <p>
+          <strong>AC潮流の出番</strong>は、<strong>電圧・無効電力まで</strong>見る必要がある場面です。
+          受電端の電圧が維持できるかの確認、電圧安定性の限度（B-02）の評価、送電損失の算定などです。
+          また、<a href="../f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a> で機能名として登場した<strong>状態推定</strong>のように、
+          実系統の電圧まで含めた状態を把握する処理も、交流の（ACの）世界の計算です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="DC潮流の出番は混雑計算・PTDF・SCUC/SCEDの潮流制約・大量のN-1スクリーニング。AC潮流の出番は電圧維持の確認・電圧安定性の評価・無効電力と送電損失の評価。実務では役割分担して組み合わせる"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="35" width="200" height="125" rx="8" fill="#eff6ff" stroke="#94a3b8"></rect>
+            <text x="120" y="57" font-size="12" text-anchor="middle" fill="#2563eb" font-weight="bold">DC潮流の出番</text>
+            <text x="35" y="83" font-size="9.5" fill="#1a1a2e">・混雑計算・PTDF（D-01）</text>
+            <text x="35" y="105" font-size="9.5" fill="#1a1a2e">・SCUC/SCEDの潮流制約（D-03）</text>
+            <text x="35" y="127" font-size="9.5" fill="#1a1a2e">・大量の断面×N-1（C-02）</text>
+            <text x="35" y="149" font-size="9.5" fill="#2563eb">→ 速さ・確実さが命</text>
+            <rect x="240" y="35" width="200" height="125" rx="8" fill="#f0fdf4" stroke="#94a3b8"></rect>
+            <text x="340" y="57" font-size="12" text-anchor="middle" fill="#16a34a" font-weight="bold">AC潮流の出番</text>
+            <text x="255" y="83" font-size="9.5" fill="#1a1a2e">・電圧が維持できるか（A-04）</text>
+            <text x="255" y="105" font-size="9.5" fill="#1a1a2e">・電圧安定性の限度（B-02）</text>
+            <text x="255" y="127" font-size="9.5" fill="#1a1a2e">・無効電力・送電損失の評価</text>
+            <text x="255" y="149" font-size="9.5" fill="#16a34a">→ 電圧まで見えるのが命</text>
+            <text x="230" y="185" font-size="10" text-anchor="middle" fill="#4a5568">実務では両者を役割分担して組み合わせる</text>
+          </svg>
+          <figcaption>図3: DCとACの使い分け。大量スクリーニングはDC、電圧面の評価はAC</figcaption>
+        </figure>
+
+        <p>
+          これで、A-04で預けた「DC潮流とAC潮流」の宿題を回収できました。
+          C領域は、系統の器（C-01）・入れるデータ（C-02）・境界の扱い（C-03）に、計算法の適用範囲と限界（C-04）が加わり、
+          領域D（混雑計算のアルゴリズム）が<strong>どんな土俵の上で計算しているか</strong>を説明できるようになりました。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: multi-choice（DC潮流の仮定） -->
+        <div class="exercise" data-exercise-id="c-04-ex01" data-type="multi-choice">
+          <h3>演習 1: DC潮流の仮定</h3>
+          <div class="exercise-problem">
+            <p>DC潮流計算（直流法）が置いている仮定・性質として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="c-04-ex01" value="1">
+              <span>送電線の抵抗を無視し、経路の流れにくさをリアクタンスのみで表す</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-04-ex01" value="2">
+              <span>各母線の電圧の大きさは一定（定格どおり）とみなす</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-04-ex01" value="3">
+              <span>無効電力の流れも正確に計算できる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-04-ex01" value="4">
+              <span>扱うのは有効電力の潮流のみである</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-04-ex01",
+          "type": "multi-choice",
+          "correct": ["1", "2", "4"],
+          "explanation": "1（抵抗の無視、X≫R）・2（電圧一定）・4（有効電力のみ）はいずれもDC潮流の仮定です。3は誤りで、DC潮流は無効電力をそもそも扱いません。無効電力や電圧の大きさまで計算するには、AC潮流計算が必要です。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（線形性＝重ね合わせ） -->
+        <div class="exercise" data-exercise-id="c-04-ex02" data-type="numeric">
+          <h3>演習 2: 重ね合わせで潮流を求める</h3>
+          <div class="exercise-problem">
+            <p>
+              DC潮流で計算すると、発電機Aだけが 100 MW 注入したとき線路Lには 40 MW 流れ、
+              発電機Bだけが 50 MW 注入したとき線路Lには 10 MW 流れる。
+              AとBが<strong>同時に</strong>（Aが 100 MW、Bが 50 MW）注入したとき、線路Lの潮流は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              線路Lの潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-04-ex02",
+          "type": "numeric",
+          "correct": 50,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "DC潮流は線形なので重ね合わせが成り立ち、40 + 10 = 50 MW です。それぞれの注入が単独でつくる潮流を、そのまま足し算できます。これが、PTDF（D-01）を固定の係数として使え、SCUC/SCED（D-03）の潮流制約を「Σ PTDF × 出力」という足し算の式で書けた理由です。"
+        }
+        </script>
+
+        <!-- 演習3: choice（DC/ACの使い分け） -->
+        <div class="exercise" data-exercise-id="c-04-ex03" data-type="choice">
+          <h3>演習 3: DCとACの使い分け</h3>
+          <div class="exercise-problem">
+            <p>
+              次の2つの場面に適した計算の組み合わせとして、最も適切なものはどれか。<br>
+              （ア）翌日の48コマ×多数の想定故障（N-1）について、基幹系統の混雑を素早くスクリーニングしたい。<br>
+              （イ）重負荷のある1断面について、受電端の電圧が維持できるかを確認したい。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="c-04-ex03" value="1">
+              <span>（ア）はDC潮流、（イ）はAC潮流</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-04-ex03" value="2">
+              <span>（ア）はAC潮流、（イ）はDC潮流</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-04-ex03" value="3">
+              <span>どちらもDC潮流でよい（電圧の評価もDC潮流でできる）</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-04-ex03",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "（ア）のような大量の断面×想定故障のスクリーニングは、一発で確実に解けて速いDC潮流の出番です。（イ）の電圧維持の確認は、電圧の大きさを未知数として解くAC潮流でなければできません。DC潮流は電圧の大きさを「一定」と仮定しているため、電圧の評価には使えず、選択肢3は誤りです。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="03-upper-lower-and-aggregated-bus.html" class="unit-nav-prev">&larr; 上位系統・下位系統と集約母線</a>
+      <a href="../d-algorithms/index.html" class="unit-nav-next">次の領域へ: D 混雑計算のアルゴリズム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>
