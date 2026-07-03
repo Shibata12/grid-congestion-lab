@@ -188,6 +188,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a,b" id="term-circuit">
+        <dt>回線</dt>
+        <dd>
+          <p>三相3本1組の送電線のひとまとまり。並列2回線なら電線は6本。N-1基準の「1回線停止」はこの単位（3本まとめて）で数える。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/05-three-phase-and-per-unit.html">A-05</a>、<a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="c" id="term-switchgear">
         <dt>開閉器（遮断器・断路器）</dt>
         <dd>
@@ -334,6 +344,16 @@
           <p>保守・点検などで設備を計画的に停止する計画。停止中の送電線などは「ない」ものとして系統モデルに反映する（Yバスからその線路のアドミタンスを除く）。設備停止で潮流分布が変わり混雑が起きやすくなることもあるため、混雑管理の前提になる。OCCTOが調整・記載要領を公開している。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a" id="term-three-phase">
+        <dt>三相交流</dt>
+        <dd>
+          <p>120°ずつずらした3つの交流をひと組にして送る方式。3つの電力の合計が常に一定になり、電流が打ち消し合うため帰りの線を省略できる。送電はほぼすべて三相で行われ、送電線は3本1組（1回線）。電圧は線間で呼び、電力（MW・Mvar・MVA）は3相合計で表す。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/05-three-phase-and-per-unit.html">A-05</a>
           </p>
         </dd>
       </div>
@@ -508,6 +528,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a,c" id="term-per-unit">
+        <dt>単位法（per-unit法・pu）</dt>
+        <dd>
+          <p>電圧・電力・インピーダンスなどを、あらかじめ決めた基準値に対する割合（pu）で表す方法。pu＝実際の値÷基準値。1.0puが基準（定格）ちょうど。電圧階級や変圧器をまたいで同じ物差しで比較でき、系統解析のデータは多くがpu・%で書かれる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/05-three-phase-and-per-unit.html">A-05</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="f" id="term-control-center">
         <dt>中央給電指令所（中給）</dt>
         <dd>
@@ -654,6 +684,16 @@
           <p>送電線に空き容量がなくても、混雑時に出力制御されることを条件に接続を認める方式。コネクト&マネージの柱の一つ。平常時は送電でき、送電線の増強を待たずに再エネ等を接続できる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,c" id="term-percent-impedance">
+        <dt>パーセントインピーダンス（%Z）</dt>
+        <dd>
+          <p>インピーダンスを単位法（pu）で表し、100倍して%にしたもの。変圧器の銘板などに記される。%Z＝pu×100（例: 0.15pu＝15%）。オーム（Ω）の値を知らなくても、基準に対する割合として系統全体の計算にそのまま使える。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/05-three-phase-and-per-unit.html">A-05</a>
           </p>
         </dd>
       </div>
