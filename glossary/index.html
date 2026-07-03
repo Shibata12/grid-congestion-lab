@@ -148,6 +148,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="e,b" id="term-area-price-spread">
+        <dt>エリア間値差</dt>
+        <dd>
+          <p>市場分断により生じる、エリアごとの約定価格（エリアプライス）の差。電気を送り出す側（余る側）のエリアは安く、受け入れる側（足りない側）のエリアは高くなる。連系線混雑が市場に現れた姿。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="d,b" id="term-lodf">
         <dt>LODF（Line Outage Distribution Factor）</dt>
         <dd>
@@ -194,6 +204,16 @@
           <p>送電線などの設備に、その送電容量を超える潮流が流れる状態。系統混雑が顕在化した状態であり、設備の損傷や連鎖故障を避けるため解消が必要。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e,b" id="term-indirect-auction">
+        <dt>間接オークション</dt>
+        <dd>
+          <p>連系線をまたぐ取引を原則すべてスポット市場を通じて行い、約定処理の中で安い電気から順に連系線の空容量を割り当てる仕組み（2018年10月導入）。利用枠を先着順で予約する従来方式（先着優先）を置き換えた。枠を直接競りにかけるのではなく、電気の市場取引を通じて間接的に配分することが名前の由来。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>、<a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
           </p>
         </dd>
       </div>
@@ -318,6 +338,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="e,b" id="term-market-split">
+        <dt>市場分断</dt>
+        <dd>
+          <p>スポット市場の約定処理で、エリア間で流したい電力が連系線の空容量を超えるとき、市場をエリアで分けてそれぞれ別の約定価格を決めること。分断がなければ全国で1つの価格になる。分断が起きるとエリア間値差が生じる。連系線混雑を約定の段階で「起こさない」形で処理する仕組み。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-variable-re">
         <dt>自然変動電源</dt>
         <dd>
@@ -414,6 +444,16 @@
           <p>各エリアの上位2電圧（例：500kV/275kV）からなる系統。基幹系統とほぼ同義で、系統の骨格をなし、系統混雑管理の主舞台になる。系統モデルでは詳細にモデル化される。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/c-grid-model/03-upper-lower-and-aggregated-bus.html">C-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-spot-market">
+        <dt>スポット市場（前日市場）</dt>
+        <dd>
+          <p>JEPX（日本卸電力取引所）で翌日に受け渡す電気を取引する市場。1日を30分単位に区切った48商品を、前日の朝に締め切ってまとめて約定処理する。約定価格はコマごとに1つに決まる（シングルプライスオークション）。約定結果は発電計画値・需要計画値に反映される。エリアをまたぐ取引は間接オークションによりこの市場を通じて行われる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
           </p>
         </dd>
       </div>
@@ -791,9 +831,9 @@
       <div class="glossary-entry" data-domain="b" id="term-interconnector">
         <dt>連系線（地域間連系線）</dt>
         <dd>
-          <p>エリア（一般送配電事業者の供給区域）どうしを結ぶ送電線。運用容量・マージン・空容量が公表され、エリアをまたぐ取引はこの容量の範囲で行われる。連系線で起きる混雑（連系線混雑）は、地内混雑とは異なり市場の仕組みを通じて処理される。</p>
+          <p>エリア（一般送配電事業者の供給区域）どうしを結ぶ送電線。運用容量・マージン・空容量が公表され、エリアをまたぐ取引はこの容量の範囲で行われる。連系線で起きる混雑（連系線混雑）は、地内混雑とは異なり市場の仕組み（間接オークション・市場分断）を通じて処理される。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
           </p>
         </dd>
       </div>

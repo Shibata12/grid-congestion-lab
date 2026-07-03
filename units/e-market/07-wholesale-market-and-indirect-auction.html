@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-07: 卸電力市場と間接オークション - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-07">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>卸電力市場と間接オークション</span>
+    </nav>
+
+    <article>
+      <h1>E-07: 卸電力市場と間接オークション</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="../b-congestion/02-operating-capacity-and-margin.html">B-02: 運用容量とマージン</a> で
+        「連系線の混雑は市場の仕組み（間接オークション）で処理される」と預けていました。本ユニットがその回収です。
+        電気の売り買いの場である<span class="term">スポット市場<span class="term-tooltip">JEPX（日本卸電力取引所）で翌日に受け渡す電気を取引する市場（前日市場）。1日を30分単位に区切った48商品を取引し、約定価格はコマごとに1つに決まる。</span></span>のきほんから始めて、
+        <strong>間接オークション</strong>（連系線の使いみちを市場で決める仕組み）と、
+        <strong>市場分断</strong>（連系線混雑が市場に現れた姿）を説明できるようになります。
+        このユニットに<strong>数式は出てきません</strong>。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="01-bg-and-generation-plan.html">E-01</a>：BGは発電計画値・需要計画値を提出する</li>
+          <li><a href="02-simultaneous-balancing.html">E-02</a>：計画は30分コマ（1日48コマ）で立てる</li>
+          <li><a href="../b-congestion/02-operating-capacity-and-margin.html">B-02</a>：連系線で新しい取引に使える枠が「空容量」</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：入札の細かなルール（最低取引単位など）や、値差をヘッジする間接送電権には踏み込みません。
+          当日の調整に使う時間前市場も、名前の紹介にとどめます。
+          参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. スポット市場のきほん</a></li>
+          <li><a href="#section-2">2. 連系線をまたぐ取引と間接オークション</a></li>
+          <li><a href="#section-3">3. 市場分断とエリア間値差</a></li>
+          <li><a href="#section-4">4. 市場と混雑管理の全体地図</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. スポット市場のきほん</h2>
+        <p>
+          E-01で、BGは発電計画値・需要計画値を提出すると学びました。では、その計画のもとになる
+          電気の<strong>売り買い</strong>はどこで行われるのでしょうか。発電事業者と小売電気事業者が直接契約する（相対契約）ほかに、
+          取引所——<strong>JEPX（日本卸電力取引所）</strong>——で売り買いする方法があります。その中心が
+          <strong>スポット市場</strong>（前日市場）です。
+        </p>
+        <p>
+          具体例で見ましょう。明日の 12:00〜12:30 のコマについて、発電側は「50 MW を 10円/kWh なら売りたい」、
+          小売側は「50 MW を 15円/kWh までなら買いたい」といった<strong>入札</strong>を出します。
+          JEPXは、集まった売り入札を<strong>安い順</strong>に、買い入札を<strong>高い順</strong>に並べ、
+          両者が交わるところで<strong>約定量と約定価格</strong>を決めます（図1）。
+        </p>
+        <p>
+          ポイントは、約定価格が<strong>コマごとに1つ</strong>に決まることです（シングルプライス）。
+          10円で入札した売り手も、約定価格が12円なら12円で売れます。
+          この取引を、翌日の<strong>48コマぶん</strong>（E-02の30分コマと同じ区切りです）、
+          <strong>前日の朝に締め切ってまとめて</strong>約定処理します。
+          約定した量は各BGの計画値（E-01）に反映され、計画値同時同量（E-02）の世界へ入っていきます。
+          なお、スポット市場のあとの変化に対応する当日の市場（時間前市場）もありますが、本ユニットではスポット市場に絞ります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="横軸を量、縦軸を価格として、安い順に並べた売り入札の曲線と高い順に並べた買い入札の曲線が交わる点で、約定量と約定価格が決まることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 軸 -->
+            <line x1="60" y1="30" x2="60" y2="170" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="60" y1="170" x2="430" y2="170" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="30" y="100" font-size="10" fill="#4a5568" transform="rotate(-90 30 100)" text-anchor="middle">価格（円/kWh）</text>
+            <text x="245" y="188" font-size="10" text-anchor="middle" fill="#4a5568">量（MW）</text>
+            <!-- 売り曲線（安い順に上がる） -->
+            <line x1="70" y1="150" x2="400" y2="50" stroke="#16a34a" stroke-width="2"></line>
+            <text x="360" y="42" font-size="10" fill="#16a34a">売り入札（安い順）</text>
+            <!-- 買い曲線（高い順に下がる） -->
+            <line x1="70" y1="40" x2="400" y2="160" stroke="#2563eb" stroke-width="2"></line>
+            <text x="360" y="172" font-size="10" fill="#2563eb">買い入札（高い順）</text>
+            <!-- 交点 -->
+            <circle cx="235" cy="100" r="4" fill="#dc2626"></circle>
+            <line x1="60" y1="100" x2="235" y2="100" stroke="#dc2626" stroke-width="1" stroke-dasharray="4 3"></line>
+            <line x1="235" y1="100" x2="235" y2="170" stroke="#dc2626" stroke-width="1" stroke-dasharray="4 3"></line>
+            <text x="64" y="94" font-size="10" fill="#dc2626">約定価格（1つに決まる）</text>
+            <text x="240" y="163" font-size="10" fill="#dc2626">約定量</text>
+          </svg>
+          <figcaption>図1: スポット市場の約定。売り（安い順）と買い（高い順）が交わる点で、約定量と約定価格が決まる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 連系線をまたぐ取引と間接オークション</h2>
+        <p>
+          さて、九州の発電事業者の電気を東京の小売が買うような<strong>エリアをまたぐ取引</strong>では、
+          電気は連系線（B-02）を通ります。連系線に流せる枠——空容量——は有限です。
+          では、<strong>限られた枠を、だれの取引に使わせるか</strong>。ここが本ユニットの核心です。
+        </p>
+        <p>
+          かつては<strong>先着優先</strong>でした。連系線の利用枠を事業者が事前に予約する、早い者勝ちの方式です。
+          しかしこれには問題がありました。枠を先に押さえた取引が優先されるため、
+          あとからもっと<strong>安い電気</strong>が現れても流せないことがある——
+          つまり、連系線が「安い電気を運ぶ」ために使われるとは限らなかったのです。
+        </p>
+        <p>
+          そこで2018年10月から
+          <span class="term">間接オークション<span class="term-tooltip">連系線をまたぐ取引をすべてスポット市場を通じて行い、約定処理の中で安い電気から順に連系線の空容量を割り当てる仕組み（2018年10月導入）。先着優先の予約方式を置き換えた。</span></span>に変わりました。
+          利用枠の予約をやめ、エリアをまたぐ取引は<strong>原則すべてスポット市場を通す</strong>ことにしたのです。
+          OCCTOの公開資料では「原則すべての連系線容量（マージン控除後）を前日スポット市場に割り当てる」仕組みと説明されています（末尾の<a href="#references">参考資料</a>）。
+          こうすると、§1で見た約定処理——安い売りから順に約定する——が、
+          そのまま「<strong>安い電気から順に、空容量の範囲で連系線を使う</strong>」配分になります。
+        </p>
+        <p>
+          名前の種明かしをしておきましょう。連系線の枠そのものを競りにかける（直接オークション）のではなく、
+          <strong>電気の市場取引を通じて、間接的に枠が配分される</strong>から「間接」オークションです。
+          利用枠の予約という手続きは、もう存在しません。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="かつての先着優先は利用枠を予約する早い者勝ちで、安い電気が流せないことがあった。2018年10月からの間接オークションは予約が不要で、スポット市場の約定処理の中で安い電気から順に空容量を使う、という対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="30" width="200" height="125" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="120" y="52" font-size="11" text-anchor="middle" fill="#4a5568" font-weight="bold">むかし：先着優先</text>
+            <text x="35" y="78" font-size="9.5" fill="#1a1a2e">・利用枠を事前に予約（早い者勝ち）</text>
+            <text x="35" y="100" font-size="9.5" fill="#1a1a2e">・先に押さえた取引が優先</text>
+            <text x="35" y="122" font-size="9.5" fill="#dc2626">・安い電気が流せないことがある</text>
+            <rect x="240" y="30" width="200" height="125" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="340" y="52" font-size="11" text-anchor="middle" fill="#d97706" font-weight="bold">いま：間接オークション</text>
+            <text x="255" y="78" font-size="9.5" fill="#1a1a2e">・予約は不要（2018年10月〜）</text>
+            <text x="255" y="100" font-size="9.5" fill="#1a1a2e">・スポット市場の約定処理の中で</text>
+            <text x="255" y="122" font-size="9.5" fill="#16a34a">・安い電気から順に空容量を使う</text>
+            <text x="230" y="178" font-size="10" text-anchor="middle" fill="#4a5568">エリアをまたぐ取引は、原則すべてスポット市場を通す</text>
+          </svg>
+          <figcaption>図2: 先着優先から間接オークションへ。連系線の使いみちを「予約順」から「安い順」に変えた</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 市場分断とエリア間値差</h2>
+        <p>
+          では、みんながエリアをまたいで安い電気を買いたがって、<strong>空容量が足りなくなったら</strong>どうなるのでしょうか。
+        </p>
+        <p>
+          具体例で見ます。エリアAは発電が豊富で電気が安く、エリアBは需要が大きく電気が高いとします。
+          全体を1つの市場として約定させると、AからBへ <strong>300 MW</strong> 流れる計算になりました。
+          しかし連系線の空容量は <strong>250 MW</strong> しかありません。
+          約定処理は空容量を制約として織り込んでいるので、A→Bの流れを <strong>250 MW で頭打ち</strong>にします。
+        </p>
+        <p>
+          その結果、AとBはもう「1つの市場」として値段を決められません。そこで
+          <span class="term">市場分断<span class="term-tooltip">エリア間で流したい電力が連系線の空容量を超えるとき、スポット市場をエリアで分けて、それぞれ別の約定価格を決めること。連系線混雑が市場に現れた姿。</span></span>が起きます——
+          市場をエリアで分けて、<strong>それぞれ別々に約定価格を決める</strong>のです。
+          Aの側は電気が余り気味なので安く（たとえば 8円/kWh）、Bの側は足りないので高く（12円/kWh）なります。
+          この価格の差（この例では4円）が
+          <span class="term">エリア間値差<span class="term-tooltip">市場分断により生じる、エリアごとの約定価格（エリアプライス）の差。送り出し側は安く、受け入れ側は高くなる。</span></span>です。
+          分断がなければ全国で1つの価格、分断が起きたところではエリアごとの価格（エリアプライス）になり、約定結果として公表されます。
+        </p>
+        <p>
+          お気づきでしょうか。これが <strong>B-02で予告した「連系線混雑は市場の仕組みで処理する」の正体</strong>です。
+          しかも処理のしかたが地内混雑とは対照的です。地内混雑は、起きそうな混雑を再給電（<a href="../d-algorithms/02-redispatch.html">D-02: 再給電</a>）などの
+          <strong>運用で解消</strong>します。一方、連系線混雑は約定の段階で流れる量を空容量以内に収めてしまう——
+          つまり<strong>混雑をそもそも起こさない</strong>処理なのです。混雑の「印」は、過負荷ではなく<strong>値差</strong>という形で市場に現れます。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="エリアAからエリアBへ300MW流したいが連系線の空容量は250MWしかないため250MWで頭打ちになり、市場が分断されてエリアAは8円、エリアBは12円と別々の価格になる図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="e7-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#6366f1"></path>
+              </marker>
+            </defs>
+            <!-- エリアA -->
+            <rect x="20" y="45" width="170" height="110" rx="10" fill="#f0fdf4" stroke="#94a3b8"></rect>
+            <text x="105" y="70" font-size="11" text-anchor="middle" fill="#1a1a2e">エリアA（発電が豊富）</text>
+            <text x="105" y="105" font-size="16" text-anchor="middle" fill="#16a34a" font-weight="bold">8円/kWh</text>
+            <text x="105" y="130" font-size="9.5" text-anchor="middle" fill="#4a5568">電気が余り気味 → 安い</text>
+            <!-- エリアB -->
+            <rect x="270" y="45" width="170" height="110" rx="10" fill="#fef2f2" stroke="#94a3b8"></rect>
+            <text x="355" y="70" font-size="11" text-anchor="middle" fill="#1a1a2e">エリアB（需要が大きい）</text>
+            <text x="355" y="105" font-size="16" text-anchor="middle" fill="#dc2626" font-weight="bold">12円/kWh</text>
+            <text x="355" y="130" font-size="9.5" text-anchor="middle" fill="#4a5568">電気が足りない → 高い</text>
+            <!-- 連系線 -->
+            <line x1="193" y1="100" x2="264" y2="100" stroke="#6366f1" stroke-width="3" marker-end="url(#e7-ah)"></line>
+            <text x="230" y="88" font-size="9.5" text-anchor="middle" fill="#6366f1">250 MW</text>
+            <text x="230" y="35" font-size="9.5" text-anchor="middle" fill="#4a5568">流したいのは 300 MW、でも空容量は 250 MW</text>
+            <!-- 値差 -->
+            <text x="230" y="180" font-size="10" text-anchor="middle" fill="#1a1a2e">市場が2つに分かれ、別々の価格に ＝ 市場分断（エリア間値差 4円）</text>
+            <text x="230" y="198" font-size="9.5" text-anchor="middle" fill="#4a5568">値差は「連系線混雑」が市場に現れた姿</text>
+          </svg>
+          <figcaption>図3: 空容量が足りないと市場分断。エリアごとに価格が決まり、エリア間値差が生じる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 市場と混雑管理の全体地図</h2>
+        <p>
+          最後に、ここまでE領域で学んだ市場たちと混雑管理の関係を、1枚に整理します。
+        </p>
+        <ul>
+          <li>
+            <strong>スポット市場（本ユニット）</strong>：電気そのもの（kWh）を前日に売り買いする場。
+            約定結果は計画値（E-01）になる。<strong>連系線混雑はここで処理される</strong>（間接オークション・市場分断）。
+          </li>
+          <li>
+            <strong>需給調整市場（<a href="03-balancing-market.html">E-03: 需給調整市場</a>）</strong>：電気ではなく<strong>調整力</strong>（出力を上げ下げできる余力）を取引する場。
+            当日の需給のズレに備える。
+          </li>
+          <li>
+            <strong>地内混雑の処理</strong>：市場ではなく<strong>運用</strong>で行う。再給電（D-02）・出力制御（<a href="06-renewable-curtailment.html">E-06: 再エネ出力制御のしくみ</a>）。
+          </li>
+        </ul>
+        <p>
+          こうしてE領域は、計画値の出どころ（E-01・E-02）、調整力の市場（E-03）、抑制のルール（E-04〜E-06）、
+          そして取引と連系線混雑（E-07）まで、市場と系統運用の接点が一通りそろいました。
+          なお、市場と系統運用をさらに一体で最適化しようという検討が「同時市場」
+          （<a href="../d-algorithms/03-scuc-sced-overview.html">D-03: SCUC/SCEDの概要</a>・<a href="../f-dispatch-system/04-computation-timing.html">F-04: 中給システムの演算タイミングと時間断面</a>）であり、
+          本ユニットの内容はその議論の出発点にあたります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="スポット市場は電気を前日に取引し約定結果が計画値になり連系線混雑を処理する。需給調整市場は調整力を取引する。地内混雑は再給電や出力制御という運用で処理する、という整理図"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="20" width="420" height="48" rx="8" fill="#f0fdf4" stroke="#10b981"></rect>
+            <text x="35" y="40" font-size="10.5" fill="#1a1a2e" font-weight="bold">スポット市場（E-07）</text>
+            <text x="35" y="58" font-size="9.5" fill="#4a5568">電気（kWh）を前日に取引 → 計画値へ。連系線混雑はここで処理（間接オークション・市場分断）</text>
+            <rect x="20" y="78" width="420" height="48" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="35" y="98" font-size="10.5" fill="#1a1a2e" font-weight="bold">需給調整市場（E-03）</text>
+            <text x="35" y="116" font-size="9.5" fill="#4a5568">調整力（上げ下げの余力）を取引 → 当日の需給のズレに備える</text>
+            <rect x="20" y="136" width="420" height="48" rx="8" fill="#fef2f2" stroke="#ef4444"></rect>
+            <text x="35" y="156" font-size="10.5" fill="#1a1a2e" font-weight="bold">地内混雑の処理（市場ではなく運用）</text>
+            <text x="35" y="174" font-size="9.5" fill="#4a5568">再給電（D-02）・出力制御（E-06）で、起きそうな混雑を解消する</text>
+          </svg>
+          <figcaption>図4: 市場と混雑管理の全体地図。連系線混雑は市場で、地内混雑は運用で処理する</figcaption>
+        </figure>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（スポット市場の基本） -->
+        <div class="exercise" data-exercise-id="e-07-ex01" data-type="choice">
+          <h3>演習 1: スポット市場のきほん</h3>
+          <div class="exercise-problem">
+            <p>JEPXのスポット市場（前日市場）の説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-07-ex01" value="1">
+              <span>翌日の電気を30分コマごと（1日48コマ）に取引し、売り・買いの入札から約定量と約定価格（コマごとに1つ）を決める</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-07-ex01" value="2">
+              <span>実需給の直後に、実際に流れた電気の量を精算する市場である</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-07-ex01" value="3">
+              <span>電気そのものではなく、発電機の出力を上げ下げできる余力（調整力）を取引する市場である</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-07-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "スポット市場は、翌日の電気を30分コマごと（48商品）に取引する前日市場で、約定価格はコマごとに1つに決まります（シングルプライス）。約定結果は発電計画値・需要計画値（E-01: BGと発電計画値）に反映されます。選択肢3は需給調整市場（E-03: 需給調整市場）の説明です。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（市場分断の判定） -->
+        <div class="exercise" data-exercise-id="e-07-ex02" data-type="numeric">
+          <h3>演習 2: 空容量と流せる量</h3>
+          <div class="exercise-problem">
+            <p>
+              スポット市場の約定処理で、エリアAからエリアBへ 300 MW 流す約定が成立しそうになった。
+              しかし、A-B間の連系線の空容量は 250 MW である。
+              実際にA→Bへ流せる（約定できる）のは何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              A→Bへ流せる量:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-07-ex02",
+          "type": "numeric",
+          "correct": 250,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "約定処理は連系線の空容量を制約として織り込むため、A→Bの流れは空容量の 250 MW で頭打ちになります。流しきれない分があるため市場は分断され、エリアAとエリアBで別々の約定価格（エリアプライス）が決まり、エリア間値差が生じます。これが連系線混雑の市場での現れ方です。"
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（間接オークション・市場分断の理解） -->
+        <div class="exercise" data-exercise-id="e-07-ex03" data-type="multi-choice">
+          <h3>演習 3: 間接オークションと市場分断</h3>
+          <div class="exercise-problem">
+            <p>間接オークションと市場分断に関する記述として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="e-07-ex03" value="1">
+              <span>間接オークションでは、連系線の利用枠を先着順で予約する必要はない</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-07-ex03" value="2">
+              <span>間接オークションでは、スポット市場の約定処理を通じて、安い電気から順に連系線の空容量が使われる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-07-ex03" value="3">
+              <span>市場分断が起きると、分断された両側のエリアで約定価格が別々に決まり、エリア間値差が生じる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-07-ex03" value="4">
+              <span>間接オークションの導入後も、連系線は早く申し込んだ事業者から順に使うことができる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-07-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1・2は間接オークションの仕組み（予約の廃止、市場を通じた安い順の配分）、3は市場分断とエリア間値差の説明で、いずれも正しい。4は誤りで、先着優先（早い者勝ちの予約方式）は間接オークションの導入（2018年10月）によって置き換えられました。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.jepx.jp/electricpower/outline/"
+               target="_blank" rel="noopener noreferrer">日本卸電力取引所（JEPX）「取引概要」（スポット市場：48商品・シングルプライスオークション）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/various/occtosystem/kansetsu_auction_gaiyou.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「間接オークションの概要」（先着優先からの移行、連系線容量のスポット市場への割り当て）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/grid/public/riyoukaikaku.html"
+               target="_blank" rel="noopener noreferrer">OCCTO「電力ネットワーク利用の改革」（連系線利用ルール・コネクト&マネージ等の公開情報）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="06-renewable-curtailment.html" class="unit-nav-prev">&larr; 再エネ出力制御のしくみ</a>
+      <a href="../f-dispatch-system/index.html" class="unit-nav-next">次の領域へ: F 中央給電指令所システム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

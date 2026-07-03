@@ -112,6 +112,8 @@ const SITE_STRUCTURE = {
         summary: '送電線の空き容量問題と、混雑時に抑制される条件付き接続（ノンファーム型接続）を、優先給電ルールの中で位置づける。' },
       { id: 'e-06', title: '再エネ出力制御のしくみ（需給と混雑、2つの抑制）', file: '06-renewable-curtailment.html', exerciseCount: 3,
         summary: '再エネが抑制される2つの理由（供給過剰＝需給／系統混雑＝送電制約）を区別し、優先給電ルール・ノンファーム・再給電を「再エネ抑制と混雑処理」の視点で整理する。' },
+      { id: 'e-07', title: '卸電力市場と間接オークション', file: '07-wholesale-market-and-indirect-auction.html', exerciseCount: 3,
+        summary: 'JEPXスポット市場のきほんと、連系線の空容量を市場の約定処理で配分する間接オークション、混雑が値差として現れる市場分断を学ぶ。B-02で預けた「連系線混雑の市場処理」の回収。' },
     ],
   },
   f: {
