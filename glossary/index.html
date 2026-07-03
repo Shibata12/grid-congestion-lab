@@ -68,6 +68,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="f" id="term-edc">
+        <dt>EDC（経済負荷配分制御）</dt>
+        <dd>
+          <p>Economic load Dispatching Control。実需給の中で持続する需給のずれに対し、経済性（どの発電機で補うのが安いか）を考えて出力配分をし直す制御。数分〜数十分のオーダーで、変動の長周期成分を受け持つ。名前は似ているが、ゲートクローズ前の計画側の最適化であるSCEDとは働く場所が違う。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/05-frequency-control-and-congestion.html">F-05</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="c,a" id="term-phase-angle">
         <dt>位相角（電圧位相角）</dt>
         <dd>
@@ -158,6 +168,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="f" id="term-lfc">
+        <dt>LFC（負荷周波数制御）</dt>
+        <dd>
+          <p>Load Frequency Control。中央給電指令所が周波数のずれを監視し、対象の発電機へ自動で出力指令を送って周波数を規定値へ戻す制御。分オーダーで、変動の短周期成分を受け持つ（おおむね二次調整力①に対応）。次期中給システムでは、エリアを越えて協調する広域LFCが機能として位置づけられている。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/05-frequency-control-and-congestion.html">F-05</a>、<a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="d,b" id="term-lodf">
         <dt>LODF（Line Outage Distribution Factor）</dt>
         <dd>
@@ -204,6 +224,16 @@
           <p>系統の接続構成を変更するための装置。遮断器・断路器など。入／切によって送電線などが系統に入る・出るが切り替わり、トポロジー（系統モデルの構造）が変わる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f" id="term-governor-free">
+        <dt>ガバナフリー（GF）</dt>
+        <dd>
+          <p>発電機の調速機（ガバナ）が周波数の変化を感じて、中央給電指令所からの指令を待たずに自律的に出力を加減する運転。需給制御の最初の層（秒オーダー）で、変動の極短周期成分を受け持つ（おおむね一次調整力に対応）。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/05-frequency-control-and-congestion.html">F-05</a>
           </p>
         </dd>
       </div>
@@ -448,6 +478,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="f,e" id="term-frequency-control">
+        <dt>需給制御（周波数制御）</dt>
+        <dd>
+          <p>実需給の中で、需要と供給のずれ（周波数のずれ）を秒〜分の単位で埋め続ける制御。速い順にガバナフリー（GF・秒・自律）、LFC（分・自動指令）、EDC（数分〜・経済配分）の3層で行われ、担い手は需給調整市場で調達した調整力。混雑管理（潮流・場所ごと・断面）と並ぶ、中央給電指令所システムの両輪のひとつ。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/05-frequency-control-and-congestion.html">F-05</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-balancing-market">
         <dt>需給調整市場</dt>
         <dd>
@@ -581,9 +621,9 @@
       <div class="glossary-entry" data-domain="e" id="term-balancing-products">
         <dt>調整力の商品区分（一次・二次・三次調整力）</dt>
         <dd>
-          <p>調整力を応動速度・継続時間で分類したもの（概略）。速い順に一次・二次・三次で、継続時間は逆に三次が長い。瞬時の変動から数十分の予測誤差まで、時間スケールに応じて使い分ける。</p>
+          <p>調整力を応動速度・継続時間で分類したもの（概略）。速い順に一次・二次・三次で、継続時間は逆に三次が長い。瞬時の変動から数十分の予測誤差まで、時間スケールに応じて使い分ける。需給制御の3層とは、おおむね一次＝GF機能、二次①＝LFC機能のように対応する。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/e-market/03-balancing-market.html">E-03</a>
+            関連ユニット: <a href="../units/e-market/03-balancing-market.html">E-03</a>、<a href="../units/f-dispatch-system/05-frequency-control-and-congestion.html">F-05</a>
           </p>
         </dd>
       </div>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F-05: 需給制御（GF・LFC・EDC）と混雑管理 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="f" data-unit="f-05">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">F: 中央給電指令所システム</a> &gt;
+      <span>需給制御（GF・LFC・EDC）と混雑管理</span>
+    </nav>
+
+    <article>
+      <h1>F-05: 需給制御（GF・LFC・EDC）と混雑管理</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="04-computation-timing.html">F-04: 中給システムの演算タイミングと時間断面</a> は、
+        計画がゲートクローズで確定するところまでを描きました。では、<strong>実需給の「中」</strong>では何が起きているのでしょうか。
+        本ユニットは、<a href="02-next-gen-dispatch-system.html">F-02</a> で機能名だけ登場した「広域LFC」の回収です。
+        周波数を守る<span class="term">需給制御<span class="term-tooltip">実需給の中で、需要と供給のずれ（周波数のずれ）を秒〜分の単位で埋め続ける制御。速い順にガバナフリー・LFC・EDCの3層で行われる。</span></span>が
+        <strong>3層（GF・LFC・EDC）</strong>でできていることと、
+        それが本サイトの主題である<strong>混雑管理とどう違い、どこでつながるか</strong>を説明できるようになります。
+        このユニットに<strong>数式は出てきません</strong>。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>：有効電力の需給バランスは<strong>周波数</strong>に現れる（系統全体で1つ）</li>
+          <li><a href="../e-market/03-balancing-market.html">E-03</a>：<strong>調整力</strong>（出力を上げ下げできる余力）は需給調整市場で調達しておく</li>
+          <li><a href="04-computation-timing.html">F-04</a>：計画はゲートクローズで確定し、実需給を迎える</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：需給制御の<strong>3層の役割分担</strong>に絞ります。
+          広域LFCの内部仕様や制御の理論（応答特性など）、調整力の商品区分との細かい対応表には踏み込みません。
+          参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 実需給の「中」では何が起きているか</a></li>
+          <li><a href="#section-2">2. 3層のしくみ：GF → LFC → EDC</a></li>
+          <li><a href="#section-3">3. 中給システムの中の需給制御</a></li>
+          <li><a href="#section-4">4. 需給制御と混雑管理：中給の両輪</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 実需給の「中」では何が起きているか</h2>
+        <p>
+          F-04まで見てきた計画の世界では、電力は<strong>30分コマ単位の一定値</strong>で扱われ、
+          ゲートクローズで確定して実需給を迎えます。
+          しかし実需給の30分の「中」では、需要は刻々と揺れ、太陽光は雲の通過で急に変わります。
+          コマ単位の計画と、連続に揺れる実際との間には、<strong>必ずずれが残ります</strong>。
+        </p>
+        <p>
+          このずれの計器が<strong>周波数</strong>です（A-04・<a href="../e-market/02-simultaneous-balancing.html">E-02: 計画値同時同量</a>）。
+          供給が余れば周波数は上がり、足りなければ下がる——系統全体で1つの値として、需給のずれを映します。
+          そして、このずれを<strong>秒・分の単位で埋め続ける</strong>のが需給制御（周波数制御）です。
+          混雑管理（計画・断面ベース）と並ぶ、中央給電指令所システムの「もう半分」の仕事です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="コマ単位で一定の計画値の階段線に対し、実際の需要は連続に揺れる波線で描かれ、両者のずれを需給制御が埋めることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 軸 -->
+            <line x1="55" y1="30" x2="55" y2="155" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="55" y1="155" x2="430" y2="155" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="245" y="172" font-size="10" text-anchor="middle" fill="#4a5568">時間 →（30分コマの「中」）</text>
+            <!-- コマ境界 -->
+            <line x1="240" y1="35" x2="240" y2="155" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="4 3"></line>
+            <!-- 計画（階段） -->
+            <line x1="60" y1="90" x2="240" y2="90" stroke="#2563eb" stroke-width="2.5"></line>
+            <line x1="240" y1="110" x2="425" y2="110" stroke="#2563eb" stroke-width="2.5"></line>
+            <text x="105" y="82" font-size="10" fill="#2563eb">計画（コマ単位で一定）</text>
+            <!-- 実際（波） -->
+            <path d="M60,95 Q85,78 110,92 Q135,106 160,90 Q185,76 210,96 Q225,106 240,100 Q265,88 290,112 Q315,126 340,106 Q365,92 390,116 L425,108"
+                  fill="none" stroke="#dc2626" stroke-width="2"></path>
+            <text x="330" y="138" font-size="10" fill="#dc2626">実際（連続に揺れる）</text>
+            <text x="245" y="45" font-size="10" text-anchor="middle" fill="#1a1a2e">計画と実際の「ずれ」は周波数に現れる（A-04）</text>
+            <text x="245" y="190" font-size="10" text-anchor="middle" fill="#4a5568">このずれを秒・分の単位で埋め続けるのが需給制御</text>
+          </svg>
+          <figcaption>図1: コマ単位の計画と、連続に揺れる実際。残るずれを埋めるのが需給制御</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 3層のしくみ：GF → LFC → EDC</h2>
+        <p>
+          具体的な場面で考えましょう。大きな工場が急に操業を落とした、あるいは雲が晴れて太陽光が急増した——
+          周波数が動き出します。これへの応答は、<strong>速さの階層</strong>になっています。
+        </p>
+        <ul>
+          <li>
+            <strong>① <span class="term">ガバナフリー<span class="term-tooltip">発電機の調速機（ガバナ）が周波数の変化を感じて、指令を待たずに自律的に出力を加減する運転。需給制御の最初の層（秒オーダー）。</span></span>（GF）</strong>：<strong>秒</strong>のオーダー。
+            発電機自身の調速機（ガバナ）が周波数の変化を感じ、<strong>指令を待たずに自律的に</strong>出力を加減します。
+            いわば現場の反射神経です。
+          </li>
+          <li>
+            <strong>② <span class="term">LFC<span class="term-tooltip">Load Frequency Control（負荷周波数制御）。中央給電指令所が周波数のずれを監視し、対象の発電機へ自動で出力指令を送って周波数を規定値へ戻す制御（分オーダー）。</span></span>（負荷周波数制御）</strong>：<strong>分</strong>のオーダー。
+            中給が周波数のずれを監視し、LFC対象の発電機へ<strong>自動で出力指令</strong>を送って、周波数を規定値へ戻します。
+          </li>
+          <li>
+            <strong>③ <span class="term">EDC<span class="term-tooltip">Economic load Dispatching Control（経済負荷配分制御）。持続する需給のずれに対し、経済性を考えて発電機の出力配分をし直す制御（数分〜数十分）。</span></span>（経済負荷配分制御）</strong>：<strong>数分〜数十分</strong>のオーダー。
+            ずれが持続するとき、<strong>どの発電機で補うのが安いか</strong>を考えて、出力配分をし直します。
+          </li>
+        </ul>
+        <p>
+          OCCTOの公開資料では、変動のうち<strong>極短周期の成分をGF、短周期の成分をLFC、長周期の成分をEDC</strong>が受け持つ、と整理されています（末尾の<a href="#references">参考資料</a>）。
+          そして、この3層を担うのが <a href="../e-market/03-balancing-market.html">E-03: 需給調整市場</a> で調達しておいた<strong>調整力</strong>です
+          （公開資料では、一次調整力がGF機能、二次調整力①がLFC機能に対応づけられています。細かい対応はここでは踏み込みません）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="時間軸の上に、秒オーダーのガバナフリー、分オーダーのLFC、数分から数十分のEDCの3層が並び、速い応答から順に受け持つことを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="25" y="40" width="125" height="90" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="87" y="63" font-size="11" text-anchor="middle" fill="#2563eb" font-weight="bold">① GF</text>
+            <text x="87" y="83" font-size="9.5" text-anchor="middle" fill="#1a1a2e">秒オーダー</text>
+            <text x="87" y="101" font-size="9.5" text-anchor="middle" fill="#4a5568">現場で自律</text>
+            <text x="87" y="117" font-size="9.5" text-anchor="middle" fill="#4a5568">（指令を待たない）</text>
+            <rect x="168" y="40" width="125" height="90" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="230" y="63" font-size="11" text-anchor="middle" fill="#16a34a" font-weight="bold">② LFC</text>
+            <text x="230" y="83" font-size="9.5" text-anchor="middle" fill="#1a1a2e">分オーダー</text>
+            <text x="230" y="101" font-size="9.5" text-anchor="middle" fill="#4a5568">中給から自動指令で</text>
+            <text x="230" y="117" font-size="9.5" text-anchor="middle" fill="#4a5568">周波数を戻す</text>
+            <rect x="311" y="40" width="125" height="90" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="373" y="63" font-size="11" text-anchor="middle" fill="#d97706" font-weight="bold">③ EDC</text>
+            <text x="373" y="83" font-size="9.5" text-anchor="middle" fill="#1a1a2e">数分〜数十分</text>
+            <text x="373" y="101" font-size="9.5" text-anchor="middle" fill="#4a5568">経済性を考えて</text>
+            <text x="373" y="117" font-size="9.5" text-anchor="middle" fill="#4a5568">配分をし直す</text>
+            <line x1="40" y1="150" x2="420" y2="150" stroke="#94a3b8" stroke-width="1.5"></line>
+            <text x="60" y="167" font-size="9.5" fill="#4a5568">速い（極短周期）</text>
+            <text x="330" y="167" font-size="9.5" fill="#4a5568">ゆっくり（長周期）</text>
+            <text x="230" y="190" font-size="10" text-anchor="middle" fill="#4a5568">担い手はE-03で調達した調整力（一次〜三次に概ね対応）</text>
+          </svg>
+          <figcaption>図2: 需給制御の3層。速い順にGF（自律）→LFC（自動指令）→EDC（経済配分）が受け持つ</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 中給システムの中の需給制御</h2>
+        <p>
+          <a href="02-next-gen-dispatch-system.html">F-02: 次期中給システムの機能構成</a> の機能図に
+          「<strong>広域LFC（広域周波数制御）</strong>」がありました。その中身が、いま見たLFCです。
+          これまでエリアごとに行ってきたLFCなどの周波数制御を、次期中給では<strong>広域で連携して</strong>行う方向が
+          検討されています（F-02の参考資料の範囲）。
+        </p>
+        <p>
+          時間軸の全体像に置いてみましょう。F-04で見た計画の演算——SCUCは先の断面まで見て早めに、SCEDは直前に細かく——が
+          ゲートクローズまでを受け持ち、その先、<strong>実需給の「中」をGF・LFC・EDCが受け持ちます</strong>。
+          ひとことで言えば「<strong>計画で先を読み、制御で今を守る</strong>」。これが中給システムの時間軸の全体像です。
+        </p>
+        <p>
+          1つ、名前の紛らわしさに注意してください。<strong>SCED</strong>（D-03、コマ単位の計画側の最適配分）と
+          <strong>EDC</strong>（実需給の中の制御側の経済配分）は、どちらも「経済的に配分する」計算ですが、
+          <strong>働く場所が違います</strong>。SCEDはゲートクローズ前の計画の演算、EDCは実需給の中の制御です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="時間軸上に、ゲートクローズより前はSCUCが早めに、SCEDが直前に計画を演算し、ゲートクローズの後の実需給の中ではGF、LFC、EDCの需給制御が働くことを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <line x1="25" y1="110" x2="440" y2="110" stroke="#94a3b8" stroke-width="1.5"></line>
+            <!-- 計画側 -->
+            <rect x="35" y="45" width="100" height="45" rx="6" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="85" y="63" font-size="10" text-anchor="middle" fill="#2563eb" font-weight="bold">SCUC</text>
+            <text x="85" y="80" font-size="9" text-anchor="middle" fill="#4a5568">起動停止・早めに</text>
+            <rect x="145" y="45" width="100" height="45" rx="6" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="195" y="63" font-size="10" text-anchor="middle" fill="#2563eb" font-weight="bold">SCED</text>
+            <text x="195" y="80" font-size="9" text-anchor="middle" fill="#4a5568">配分・直前に</text>
+            <!-- GC -->
+            <line x1="265" y1="35" x2="265" y2="130" stroke="#dc2626" stroke-width="2"></line>
+            <text x="265" y="28" font-size="9.5" text-anchor="middle" fill="#dc2626">ゲートクローズ</text>
+            <!-- 制御側 -->
+            <rect x="280" y="45" width="150" height="45" rx="6" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="355" y="63" font-size="10" text-anchor="middle" fill="#d97706" font-weight="bold">GF → LFC → EDC</text>
+            <text x="355" y="80" font-size="9" text-anchor="middle" fill="#4a5568">実需給の中の需給制御</text>
+            <!-- ラベル -->
+            <text x="150" y="130" font-size="10" text-anchor="middle" fill="#2563eb">計画（コマ単位・F-04）</text>
+            <text x="355" y="130" font-size="10" text-anchor="middle" fill="#d97706">制御（秒〜分・本ユニット）</text>
+            <text x="230" y="165" font-size="10.5" text-anchor="middle" fill="#1a1a2e">「計画で先を読み、制御で今を守る」</text>
+          </svg>
+          <figcaption>図3: F-04の時間軸の続き。ゲートクローズまでは計画（SCUC/SCED）、実需給の中は需給制御（GF/LFC/EDC）</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 需給制御と混雑管理：中給の両輪</h2>
+        <p>
+          最後に、本サイトの主題である<strong>混雑管理</strong>との関係を整理します。両者は守るものが違います。
+        </p>
+        <ul>
+          <li><strong>需給制御</strong>が守るのは<strong>周波数</strong>——需給の合計のバランスで、エリア・系統全体で<strong>1つ</strong>の量。秒〜分の連続的な制御。</li>
+          <li><strong>混雑管理</strong>が守るのは<strong>潮流</strong>——<strong>線路ごと・場所ごと</strong>の量。コマ・断面ベースの計画と運用（B-01〜D-04）。</li>
+        </ul>
+        <p>
+          ところが<strong>手段は同じ</strong>です——発電機の出力の上げ下げ。
+          <a href="../e-market/03-balancing-market.html">E-03: 需給調整市場</a> で「調整力と再給電は、同じ手段で違う目的」と学びましたが、その全体像がここで完成します。
+          そして手段が同じだからこそ、両者はつながります。需給制御で発電機の出力を動かせば、
+          <strong>潮流も動く</strong>のです（<a href="../d-algorithms/01-ptdf-sensitivity.html">D-01: PTDFと感度分析</a>）。
+          混雑した系統では「<strong>どの場所の電源で</strong>調整するか」が線路の潮流に効いてきます。
+        </p>
+        <p>
+          だからこそ、計画の段階（SCUC/SCED＋混雑計算、D-03・F-02）で<strong>混雑まで織り込んで</strong>配分を決めておくことが、
+          実需給の中の制御を無理なく行う土台になります。
+          需給制御（周波数・今を守る）と混雑管理（潮流・先を読む）——この<strong>両輪</strong>がそろって、
+          中央給電指令所システムの全体像です。F領域はこれで完結です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="需給制御は周波数というエリア全体で1つの量を秒から分で守り、混雑管理は線路ごとの潮流をコマ単位の計画で守る。手段はどちらも発電機の出力の上げ下げで共通し、出力を動かせば潮流も動くという接点があることを示す対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="30" width="200" height="130" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="120" y="52" font-size="11.5" text-anchor="middle" fill="#d97706" font-weight="bold">需給制御（本ユニット）</text>
+            <text x="35" y="78" font-size="9.5" fill="#1a1a2e">・守るもの: 周波数（需給の合計）</text>
+            <text x="35" y="100" font-size="9.5" fill="#1a1a2e">・範囲: エリア・系統全体で1つ</text>
+            <text x="35" y="122" font-size="9.5" fill="#1a1a2e">・時間: 秒〜分、連続の制御</text>
+            <text x="35" y="144" font-size="9.5" fill="#1a1a2e">・手段: 発電機出力の上げ下げ</text>
+            <rect x="240" y="30" width="200" height="130" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="340" y="52" font-size="11.5" text-anchor="middle" fill="#2563eb" font-weight="bold">混雑管理（本サイトの主題）</text>
+            <text x="255" y="78" font-size="9.5" fill="#1a1a2e">・守るもの: 潮流（線路ごと）</text>
+            <text x="255" y="100" font-size="9.5" fill="#1a1a2e">・範囲: 場所ごと（どの線路か）</text>
+            <text x="255" y="122" font-size="9.5" fill="#1a1a2e">・時間: コマ・断面の計画と運用</text>
+            <text x="255" y="144" font-size="9.5" fill="#1a1a2e">・手段: 発電機出力の上げ下げ</text>
+            <text x="230" y="182" font-size="10" text-anchor="middle" fill="#1a1a2e">手段が同じ → 出力を動かせば潮流も動く（PTDF）＝両者の接点</text>
+            <text x="230" y="200" font-size="9.5" text-anchor="middle" fill="#4a5568">計画段階で混雑まで織り込むことが、実需給の制御の土台になる</text>
+          </svg>
+          <figcaption>図4: 需給制御と混雑管理の対比。守るものは違うが手段は同じ——だからつながる</figcaption>
+        </figure>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: ordering（時間順） -->
+        <div class="exercise" data-exercise-id="f-05-ex01" data-type="ordering">
+          <h3>演習 1: 需給のずれへの備えと応答の順序</h3>
+          <div class="exercise-problem">
+            <p>
+              需給のずれへの備えと応答を、<strong>時間の流れの順</strong>（早く行われるものから）に並べ替えよ。
+              （ドラッグ、または ▲▼ ボタンで操作できます）
+            </p>
+          </div>
+          <div class="exercise-input">
+            <ul class="ordering-list" role="listbox">
+              <li class="ordering-item" draggable="true" data-item-id="b">周波数のずれに、発電機のガバナが自律的に応答する（ガバナフリー）</li>
+              <li class="ordering-item" draggable="true" data-item-id="d">ずれが続くため、経済性を考えて出力配分をし直す（EDC）</li>
+              <li class="ordering-item" draggable="true" data-item-id="a">需給調整市場で、調整力（上げ下げの余力）をあらかじめ調達しておく</li>
+              <li class="ordering-item" draggable="true" data-item-id="c">中給からの自動指令で、周波数を規定値へ戻す（LFC）</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-05-ex01",
+          "type": "ordering",
+          "correct": ["a", "b", "c", "d"],
+          "explanation": "調整力の調達（E-03: 需給調整市場）は実需給より前に済ませておく備えです。実需給の中でずれが生じると、まず秒オーダーでガバナフリー（現場で自律）、次に分オーダーでLFC（中給から自動指令）、ずれが持続すれば数分〜数十分でEDC（経済性を考えた配分し直し）が働きます。速い層から順に受け持つ階層構造です。"
+        }
+        </script>
+
+        <!-- 演習2: choice（需給制御と混雑管理の対比） -->
+        <div class="exercise" data-exercise-id="f-05-ex02" data-type="choice">
+          <h3>演習 2: 需給制御と混雑管理</h3>
+          <div class="exercise-problem">
+            <p>需給制御と混雑管理の違いの説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="f-05-ex02" value="1">
+              <span>需給制御はエリア全体で1つの周波数（需給の合計）を守り、混雑管理は線路ごとの潮流（場所）を守る</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-05-ex02" value="2">
+              <span>需給制御は線路ごとの潮流を守り、混雑管理はエリア全体の周波数を守る</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-05-ex02" value="3">
+              <span>両者は同じものであり、呼び方が違うだけである</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-05-ex02",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "需給制御が守るのは周波数——需給の合計のバランスで、エリア・系統全体で1つの量です（A-04: 有効電力・無効電力と電圧）。混雑管理が守るのは潮流——線路ごと・場所ごとの量です（B-01: 混雑の判定とN-1基準）。守るものは違いますが、手段はどちらも発電機出力の上げ下げで共通しており、そこが両者の接点になります。"
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（GF/LFC/EDCと接点の理解） -->
+        <div class="exercise" data-exercise-id="f-05-ex03" data-type="multi-choice">
+          <h3>演習 3: GF・LFC・EDCの理解</h3>
+          <div class="exercise-problem">
+            <p>需給制御に関する記述として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="f-05-ex03" value="1">
+              <span>ガバナフリー（GF）は、中給からの指令を待たずに、発電機みずからが周波数の変化に応答する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-05-ex03" value="2">
+              <span>LFCは、中給からの自動指令で発電機の出力を動かし、周波数を規定値へ戻す</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-05-ex03" value="3">
+              <span>EDCとSCEDは、名前は似ているが同じ演算であり、区別する必要はない</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-05-ex03" value="4">
+              <span>需給制御で発電機の出力を動かすと、送電線の潮流も変化する</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-05-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "4"],
+          "explanation": "1はGF（現場で自律・秒オーダー）、2はLFC（中給から自動指令・分オーダー）の説明で正しい。4も正しく、出力を動かせば潮流も動くため（D-01: PTDFと感度分析）、混雑した系統では『どの場所の電源で調整するか』が効いてきます。3は誤りで、SCEDはゲートクローズ前の計画側の最適配分（D-03: SCUC/SCEDの概要）、EDCは実需給の中の制御側の経済配分であり、働く場所が違います。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/iinkai/chouseiryoku/jukyuchousei/2019/files/jukyu_shijyo_14_02r.pdf"
+               target="_blank" rel="noopener noreferrer">OCCTO 需給調整市場検討小委員会事務局「一次調整力から三次調整力①の必要量の考え方について」（第14回 資料2、2019年11月5日。GF＝極短周期・LFC＝短周期・EDC＝長周期の整理）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/assets/iinkai/chouseiryoku/jukyuchousei/2020/files/jukyu_shijyo_19_02_02.pdf"
+               target="_blank" rel="noopener noreferrer">一般送配電事業者（10社）「GFおよびLFC運用の現状について」（OCCTO 第19回需給調整市場検討小委員会 資料2-2、2020年9月29日。一次調整力＝GF機能・二次調整力①＝LFC機能の対応）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/iinkai/chouseiryoku/jukyuchousei/"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「需給調整市場検討小委員会」</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="04-computation-timing.html" class="unit-nav-prev">&larr; 中給システムの演算タイミングと時間断面</a>
+      <a href="../../index.html" class="unit-nav-next">トップへ戻る &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

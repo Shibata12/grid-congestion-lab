@@ -131,6 +131,8 @@ const SITE_STRUCTURE = {
         summary: '再エネ抑制・混雑処理を、現行（エリア中心のルールベース）と次期中給（全国一括のSCUC/SCED最適化）で比較し、段階的な移行（二段階構成）を学ぶ。' },
       { id: 'f-04', title: '中給システムの演算タイミングと時間断面', file: '04-computation-timing.html', exerciseCount: 3,
         summary: '30分コマ・ゲートクローズの時間軸の上に、予測・混雑計算・SCUC（早め）・SCED（直前）がいつ・どのコマを対象に走るかを整理する。' },
+      { id: 'f-05', title: '需給制御（GF・LFC・EDC）と混雑管理', file: '05-frequency-control-and-congestion.html', exerciseCount: 3,
+        summary: '実需給の中で周波数を守る需給制御の3層（GF＝秒・自律／LFC＝分・自動指令／EDC＝数分〜・経済配分）と、混雑管理（潮流・場所）との違い・接点を学ぶ。F-02「広域LFC」の回収でF領域完結。' },
     ],
   },
 };
