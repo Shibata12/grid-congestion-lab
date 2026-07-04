@@ -95,6 +95,8 @@ const SITE_STRUCTURE = {
         summary: '再給電を最適化問題として定式化する。目的関数（発電コスト最小）と制約（需給・潮流・出力上下限）、SCUCとSCEDの違い、二段階構成を学ぶ。' },
       { id: 'd-04', title: '想定故障計算とLODF', file: '04-contingency-analysis-and-lodf.html', exerciseCount: 3,
         summary: '停止した線路の潮流が残りへ上乗せされる割合（LODF）で、N-1の混雑チェックを足し算で高速に回す方法を学ぶ。B-01の転流の式化であり、Security Constrainedの完成形。' },
+      { id: 'd-05', title: '総合演習──ある日の混雑管理を通しで解く', file: '05-integrated-exercise.html', exerciseCount: 8,
+        summary: '新しい知識ゼロの総仕上げ。1つの系統・1つのシナリオを、計画値→潮流→混雑判定→PTDF→再給電→N-1チェックまで、初見の数字で8問の数珠つなぎで通しで解く。' },
     ],
   },
   e: {
