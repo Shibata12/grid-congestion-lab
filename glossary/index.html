@@ -43,7 +43,7 @@
         <dd>
           <p>送電線にまだ流せる余裕。運用容量からマージンと既に決まっている利用（計画潮流）を除いた残りで、新しい取引・接続に使える分（連系線では「空容量」と表記される）。従来は、接続済み電源が最大出力で同時に発電すると想定して計算されるため保守的になりがちで、実際には多くの時間帯で空きがある。ノンファーム型接続は、この空きを活用する仕組み。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/e-market/05-non-firm-connection.html">E-05</a>、<a href="../units/c-grid-model/05-reading-public-grid-data.html">C-05</a>
           </p>
         </dd>
       </div>
@@ -161,9 +161,9 @@
       <div class="glossary-entry" data-domain="e,b" id="term-area-price-spread">
         <dt>エリア間値差</dt>
         <dd>
-          <p>市場分断により生じる、エリアごとの約定価格（エリアプライス）の差。電気を送り出す側（余る側）のエリアは安く、受け入れる側（足りない側）のエリアは高くなる。連系線混雑が市場に現れた姿。</p>
+          <p>市場分断により生じる、エリアごとの約定価格（エリアプライス）の差。電気を送り出す側（余る側）のエリアは安く、受け入れる側（足りない側）のエリアは高くなる。連系線混雑が市場に現れた姿。JEPXの取引結果から実際の値差を読み取れる。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
+            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>、<a href="../units/c-grid-model/05-reading-public-grid-data.html">C-05</a>
           </p>
         </dd>
       </div>
@@ -394,6 +394,16 @@
           <p>スポット市場の約定処理で、エリア間で流したい電力が連系線の空容量を超えるとき、市場をエリアで分けてそれぞれ別の約定価格を決めること。分断がなければ全国で1つの価格になる。分断が起きるとエリア間値差が生じる。連系線混雑を約定の段階で「起こさない」形で処理する仕組み。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e,c" id="term-system-price">
+        <dt>システムプライス</dt>
+        <dd>
+          <p>スポット市場で、市場分断がない（全国を1つの市場として約定させる）と仮定して算出される参考価格。分断が起きたコマでは、実際の約定価格はエリアごとのエリアプライスになり、エリアプライスの切れ目や値差から分断の場所・強さが読み取れる。JEPXが取引結果として公表する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/05-reading-public-grid-data.html">C-05</a>、<a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
           </p>
         </dd>
       </div>

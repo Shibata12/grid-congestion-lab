@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C-05: 公開系統データを読む - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="c" data-unit="c-05">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">C: 系統モデル</a> &gt;
+      <span>公開系統データを読む</span>
+    </nav>
+
+    <article>
+      <h1>C-05: 公開系統データを読む</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="../a-grid-fundamentals/05-three-phase-and-per-unit.html">A-05: 三相交流と単位法</a> の最後に
+        「実データに向き合う場面になったら戻ってきてください」と書きました——<strong>その場面が、このユニットです</strong>。
+        本サイトで学んだ空容量（<a href="../b-congestion/02-operating-capacity-and-margin.html">B-02</a>）や
+        エリア間値差（<a href="../e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>）は、
+        概念ではなく<strong>毎日実際に公表されている数字</strong>です。
+        どこで何が公開されているかを知り、公表様式の表を自力で読み・検算できるようになります。
+        新しい式はありません（B-02の式を実物に使うだけです）。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../a-grid-fundamentals/05-three-phase-and-per-unit.html">A-05</a>：単位の読み方（MW/MVA・線間電圧・pu・%）</li>
+          <li><a href="../b-congestion/02-operating-capacity-and-margin.html">B-02</a>：空容量 ＝ 運用容量 − マージン − 計画潮流</li>
+          <li><a href="../e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>：市場分断が起きるとエリアごとの価格（エリアプライス）に値差が出る</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：本ユニットに載せる数表は、公開様式に基づく<strong>教材用の例示値</strong>です
+          （実際の公表値は日々・コマごとに更新されます）。実物は本文と末尾の<a href="#references">参考資料</a>のリンク先で、
+          同じ見方で最新値を読んでみてください。各サービスの操作方法や全項目の網羅には踏み込みません。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. どこで何が公開されているか</a></li>
+          <li><a href="#section-2">2. 例1：連系線の空容量を読む</a></li>
+          <li><a href="#section-3">3. 例2：JEPXの約定結果を読む</a></li>
+          <li><a href="#section-4">4. 例3：設備データの表記を読む＋3つの心得</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. どこで何が公開されているか</h2>
+        <p>
+          <a href="03-upper-lower-and-aggregated-bus.html">C-03</a> で学んだとおり、系統情報の公開は制度で決められています。
+          本サイトの学びに対応する「窓口」は、大きく3つです。
+        </p>
+        <ul>
+          <li><strong>OCCTO 系統情報サービス</strong>：系統図・設備データ・空き容量など、系統に関する公開情報の入口（C-01・C-03で参照した窓口）</li>
+          <li><strong>OCCTO 連系線情報</strong>：連系線ごとの<strong>運用容量・マージン・空容量</strong>の公表（B-02で学んだ内訳の実物）</li>
+          <li><strong>JEPX 取引結果</strong>：スポット市場の約定価格——<strong>システムプライスと9エリアのエリアプライス</strong>（E-07で学んだ市場分断・値差の実物）</li>
+        </ul>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="3つの公開窓口。OCCTO系統情報サービスは系統図・設備・空き容量、OCCTO連系線情報は運用容量・マージン・空容量、JEPX取引結果はシステムプライスとエリアプライスを公表している"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="20" width="420" height="48" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="35" y="40" font-size="10.5" fill="#1a1a2e" font-weight="bold">OCCTO 系統情報サービス</text>
+            <text x="35" y="58" font-size="9.5" fill="#4a5568">系統図・設備データ・空き容量など（C-01・C-03の窓口）</text>
+            <rect x="20" y="78" width="420" height="48" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="35" y="98" font-size="10.5" fill="#1a1a2e" font-weight="bold">OCCTO 連系線情報（運用容量・マージン）</text>
+            <text x="35" y="116" font-size="9.5" fill="#4a5568">連系線ごとの運用容量・マージン・空容量（B-02の実物）→ §2</text>
+            <rect x="20" y="136" width="420" height="48" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="35" y="156" font-size="10.5" fill="#1a1a2e" font-weight="bold">JEPX 取引結果（スポット市場）</text>
+            <text x="35" y="174" font-size="9.5" fill="#4a5568">システムプライス・9エリアのエリアプライス（E-07の実物）→ §3</text>
+          </svg>
+          <figcaption>図1: 学んだ概念の「実物」が公開されている3つの窓口</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 例1：連系線の空容量を読む</h2>
+        <p>
+          連系線の空容量は、B-02で学んだ内訳——運用容量・マージン・計画潮流——とともに公表されています。
+          公表様式に基づく例を見てみましょう（<strong>教材用の例示値</strong>です）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 180" role="img"
+               aria-label="連系線の公表イメージ。ある連系線・あるコマの例として、運用容量1200MW、マージン150MW、計画潮流900MW、空容量150MWが表形式で示されている"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="60" y="20" width="340" height="28" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="230" y="39" font-size="10.5" text-anchor="middle" fill="#1a1a2e" font-weight="bold">○○連系線（順方向）あるコマの公表例</text>
+            <rect x="60" y="48" width="200" height="26" fill="#fff" stroke="#94a3b8"></rect>
+            <rect x="260" y="48" width="140" height="26" fill="#fff" stroke="#94a3b8"></rect>
+            <text x="72" y="65" font-size="10" fill="#1a1a2e">運用容量</text>
+            <text x="388" y="65" font-size="10" text-anchor="end" fill="#1a1a2e">1,200 MW</text>
+            <rect x="60" y="74" width="200" height="26" fill="#fff" stroke="#94a3b8"></rect>
+            <rect x="260" y="74" width="140" height="26" fill="#fff" stroke="#94a3b8"></rect>
+            <text x="72" y="91" font-size="10" fill="#1a1a2e">マージン</text>
+            <text x="388" y="91" font-size="10" text-anchor="end" fill="#1a1a2e">150 MW</text>
+            <rect x="60" y="100" width="200" height="26" fill="#fff" stroke="#94a3b8"></rect>
+            <rect x="260" y="100" width="140" height="26" fill="#fff" stroke="#94a3b8"></rect>
+            <text x="72" y="117" font-size="10" fill="#1a1a2e">計画潮流</text>
+            <text x="388" y="117" font-size="10" text-anchor="end" fill="#1a1a2e">900 MW</text>
+            <rect x="60" y="126" width="200" height="26" fill="#fffbeb" stroke="#d97706"></rect>
+            <rect x="260" y="126" width="140" height="26" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="72" y="143" font-size="10" fill="#d97706" font-weight="bold">空容量</text>
+            <text x="388" y="143" font-size="10" text-anchor="end" fill="#d97706" font-weight="bold">150 MW</text>
+            <text x="230" y="170" font-size="9.5" text-anchor="middle" fill="#4a5568">※教材用の例示値。実際の公表値は日々・コマごとに更新される</text>
+          </svg>
+          <figcaption>図2: 連系線の公表イメージ（例示値）。B-02で学んだ内訳がそのまま並んでいる</figcaption>
+        </figure>
+
+        <p>
+          読み方のポイントは、この表が<strong>B-02の式そのもの</strong>だということです。
+        </p>
+        <div class="math-block"
+             data-tex="\text{空容量} = \text{運用容量} - \text{マージン} - \text{計画潮流}"
+             data-fallback="空容量 = 運用容量 − マージン − 計画潮流"></div>
+        <p>
+          つまり、公表された空容量は<strong>自分で検算できます</strong>（演習1でやってみます）。
+          検算が合う——それは「この数字の成り立ちを理解している」ということです。
+          実物のページでも、同じ検算がそのまま通用します。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 例2：JEPXの約定結果を読む</h2>
+        <p>
+          JEPXはスポット市場の約定結果を、コマごとに公表しています。価格の欄には
+          <span class="term">システムプライス<span class="term-tooltip">スポット市場で、市場分断がない（全国を1つの市場として約定させる）と仮定して算出される参考価格。分断が起きたコマでは、実際の約定価格はエリアごとのエリアプライスになる。</span></span>と、
+          9エリアそれぞれの<strong>エリアプライス</strong>が並びます。例を見ましょう（教材用の例示値です）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="JEPX約定結果の公表イメージ。あるコマの例として、システムプライス10.85円に対し、エリアプライスは北海道9.50円、東北9.50円、東京13.20円、中部13.20円、関西13.20円、九州13.20円で、東北と東京の間で価格が分かれている"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="30" y="18" width="400" height="26" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="230" y="35" font-size="10.5" text-anchor="middle" fill="#1a1a2e" font-weight="bold">スポット取引結果 あるコマの例（円/kWh）</text>
+            <rect x="30" y="44" width="260" height="26" fill="#fff" stroke="#94a3b8"></rect>
+            <rect x="290" y="44" width="140" height="26" fill="#fff" stroke="#94a3b8"></rect>
+            <text x="42" y="61" font-size="10" fill="#1a1a2e">システムプライス（参考）</text>
+            <text x="418" y="61" font-size="10" text-anchor="end" fill="#1a1a2e">10.85</text>
+            <!-- エリア行 -->
+            <g font-size="9.5">
+              <rect x="30" y="82" width="66" height="24" fill="#f5f7fa" stroke="#94a3b8"></rect>
+              <rect x="96" y="82" width="66" height="24" fill="#f5f7fa" stroke="#94a3b8"></rect>
+              <rect x="162" y="82" width="66" height="24" fill="#f5f7fa" stroke="#94a3b8"></rect>
+              <rect x="228" y="82" width="66" height="24" fill="#f5f7fa" stroke="#94a3b8"></rect>
+              <rect x="294" y="82" width="66" height="24" fill="#f5f7fa" stroke="#94a3b8"></rect>
+              <rect x="360" y="82" width="66" height="24" fill="#f5f7fa" stroke="#94a3b8"></rect>
+              <text x="63" y="98" text-anchor="middle" fill="#1a1a2e">北海道</text>
+              <text x="129" y="98" text-anchor="middle" fill="#1a1a2e">東北</text>
+              <text x="195" y="98" text-anchor="middle" fill="#1a1a2e">東京</text>
+              <text x="261" y="98" text-anchor="middle" fill="#1a1a2e">中部</text>
+              <text x="327" y="98" text-anchor="middle" fill="#1a1a2e">関西</text>
+              <text x="393" y="98" text-anchor="middle" fill="#1a1a2e">九州</text>
+              <rect x="30" y="106" width="66" height="24" fill="#f0fdf4" stroke="#94a3b8"></rect>
+              <rect x="96" y="106" width="66" height="24" fill="#f0fdf4" stroke="#94a3b8"></rect>
+              <rect x="162" y="106" width="66" height="24" fill="#fef2f2" stroke="#94a3b8"></rect>
+              <rect x="228" y="106" width="66" height="24" fill="#fef2f2" stroke="#94a3b8"></rect>
+              <rect x="294" y="106" width="66" height="24" fill="#fef2f2" stroke="#94a3b8"></rect>
+              <rect x="360" y="106" width="66" height="24" fill="#fef2f2" stroke="#94a3b8"></rect>
+              <text x="63" y="122" text-anchor="middle" fill="#16a34a">9.50</text>
+              <text x="129" y="122" text-anchor="middle" fill="#16a34a">9.50</text>
+              <text x="195" y="122" text-anchor="middle" fill="#dc2626">13.20</text>
+              <text x="261" y="122" text-anchor="middle" fill="#dc2626">13.20</text>
+              <text x="327" y="122" text-anchor="middle" fill="#dc2626">13.20</text>
+              <text x="393" y="122" text-anchor="middle" fill="#dc2626">13.20</text>
+            </g>
+            <path d="M162,140 L162,132" stroke="#6366f1" stroke-width="2"></path>
+            <text x="162" y="156" font-size="9.5" text-anchor="middle" fill="#6366f1">← ここで価格が分かれている＝東北・東京間で市場分断</text>
+            <text x="230" y="186" font-size="9.5" text-anchor="middle" fill="#4a5568">※教材用の例示値（実際は9エリアぶん公表される）</text>
+          </svg>
+          <figcaption>図3: JEPX約定結果の公表イメージ（例示値）。エリアプライスの切れ目が市場分断の場所</figcaption>
+        </figure>
+
+        <p>
+          読み方はこうです。<strong>全エリアの価格が同じ</strong>なら、そのコマは分断なし（全国1つの市場、価格はシステムプライスと一致）。
+          この例のように<strong>価格が途中で分かれていたら</strong>、そこの連系線で市場分断（E-07）が起きています。
+          安い側（北海道・東北）から高い側（東京以西）へ、連系線の空容量いっぱいまで電気が流れた結果です。
+          値差の大きさ（演習2で読み取ります）は、その連系線の混雑の「強さ」の現れです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 例3：設備データの表記を読む＋3つの心得</h2>
+        <p>
+          最後に、設備データです。A-05で学んだ表記——MVA・線間電圧・%Z——は、変圧器の銘板や設備データでこう現れます。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 180" role="img"
+               aria-label="変圧器銘板の例。定格容量300MVA、電圧275kVと154kV、パーセントインピーダンス14.5%（自己容量基準）と記されている"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="90" y="20" width="280" height="130" rx="6" fill="#f5f7fa" stroke="#4a5568" stroke-width="1.5"></rect>
+            <text x="230" y="44" font-size="11" text-anchor="middle" fill="#1a1a2e" font-weight="bold">変圧器 銘板（例）</text>
+            <line x1="105" y1="54" x2="355" y2="54" stroke="#94a3b8" stroke-width="1"></line>
+            <text x="110" y="76" font-size="10" fill="#1a1a2e">定格容量：300 MVA</text>
+            <text x="110" y="98" font-size="10" fill="#1a1a2e">電圧：275 kV ／ 154 kV</text>
+            <text x="110" y="120" font-size="10" fill="#1a1a2e">%Z：14.5 %（自己容量基準）</text>
+            <text x="230" y="170" font-size="9.5" text-anchor="middle" fill="#4a5568">MVAは3相合計、kVは線間電圧、%Zはpu×100（すべてA-05の読み方ルール）</text>
+          </svg>
+          <figcaption>図4: 変圧器銘板の例。A-05のリファレンスカードがそのまま使える</figcaption>
+        </figure>
+
+        <p>
+          注目してほしいのは「<strong>（自己容量基準）</strong>」の一言です。%やpuは「基準に対する割合」（A-05）なので、
+          <strong>何を基準にした割合なのか</strong>を確認しないと、値の意味が定まりません。この銘板なら、%Zはこの変圧器自身の定格容量（300 MVA）を基準にした値です。
+        </p>
+        <p>
+          まとめとして、実データを読むときの<strong>3つの心得</strong>です。
+        </p>
+        <ul>
+          <li><strong>① 値の前に、単位と基準を確認する。</strong>MWかMVAか、%は何に対する割合か（A-05）。</li>
+          <li><strong>② いつ時点の値かを確認する。</strong>公表値は日々・コマごとに更新され、様式も改定されることがあります。</li>
+          <li><strong>③ 「空容量ゼロ」＝物理的に流せない、ではない。</strong><a href="../e-market/05-non-firm-connection.html">E-05: ノンファーム型接続</a> で学んだとおり、
+            空き容量は保守的に見積もられることがあり、その空きの活用こそがノンファーム型接続の背景でした。数字の「成り立ち」まで含めて読むのが専門家の読み方です。</li>
+        </ul>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（空容量の検算） -->
+        <div class="exercise" data-exercise-id="c-05-ex01" data-type="numeric">
+          <h3>演習 1: 空容量を検算する</h3>
+          <div class="exercise-problem">
+            <p>
+              ある連系線の公表例に、運用容量 1,200 MW・マージン 150 MW・計画潮流 900 MW とある。
+              空容量の欄の値を検算せよ（何 MW になっているはずか）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              空容量:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-05-ex01",
+          "type": "numeric",
+          "correct": 150,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "空容量 = 運用容量 − マージン − 計画潮流 = 1,200 − 150 − 900 = 150 MW（B-02: 運用容量とマージン）。図2の公表欄の150 MWと一致します。実物の公表ページでも、この検算はそのまま通用します——検算が合うことが「数字の成り立ちを理解している」証拠です。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（エリア間値差の読み取り） -->
+        <div class="exercise" data-exercise-id="c-05-ex02" data-type="numeric">
+          <h3>演習 2: エリア間値差を読み取る</h3>
+          <div class="exercise-problem">
+            <p>
+              図3の約定結果の例で、東北エリアのエリアプライスは 9.50 円/kWh、東京エリアは 13.20 円/kWh である。
+              東北・東京間のエリア間値差は何 円/kWh か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              エリア間値差:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 円/kWh
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-05-ex02",
+          "type": "numeric",
+          "correct": 3.7,
+          "tolerance": 0,
+          "unit": "円/kWh",
+          "explanation": "値差 = 13.20 − 9.50 = 3.70 円/kWh。東側（北海道・東北）が安く、東京以西が高い——このコマは東北・東京間の連系線で市場分断（E-07: 卸電力市場と間接オークション）が起きていたと読めます。値差は連系線混雑が市場に現れた姿でした。"
+        }
+        </script>
+
+        <!-- 演習3: numeric（%Zの読み取り） -->
+        <div class="exercise" data-exercise-id="c-05-ex03" data-type="numeric">
+          <h3>演習 3: 銘板の%Zを読む</h3>
+          <div class="exercise-problem">
+            <p>
+              図4の銘板の例に「%Z：14.5 %（自己容量基準）」とある。
+              この変圧器のインピーダンスを pu で表すといくらか。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              インピーダンス:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> pu
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-05-ex03",
+          "type": "numeric",
+          "correct": 0.145,
+          "tolerance": 0,
+          "unit": "pu",
+          "explanation": "%はpuを100倍したものなので、14.5 ÷ 100 = 0.145 pu（A-05: 三相交流と単位法）。あわせて「自己容量基準」＝この変圧器の定格容量300 MVAに対する割合、という基準の確認も忘れずに。%やpuは基準とセットで初めて意味が定まります。"
+        }
+        </script>
+
+        <!-- 演習4: multi-choice（実データを読む心得） -->
+        <div class="exercise" data-exercise-id="c-05-ex04" data-type="multi-choice">
+          <h3>演習 4: 実データを読む心得</h3>
+          <div class="exercise-problem">
+            <p>公開系統データの読み方として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="c-05-ex04" value="1">
+              <span>値を読む前に、単位（MW/MVAなど）と、%やpuが何を基準にした割合かを確認する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-05-ex04" value="2">
+              <span>公表値は日々・コマごとに更新されるため、いつ時点の値かを確認する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-05-ex04" value="3">
+              <span>空容量がゼロと公表されていれば、その送電線は物理的にこれ以上まったく流せない状態である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-05-ex04" value="4">
+              <span>本ユニットの例示値で練習した見方は、実際の公表ページでも同じように使える</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-05-ex04",
+          "type": "multi-choice",
+          "correct": ["1", "2", "4"],
+          "explanation": "1（単位と基準の確認）と2（時点の確認）は実データを読む基本の心得、4はこのユニットの狙いそのもので、いずれも正しい。3は誤りで、空き容量は保守的に見積もられることがあり、「空容量ゼロ」でも実際には流せる余地が残っていることがあります（E-05: ノンファーム型接続の背景）。数字の成り立ちまで含めて読むのが専門家の読み方です。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URL・公表様式は更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/institution/keitoujouhou/"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「系統情報サービス等」（系統図・設備・空き容量等の公開窓口）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/news/renkeisenriyou/index.html"
+               target="_blank" rel="noopener noreferrer">OCCTO「運用容量・マージン」（連系線の運用容量・マージン・空容量の公表）</a>
+          </li>
+          <li>
+            <a href="https://www.jepx.jp/electricpower/market-data/spot/"
+               target="_blank" rel="noopener noreferrer">日本卸電力取引所（JEPX）「スポット市場 市場情報」（システムプライス・エリアプライスの取引結果）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="04-dc-and-ac-power-flow.html" class="unit-nav-prev">&larr; DC潮流とAC潮流</a>
+      <a href="../d-algorithms/index.html" class="unit-nav-next">次の領域へ: D 混雑計算のアルゴリズム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>
