@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C-06: 計測と状態推定 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="c" data-unit="c-06">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">C: 系統モデル</a> &gt;
+      <span>計測と状態推定</span>
+    </nav>
+
+    <article>
+      <h1>C-06: 計測と状態推定</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="../f-dispatch-system/02-next-gen-dispatch-system.html">F-02: 次期中給システムの機能構成</a> で
+        機能名だけ登場した<span class="term">状態推定<span class="term-tooltip">実系統の計測値（誤差や欠測を含む）から、物理法則と最もつじつまの合う系統の状態（各母線の電圧の大きさと位相角）を推定する計算。実系統把握の土台。</span></span>の回収です。
+        本サイトの計算はこれまでほぼすべて「計画値から」でした。本ユニットでは、
+        <strong>「計画の世界」から「実系統の世界」への入口</strong>——実際の計測から系統の「今」をどう知るか——を学びます。
+        数式は出てきません。時計のたとえ話が1つ出てくるだけです。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02</a>：潮流計算は「計画値（注入）から」潮流を求める計算</li>
+          <li><a href="04-dc-and-ac-power-flow.html">C-04</a>：交流の系統の状態は「各母線の電圧の大きさと位相角」で決まる（AC潮流の未知数）</li>
+          <li><a href="../f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>：次期中給の機能に「状態推定」があった</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：状態推定の<strong>考え方</strong>に絞ります。
+          最小二乗法などの数学の中身や、実システムの計測点数・仕様には踏み込みません
+          （公開資料＋一般的な系統工学の範囲です。参考資料は末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 計画の世界と実系統の世界</a></li>
+          <li><a href="#section-2">2. 計測値は、そのままでは使えない</a></li>
+          <li><a href="#section-3">3. 状態推定：つじつまの合う「今」を選ぶ</a></li>
+          <li><a href="#section-4">4. 状態推定は何を支えているか</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 計画の世界と実系統の世界</h2>
+        <p>
+          ふりかえると、本サイトの計算はほぼすべて<strong>計画値が入力</strong>でした。
+          A-02の潮流計算も、C-02の系統データも、D領域の混雑計算も、F-04の計画演算も——
+          どれも「<strong>未来の見積り</strong>」から出発しています。
+        </p>
+        <p>
+          では、実需給の「中」、<strong>まさに今この瞬間</strong>の系統はどう知るのでしょうか。
+          <a href="../f-dispatch-system/05-frequency-control-and-congestion.html">F-05</a> では周波数——需給の<strong>合計</strong>のずれ——を見ました。
+          しかし混雑は<strong>場所ごと</strong>の話です（B-01）。線路ごとの「今の潮流」を知る必要があります。
+        </p>
+        <p>
+          そのために、系統の各所（変電所など）には計測器が置かれ、電力（P・Q）・電圧・開閉器の入切などが、
+          通信で中央給電指令所へ<strong>常時送られて</strong>います。この遠隔計測・伝送の仕組みを
+          <span class="term">テレメータ<span class="term-tooltip">系統各所の電力（P・Q）・電圧・開閉器の状態などを計測し、通信で中央給電指令所へ常時伝送する仕組み（遠隔計測）。状態推定の入力になる。</span></span>といいます。
+          「なら、計測値をそのまま並べれば『今』が分かるのでは？」——と思いたくなりますが、そうはいかないのです（§2へ）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="系統各所の変電所に置かれた計測器から、電力・電圧・開閉器の状態がテレメータで中央給電指令所へ常時送られてくることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="c6-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#8b5cf6"></path>
+              </marker>
+            </defs>
+            <!-- 系統側 -->
+            <line x1="50" y1="45" x2="50" y2="105" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="150" y1="45" x2="150" y2="105" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="54" y1="75" x2="146" y2="75" stroke="#2563eb" stroke-width="2"></line>
+            <line x1="100" y1="130" x2="100" y2="160" stroke="#1a1a2e" stroke-width="0"></line>
+            <circle cx="70" cy="75" r="5" fill="#8b5cf6"></circle>
+            <circle cx="130" cy="75" r="5" fill="#8b5cf6"></circle>
+            <circle cx="50" cy="55" r="5" fill="#8b5cf6"></circle>
+            <text x="100" y="30" font-size="10" text-anchor="middle" fill="#1a1a2e">系統の各所（変電所など）</text>
+            <text x="100" y="125" font-size="9.5" text-anchor="middle" fill="#8b5cf6">● ＝ 計測点（P・Q・電圧・入切）</text>
+            <!-- テレメータ -->
+            <line x1="170" y1="75" x2="300" y2="75" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#c6-ah)"></line>
+            <text x="235" y="65" font-size="10" text-anchor="middle" fill="#8b5cf6">テレメータ（常時伝送）</text>
+            <!-- 中給 -->
+            <rect x="310" y="45" width="120" height="70" rx="8" fill="#eef2ff" stroke="#6366f1"></rect>
+            <text x="370" y="75" font-size="11" text-anchor="middle" fill="#4338ca" font-weight="bold">中央給電指令所</text>
+            <text x="370" y="95" font-size="9.5" text-anchor="middle" fill="#4a5568">計測値が集まる</text>
+            <text x="230" y="175" font-size="10" text-anchor="middle" fill="#4a5568">ただし届くのは、誤差や欠測を含む「生の計測値」</text>
+          </svg>
+          <figcaption>図1: 系統各所の計測が、テレメータで中給へ常時集まってくる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 計測値は、そのままでは使えない</h2>
+        <p>
+          具体例から始めます。負荷のないある母線について、こんな計測が届きました——
+          線路αからの<strong>流入 98 MW</strong>、線路βへの<strong>流出 95 MW</strong>。
+          あれ？ <strong>差の 3 MW はどこへ消えたのでしょう</strong>。
+          A-01のキルヒホッフの電流則（入り＝出）に照らすと、この2つの計測値は<strong>両立しません</strong>。
+          犯人は<strong>計測誤差</strong>です。どちらか（あるいは両方）が、少しずれた値を報告しているのです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 160" role="img"
+               aria-label="負荷のない母線に、線路アルファから流入98MW、線路ベータへ流出95MWという計測が届いた。差の3MWは物理的にあり得ず、キルヒホッフの電流則と矛盾していることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="c6-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <line x1="230" y1="35" x2="230" y2="115" stroke="#1a1a2e" stroke-width="4"></line>
+            <text x="230" y="132" font-size="10.5" text-anchor="middle" fill="#1a1a2e">母線（負荷なし）</text>
+            <line x1="80" y1="75" x2="226" y2="75" stroke="#16a34a" stroke-width="2.5" marker-end="url(#c6-ah2)"></line>
+            <text x="150" y="65" font-size="10" text-anchor="middle" fill="#16a34a">線路α 計測: 流入 98 MW</text>
+            <line x1="234" y1="75" x2="380" y2="75" stroke="#2563eb" stroke-width="2.5" marker-end="url(#c6-ah2)"></line>
+            <text x="310" y="65" font-size="10" text-anchor="middle" fill="#2563eb">線路β 計測: 流出 95 MW</text>
+            <text x="230" y="152" font-size="10" text-anchor="middle" fill="#dc2626">差の 3 MW はどこへ？ —— KCL（入り＝出、A-01）と矛盾</text>
+          </svg>
+          <figcaption>図2: 誤差を含む計測値は、そのままでは物理法則とつじつまが合わない</figcaption>
+        </figure>
+
+        <p>
+          計測値をそのまま使えない理由は、まとめると3つです。
+        </p>
+        <ul>
+          <li><strong>① 誤差</strong>：計測器は必ず誤差を持ちます。1つ1つは小さくても、系統全体では図2のような矛盾があちこちに生じます。</li>
+          <li><strong>② 欠測・異常値</strong>：通信の途絶や計測器の故障で、値が届かない・明らかにおかしな値が届くことがあります。</li>
+          <li><strong>③ つじつまの不一致</strong>：誤差を含む計測値の集まりは、物理法則（KCLなど）を満たしません。そのまま並べても「物理的にあり得ない系統の姿」にしかならないのです。</li>
+        </ul>
+        <p>
+          ここで登場するのが、状態推定です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 状態推定：つじつまの合う「今」を選ぶ</h2>
+        <p>
+          まず、たとえ話から。部屋に時計が5つあり、それぞれ
+          <strong>10:00・10:01・9:59・10:00・10:45</strong> を指しているとします。いま何時でしょうか？
+          どれか1つだけを信じるのではなく、<strong>全体と最もつじつまの合う時刻</strong>——約10:00——を採るのが自然です。
+          そして10:45の時計は、他の4つとの食い違いが大きすぎるので「<strong>壊れている</strong>」と見抜けます。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="5つの時計が10時、10時1分、9時59分、10時、10時45分を指している。全体と最もつじつまの合う時刻は約10時で、10時45分の時計は壊れていると見抜けることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <g stroke="#94a3b8" fill="none" stroke-width="1.5">
+              <circle cx="60" cy="70" r="30"></circle>
+              <circle cx="150" cy="70" r="30"></circle>
+              <circle cx="240" cy="70" r="30"></circle>
+              <circle cx="330" cy="70" r="30"></circle>
+              <circle cx="420" cy="70" r="30" stroke="#dc2626" stroke-width="2"></circle>
+            </g>
+            <!-- 針（短針約10時方向・長針） -->
+            <g stroke="#1a1a2e" stroke-width="2">
+              <line x1="60" y1="70" x2="45" y2="55"></line><line x1="60" y1="70" x2="60" y2="45"></line>
+              <line x1="150" y1="70" x2="135" y2="55"></line><line x1="150" y1="70" x2="153" y2="45"></line>
+              <line x1="240" y1="70" x2="225" y2="55"></line><line x1="240" y1="70" x2="238" y2="45"></line>
+              <line x1="330" y1="70" x2="315" y2="55"></line><line x1="330" y1="70" x2="330" y2="45"></line>
+            </g>
+            <g stroke="#dc2626" stroke-width="2">
+              <line x1="420" y1="70" x2="408" y2="52"></line><line x1="420" y1="70" x2="402" y2="82"></line>
+            </g>
+            <g font-size="10" text-anchor="middle" fill="#1a1a2e">
+              <text x="60" y="118">10:00</text>
+              <text x="150" y="118">10:01</text>
+              <text x="240" y="118">9:59</text>
+              <text x="330" y="118">10:00</text>
+            </g>
+            <text x="420" y="118" font-size="10" text-anchor="middle" fill="#dc2626">10:45</text>
+            <text x="420" y="132" font-size="9.5" text-anchor="middle" fill="#dc2626">壊れてる！</text>
+            <text x="230" y="155" font-size="10.5" text-anchor="middle" fill="#1a1a2e">全体と最もつじつまの合う時刻 ＝ 約10:00</text>
+            <text x="230" y="175" font-size="9.5" text-anchor="middle" fill="#4a5568">数が多いから、多数決で「壊れた1つ」を見抜ける（冗長性）</text>
+          </svg>
+          <figcaption>図3: 状態推定の考え方は「5つの時計」。つじつまの合う答えを選び、外れ者を見抜く</figcaption>
+        </figure>
+
+        <p>
+          状態推定は、これを系統でやります。系統の「<strong>状態</strong>」とは、
+          <strong>各母線の電圧の大きさと位相角</strong>——そう、<a href="04-dc-and-ac-power-flow.html">C-04: DC潮流とAC潮流</a> で学んだ
+          <strong>AC潮流と同じ未知数</strong>です。状態が1組決まれば、逆に「各計測器が本来指すべき値」はすべて計算できます。
+          そこで、<strong>実際の計測値との食い違いの合計が最も小さくなる状態</strong>を探して、それを「今の系統」として採用します
+          （この考え方には最小二乗法という名前がついていますが、名前だけで十分です）。
+        </p>
+        <p>
+          時計が5つあったことが効いたように、系統でも<strong>状態を決めるのに必要な最小限より多くの計測</strong>を集めておきます（冗長性）。
+          だから多数決が働き、壊れた計測（バッドデータ）を検出して除外できます。
+          そして推定の力はもう1つ——状態（電圧・位相角）さえ決まれば、C-04の関係ですべての線路の潮流が計算できるので、
+          <strong>計測器のない場所の潮流まで分かる</strong>のです。
+          なお、電圧の大きさまで扱うこの計算は、C-04 §4で予告したとおり<strong>AC（交流）の世界の計算</strong>です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 状態推定は何を支えているか</h2>
+        <p>
+          これで、中給システムの「入力」の全体像がそろいました。系統の把握には2つの系統があります。
+        </p>
+        <ul>
+          <li><strong>計画で先を読む</strong>：計画値（E-01）→ 潮流計算（A-02）→ 混雑計算・SCUC/SCED（D領域・F-04）——未来のコマが対象</li>
+          <li><strong>計測で今を知る</strong>：テレメータ → <strong>状態推定</strong> → 今の系統状態（全線路の潮流・全母線の電圧）→ リアルタイムの混雑監視や当日運用の土台——現在が対象</li>
+        </ul>
+        <p>
+          F-02の機能図で状態推定が「リアルタイムで系統を把握する土台」と書かれていた意味が、これです。
+          計画がどれだけ精密でも、現実は計画どおりには動きません。<strong>今の系統を正しく知る入口</strong>があってはじめて、
+          混雑の監視も、ずれへの対応（F-05）も成り立ちます。
+        </p>
+        <p>
+          C領域はこれで完結です。系統の器（C-01）→ 計画データ（C-02）→ 境界の扱い（C-03）→ 計算法と限界（C-04）→
+          公開データを読む（C-05）→ 実測から今を知る（C-06）。<strong>モデルと現実を往復する道具</strong>が、ひととおり手に入りました。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="計画で先を読む系統は、計画値から潮流計算を経て混雑計算やSCUC/SCEDへ向かい未来のコマを対象とする。計測で今を知る系統は、テレメータから状態推定を経て今の系統状態を求め、リアルタイムの混雑監視の土台になる。両方が中給システムを支える"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="30" width="420" height="60" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="35" y="52" font-size="10.5" fill="#2563eb" font-weight="bold">計画で先を読む（未来のコマ）</text>
+            <text x="35" y="74" font-size="9.5" fill="#1a1a2e">計画値（E-01）→ 潮流計算（A-02）→ 混雑計算・SCUC/SCED（D・F-04）</text>
+            <rect x="20" y="100" width="420" height="60" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="35" y="122" font-size="10.5" fill="#d97706" font-weight="bold">計測で今を知る（現在）—— 本ユニット</text>
+            <text x="35" y="144" font-size="9.5" fill="#1a1a2e">テレメータ → 状態推定 → 今の潮流・電圧 → リアルタイムの混雑監視へ</text>
+            <text x="230" y="185" font-size="10" text-anchor="middle" fill="#4a5568">2つの系統がそろって、中央給電指令所システムの入力が完成する（F-02）</text>
+          </svg>
+          <figcaption>図4: 「計画で先を読む」と「計測で今を知る」。状態推定は後者の心臓部</figcaption>
+        </figure>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（潮流計算 vs 状態推定） -->
+        <div class="exercise" data-exercise-id="c-06-ex01" data-type="choice">
+          <h3>演習 1: 潮流計算と状態推定の違い</h3>
+          <div class="exercise-problem">
+            <p>潮流計算（A-02）と状態推定の違いの説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="c-06-ex01" value="1">
+              <span>潮流計算は計画値（注入）から潮流を求め、状態推定は実際の計測値からつじつまの合う「今」の状態を割り出す</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-06-ex01" value="2">
+              <span>潮流計算は実際の計測から状態を割り出し、状態推定は計画値から潮流を求める</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-06-ex01" value="3">
+              <span>両者は同じ計算であり、呼び方が違うだけである</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-06-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "潮流計算（A-02: 潮流計算の基礎）は「計画値（注入）→潮流」という未来向きの計算、状態推定は「計測→つじつまの合う今の状態」という現在向きの計算です。向きが逆の、対になる道具です。F-02: 次期中給システムの機能構成 で「計画値から求めるのに対し、実際の計測から割り出す」と書かれていたのは、この対比のことでした。"
+        }
+        </script>
+
+        <!-- 演習2: multi-choice（計測と状態推定の性質） -->
+        <div class="exercise" data-exercise-id="c-06-ex02" data-type="multi-choice">
+          <h3>演習 2: 計測と状態推定の性質</h3>
+          <div class="exercise-problem">
+            <p>計測と状態推定について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="c-06-ex02" value="1">
+              <span>計測値は必ず誤差を含むため、そのまま並べると物理法則（KCLなど）と矛盾が生じる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-06-ex02" value="2">
+              <span>必要最小限より多くの計測（冗長性）があると、多数決の働きで壊れた計測を見抜ける</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-06-ex02" value="3">
+              <span>状態が推定できれば、計測器のない場所の潮流も計算で求められる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-06-ex02" value="4">
+              <span>計測値は正確なので、そのまま使うのが最も確実である</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-06-ex02",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（誤差と物理法則の矛盾＝図2の「消えた3MW」）、2（冗長性と多数決＝5つの時計）、3（状態が決まれば全線路の潮流が計算できる）はいずれも正しい。4は誤りで、計測器は必ず誤差を持ち、欠測や異常値もあります。だからこそ「つじつまの合う状態を選ぶ」状態推定が必要なのです。"
+        }
+        </script>
+
+        <!-- 演習3: choice（状態推定の未知数） -->
+        <div class="exercise" data-exercise-id="c-06-ex03" data-type="choice">
+          <h3>演習 3: 状態推定が求める「状態」</h3>
+          <div class="exercise-problem">
+            <p>状態推定が求める、系統の「状態」とは何か。最も適切なものを選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="c-06-ex03" value="1">
+              <span>各母線の電圧の大きさと位相角（C-04のAC潮流と同じ未知数）</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-06-ex03" value="2">
+              <span>各発電機の燃料費と起動費</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-06-ex03" value="3">
+              <span>翌日の各コマの需要予測値</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-06-ex03",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "系統の「状態」＝各母線の電圧の大きさと位相角です。C-04: DC潮流とAC潮流 で学んだAC潮流の未知数と同じで、この1組が決まれば、すべての線路の潮流も、各計測器が本来指すべき値も計算できます。2は最適化（D-03: SCUC/SCEDの概要）の入力、3は需要予測（F-02）の出力で、状態推定の対象ではありません。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。状態推定の考え方そのものは一般的な系統工学の範囲です。</p>
+        <ul>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/pdf/008_02_00.pdf"
+               target="_blank" rel="noopener noreferrer">一般社団法人 送配電網協議会「次期中給システム開発に関する検討状況」（経済産業省 次世代電力系統ワーキンググループ 第8回 資料2、2026年3月16日。状態推定の機能位置づけ）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="05-reading-public-grid-data.html" class="unit-nav-prev">&larr; 公開系統データを読む</a>
+      <a href="../d-algorithms/index.html" class="unit-nav-next">次の領域へ: D 混雑計算のアルゴリズム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

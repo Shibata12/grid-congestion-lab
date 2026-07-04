@@ -82,6 +82,8 @@ const SITE_STRUCTURE = {
         summary: 'これまでの潮流計算がDC潮流という近似だったことを種明かしし、4つの仮定と線形性（重ね合わせ＝PTDFの土台）、電圧まで解くAC潮流との違い・使い分けを学ぶ。A-04で預けたDC/AC潮流の回収。' },
       { id: 'c-05', title: '公開系統データを読む', file: '05-reading-public-grid-data.html', exerciseCount: 4,
         summary: '学んだ概念の「実物」であるOCCTOの空容量公表・JEPXのエリアプライス・設備銘板を、公表様式に基づく例示値で読み・検算する実データ演習。A-05・B-02・E-07の実データでの回収。' },
+      { id: 'c-06', title: '計測と状態推定', file: '06-measurement-and-state-estimation.html', exerciseCount: 3,
+        summary: '誤差を含む計測値（テレメータ）から、物理法則と最もつじつまの合う「今」の系統状態を推定するしくみを、5つの時計のたとえで学ぶ。F-02「状態推定」の回収でC領域完結。' },
     ],
   },
   d: {

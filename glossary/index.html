@@ -518,6 +518,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="c,f" id="term-state-estimation">
+        <dt>状態推定</dt>
+        <dd>
+          <p>実系統の計測値（誤差や欠測を含む）から、物理法則と最もつじつまの合う系統の状態——各母線の電圧の大きさと位相角——を推定する計算。冗長な（必要最小限より多い）計測を使うことで、多数決の働きにより異常な計測（バッドデータ）を検出でき、推定した状態からは計測していない場所の潮流も計算できる。潮流計算（計画値→潮流）と向きが逆の、実系統把握の土台。次期中給システムの機能の1つ。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/06-measurement-and-state-estimation.html">C-06</a>、<a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-spot-market">
         <dt>スポット市場（前日市場）</dt>
         <dd>
@@ -684,6 +694,16 @@
           <p>需要を増やしたり減らしたりして需給調整に活用すること。発電だけでなく需要側も調整力の提供者になりうる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/03-balancing-market.html">E-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c,f" id="term-telemeter">
+        <dt>テレメータ</dt>
+        <dd>
+          <p>系統各所（変電所など）の電力（P・Q）・電圧・開閉器の状態などを計測し、通信で中央給電指令所へ常時伝送する仕組み（遠隔計測）。届く値は誤差や欠測を含むため、状態推定の入力として使われる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/06-measurement-and-state-estimation.html">C-06</a>
           </p>
         </dd>
       </div>
