@@ -171,9 +171,9 @@
       <div class="glossary-entry" data-domain="e,b" id="term-area-price-spread">
         <dt>エリア間値差</dt>
         <dd>
-          <p>市場分断により生じる、エリアごとの約定価格（エリアプライス）の差。電気を送り出す側（余る側）のエリアは安く、受け入れる側（足りない側）のエリアは高くなる。連系線混雑が市場に現れた姿。JEPXの取引結果から実際の値差を読み取れる。</p>
+          <p>市場分断により生じる、エリアごとの約定価格（エリアプライス）の差。電気を送り出す側（余る側）のエリアは安く、受け入れる側（足りない側）のエリアは高くなる。連系線混雑が市場に現れた姿。JEPXの取引結果から実際の値差を読み取れる。エリアをまたぐ取引にとってはリスクであり、間接送電権でヘッジできる。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>、<a href="../units/c-grid-model/05-reading-public-grid-data.html">C-05</a>
+            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>、<a href="../units/c-grid-model/05-reading-public-grid-data.html">C-05</a>、<a href="../units/e-market/08-indirect-transmission-rights.html">E-08</a>
           </p>
         </dd>
       </div>
@@ -264,6 +264,16 @@
           <p>連系線をまたぐ取引を原則すべてスポット市場を通じて行い、約定処理の中で安い電気から順に連系線の空容量を割り当てる仕組み（2018年10月導入）。利用枠を先着順で予約する従来方式（先着優先）を置き換えた。枠を直接競りにかけるのではなく、電気の市場取引を通じて間接的に配分することが名前の由来。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>、<a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-indirect-transmission-right">
+        <dt>間接送電権</dt>
+        <dd>
+          <p>エリア間値差を受け取る権利（逆向きの値差なら支払う義務）。市場分断による値差リスクのヘッジ手段として2019年度に導入された。JEPXが連系線・方向ごとの週間商品（土〜金・24時間型）として販売し、売り量は連系線の空容量（当該期間のmin（運用容量−マージン−経過措置計画量））が上限。スポット市場で同じ時間帯に約定した電気の取引の範囲内で精算され、転売はできない。電気を物理的に送る権利ではない。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/08-indirect-transmission-rights.html">E-08</a>
           </p>
         </dd>
       </div>
@@ -624,6 +634,16 @@
           <p>電圧・電力・インピーダンスなどを、あらかじめ決めた基準値に対する割合（pu）で表す方法。pu＝実際の値÷基準値。1.0puが基準（定格）ちょうど。電圧階級や変圧器をまたいで同じ物差しで比較でき、系統解析のデータは多くがpu・%で書かれる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/a-grid-fundamentals/05-three-phase-and-per-unit.html">A-05</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-price-difference-revenue">
+        <dt>値差収益</dt>
+        <dd>
+          <p>市場分断が起きたコマでスポット市場に生じる、買いエリア側の支払い（高いエリアプライス）と売りエリア側の受け取り（安いエリアプライス）の差額。誰のものでもないお金として市場に残り、間接送電権の精算の原資になるほか、連系線の増強費用に充てられる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/08-indirect-transmission-rights.html">E-08</a>、<a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>
           </p>
         </dd>
       </div>

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-08: 間接送電権──エリア間値差のリスクをヘッジする - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-08">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>間接送電権</span>
+    </nav>
+
+    <article>
+      <h1>E-08: 間接送電権──エリア間値差のリスクをヘッジする</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="07-wholesale-market-and-indirect-auction.html">E-07: 卸電力市場と間接オークション</a> で、
+        連系線混雑は市場分断という形で処理され、混雑の「印」は<strong>エリア間値差</strong>として現れると学びました。
+        本ユニットは、その値差を<strong>被る側</strong>の目線に立ちます。
+        値差は事業者にとって読めないリスクです。それを保険のように固定する道具が
+        <strong>間接送電権</strong>——E-07が「踏み込まない」と預けていた仕組みの回収です。
+        新しい式は<strong>1本だけ</strong>で、しかもB-02で見た空き容量の式の親戚です。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="07-wholesale-market-and-indirect-auction.html">E-07</a>：エリアをまたぐ取引は原則すべてスポット市場経由（間接オークション）。空容量が足りないと市場分断が起き、エリア間値差が生じる</li>
+          <li><a href="../b-congestion/02-operating-capacity-and-margin.html">B-02</a>：空き容量 ＝ 運用容量 − マージン − 計画潮流</li>
+          <li><a href="../c-grid-model/05-reading-public-grid-data.html">C-05</a>：エリアプライスの実物はJEPXの約定結果で読める（例示では北海道・東北 9.50円／東京以西 13.20円、値差3.7円）</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：入札・決済の細かな手続きや、売り値の決め方の算定式には踏み込みません。
+          制度の見直し議論（2025年3月とりまとめ）は「とりまとめられた方向性」として紹介するにとどめ、最終的な姿は断定しません。
+          参考にした公開資料は末尾の<a href="#references">参考資料</a>を参照してください。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 値差リスク──分断に「巻き込まれる」側の話</a></li>
+          <li><a href="#section-2">2. 間接送電権とは──値差を受け取る権利</a></li>
+          <li><a href="#section-3">3. 市場の仕組み──売り手はJEPX、発行量は空容量まで</a></li>
+          <li><a href="#section-4">4. 値差収益のゆくえと制度のいま</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 値差リスク──分断に「巻き込まれる」側の話</h2>
+        <p>
+          具体例から始めます。エリアAの発電事業者とエリアBの小売電気事業者が、
+          「1 kWh あたり <strong>11円</strong>で売買する」という当事者間の直接契約（相対契約）を結んだとします。
+          エリアをまたいで電気を届けるには、E-07で学んだとおり<strong>スポット市場を通す</strong>必要があります（間接オークション）。
+          市場分断が<strong>起きなければ</strong>、両エリアの約定価格は同じ1つの価格なので、
+          約束の11円との差は共通の価格を基準に精算でき、問題は起きません。
+        </p>
+        <p>
+          ところが<strong>分断が起きる</strong>と話が変わります。エリアAのエリアプライスが <strong>9円</strong>、
+          エリアBが <strong>14円</strong>（値差5円）になったとしましょう。
+          発電側はエリアAの市場で<strong>9円でしか売れず</strong>、小売側はエリアBの市場で<strong>14円で買う</strong>ことになります。
+          約束した11円をどう守るかは契約の取り決め次第ですが、
+          両者あわせて<strong>値差5円/kWh ぶんの持ち出し</strong>がどちらか（または双方）に生じます（図1）。
+        </p>
+        <p>
+          やっかいなのは、値差が<strong>事前に読めない</strong>ことです。分断が起きるかどうか、値差がいくらになるかは、
+          コマごと・週ごとの需給と空容量次第で変わります
+          （<a href="../c-grid-model/05-reading-public-grid-data.html">C-05: 公開系統データを読む</a> で見た実物のエリアプライスを思い出してください）。
+          エリアをまたぐ取引を長く続ける事業者にとって、これは無視できないリスクです。
+          このリスクを<strong>あらかじめ固定（ヘッジ）する道具</strong>として用意されたのが、間接送電権です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 225" role="img"
+               aria-label="エリアAの発電事業者とエリアBの小売事業者が11円で売買する相対契約を結んでいたが、市場分断でエリアAは9円、エリアBは14円になり、値差5円分の持ち出しが生じることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="e8-ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#6366f1"></path>
+              </marker>
+            </defs>
+            <!-- 相対契約の約束 -->
+            <text x="230" y="26" font-size="10.5" text-anchor="middle" fill="#1a1a2e" font-weight="bold">当事者間の約束（相対契約）: 11円/kWh</text>
+            <line x1="105" y1="38" x2="355" y2="38" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3"></line>
+            <!-- エリアA -->
+            <rect x="20" y="55" width="170" height="105" rx="10" fill="#f0fdf4" stroke="#94a3b8"></rect>
+            <text x="105" y="78" font-size="11" text-anchor="middle" fill="#1a1a2e">エリアA（発電側）</text>
+            <text x="105" y="110" font-size="16" text-anchor="middle" fill="#16a34a" font-weight="bold">9円/kWh</text>
+            <text x="105" y="138" font-size="9.5" text-anchor="middle" fill="#4a5568">市場では9円でしか売れない</text>
+            <!-- エリアB -->
+            <rect x="270" y="55" width="170" height="105" rx="10" fill="#fef2f2" stroke="#94a3b8"></rect>
+            <text x="355" y="78" font-size="11" text-anchor="middle" fill="#1a1a2e">エリアB（小売側）</text>
+            <text x="355" y="110" font-size="16" text-anchor="middle" fill="#dc2626" font-weight="bold">14円/kWh</text>
+            <text x="355" y="138" font-size="9.5" text-anchor="middle" fill="#4a5568">市場では14円で買うことに</text>
+            <!-- 連系線 -->
+            <line x1="193" y1="108" x2="264" y2="108" stroke="#6366f1" stroke-width="3" marker-end="url(#e8-ah1)"></line>
+            <text x="230" y="96" font-size="9.5" text-anchor="middle" fill="#6366f1">分断</text>
+            <!-- 持ち出し -->
+            <text x="230" y="188" font-size="10.5" text-anchor="middle" fill="#dc2626" font-weight="bold">値差 5円/kWh のぶん、約束どおりの受け渡しができない</text>
+            <text x="230" y="208" font-size="9.5" text-anchor="middle" fill="#4a5568">値差はコマごと・週ごとに変わり、事前に読めない ＝ 値差リスク</text>
+          </svg>
+          <figcaption>図1: 値差リスク。市場分断が起きると、エリアをまたぐ相対取引には値差ぶんの持ち出しが生じる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 間接送電権とは──値差を受け取る権利</h2>
+        <p>
+          <span class="term">間接送電権<span class="term-tooltip">エリア間値差を受け取る権利（逆向きの値差なら支払う義務）。JEPXが販売する金銭的な権利で、電気を物理的に送る権利ではない。市場分断による値差リスクのヘッジ手段として2019年度に導入された。</span></span>は、
+          <strong>エリア間値差を受け取る権利</strong>です。
+          A→B向きの間接送電権を 1 kWh ぶん持っていると、その時間帯にA→B向きの値差
+          （Bのエリアプライス − Aのエリアプライス）が発生したとき、<strong>その値差ぶんのお金を受け取れます</strong>。
+          権利はJEPX（日本卸電力取引所）が有償で販売します。
+        </p>
+        <p>
+          §1の例で確かめましょう。この権利を 1 kWh あたり<strong>1円</strong>で買っていたとします。
+          値差5円が発生した週なら、精算で<strong>5円受け取り</strong>、権利の購入代金1円を差し引いて<strong>正味＋4円</strong>。
+          §1で生じた値差5円の持ち出しと、ほぼ相殺できます。
+          値差が出なかった週は受け取りゼロで、権利代1円は掛け捨て——<strong>保険料</strong>のようなものです（図2）。
+          読めなかった値差が、「権利代」という<strong>事前に決まった費用</strong>に置き換わる。これがヘッジの意味です。
+        </p>
+        <p>
+          注意がひとつ。値差が<strong>逆向き</strong>に出た場合（Aの方が高くなった場合）は、
+          逆にその値差ぶんを<strong>支払う義務</strong>を負います。
+          JEPXの資料でも、間接送電権は「エリア間のエリア価格差を<strong>受け取る権利、または支払う義務</strong>」と説明されています。
+          値差を「もらえるときだけもらう」のではなく、<strong>プラスもマイナスも固定してしまう</strong>道具なのです。
+        </p>
+        <p>
+          名前の種明かしをしましょう。間接送電権は、<strong>電気を物理的に送る権利ではありません</strong>。
+          連系線の物理的な使いみちは、E-07で学んだとおり間接オークションの約定処理がすでに配分しています。
+          間接送電権が動かすのは<strong>お金の精算だけ</strong>——それでも値差を固定できるので、
+          送る権利を直接持つのと<strong>同じ経済効果</strong>が得られます。だから「間接」送電権です。
+        </p>
+        <p>
+          使い方にも約束があります。精算を受けられるのは、<strong>スポット市場で同じ時間帯に電気の取引を約定させている範囲内</strong>です
+          （現物の取引とセットで使う道具、という位置づけです）。また、買った権利をほかの事業者へ<strong>転売することはできません</strong>。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 215" role="img"
+               aria-label="A→B向きの間接送電権を1円で買っていた場合、値差5円が出た週は精算5円から権利代1円を引いて正味プラス4円、値差が出なかった週は権利代1円の掛け捨てになることを示す2パネルの図"
+               xmlns="http://www.w3.org/2000/svg">
+            <text x="230" y="24" font-size="10.5" text-anchor="middle" fill="#1a1a2e" font-weight="bold">A→B向きの間接送電権を 1円/kWh で買っていた場合</text>
+            <!-- 左: 値差が出た週 -->
+            <rect x="20" y="38" width="200" height="120" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="120" y="60" font-size="10.5" text-anchor="middle" fill="#16a34a" font-weight="bold">値差 5円 が出た週</text>
+            <text x="35" y="86" font-size="9.5" fill="#1a1a2e">権利の購入代金　−1円</text>
+            <text x="35" y="108" font-size="9.5" fill="#1a1a2e">値差の精算　　　＋5円</text>
+            <line x1="35" y1="118" x2="205" y2="118" stroke="#94a3b8" stroke-width="1"></line>
+            <text x="35" y="138" font-size="10" fill="#16a34a" font-weight="bold">差し引き　　　　＋4円</text>
+            <!-- 右: 値差が出なかった週 -->
+            <rect x="240" y="38" width="200" height="120" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="340" y="60" font-size="10.5" text-anchor="middle" fill="#4a5568" font-weight="bold">値差が出なかった週</text>
+            <text x="255" y="86" font-size="9.5" fill="#1a1a2e">権利の購入代金　−1円</text>
+            <text x="255" y="108" font-size="9.5" fill="#1a1a2e">値差の精算　　　　0円</text>
+            <line x1="255" y1="118" x2="425" y2="118" stroke="#94a3b8" stroke-width="1"></line>
+            <text x="255" y="138" font-size="10" fill="#4a5568" font-weight="bold">差し引き　　　　−1円（掛け捨て）</text>
+            <!-- 注記 -->
+            <text x="230" y="180" font-size="9.5" text-anchor="middle" fill="#4a5568">読めない値差リスクが、事前に決まった「権利代」に置き換わる（保険のイメージ）</text>
+            <text x="230" y="200" font-size="9.5" text-anchor="middle" fill="#dc2626">※ 値差が逆向きに出た場合は、その値差ぶんを支払う（受け取りの逆）</text>
+          </svg>
+          <figcaption>図2: 間接送電権の精算。値差が出れば受け取り、出なければ権利代の掛け捨て。値差リスクが固定費用に変わる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 市場の仕組み──売り手はJEPX、発行量は空容量まで</h2>
+        <p>
+          間接送電権はどこで、どうやって買うのでしょうか。JEPXに<strong>間接送電権市場</strong>という専用の市場があります。
+          商品は<strong>連系線・方向ごと</strong>に設定され、基本の商品は
+          <strong>1週間（土曜〜金曜）・24時間型</strong>——つまり「この連系線のこの向きの値差を、この1週間ぶん」という単位です。
+          対象の週が来る前に、月ごとにまとめて入札日が設けられ、オークションで約定します。
+          約定価格が1つに決まる<strong>シングルプライスオークション</strong>で、これはE-07のスポット市場と同じ方式です。
+        </p>
+        <p>
+          スポット市場と大きく違うのは、<strong>売り手がJEPXだけ</strong>という点です。
+          事業者どうしが権利を売り買いするのではなく、JEPXが発行する権利を事業者が買います。
+          では、JEPXは<strong>いくらでも</strong>権利を発行してよいのでしょうか——ここで系統の話に戻ってきます。売り量は次の式で決まります。
+        </p>
+        <div class="math-block"
+             data-tex="\text{売り量} = \text{当該期間の}\min(\text{運用容量} - \text{マージン} - \text{経過措置計画量})"
+             data-fallback="売り量 = 当該期間の min（運用容量 − マージン − 経過措置計画量）"></div>
+        <p>
+          記号を確かめます。<strong>運用容量</strong>と<strong>マージン</strong>は
+          <a href="../b-congestion/02-operating-capacity-and-margin.html">B-02: 運用容量とマージン</a> で学んだ連系線のそれです。
+          <strong>経過措置計画量</strong>は、間接オークション導入（2018年10月）より前からあった取引を守るための
+          経過措置に割り当てられていた計画量です（この経過措置は2025年度で終了しました）。
+          「当該期間の min」は、<strong>週間商品なので、その週のどのコマでも保証できる量＝週の中で最も小さいコマの値</strong>を使う、という意味です。
+        </p>
+        <p>
+          この式、見覚えがありませんか。B-02の「空き容量 ＝ 運用容量 − マージン − 計画潮流」と同じ発想です。
+          つまり間接送電権は、<strong>連系線の空容量を上限として発行されます</strong>。
+          物理的に流せる量までしか権利を売らない——お金の権利でありながら、発行量は系統の物理で頭打ちになっているのです。
+        </p>
+        <p>
+          もうひとつの特徴は、<strong>すべての連系線に商品があるわけではない</strong>ことです。
+          取引には手数料（0.01円/kWh）がかかるため、値差の期待値がそれを上回る見込みのある連系線・方向だけが商品化されています。
+          導入時（2019年度）は5連系線・6商品からのスタートでした。決済はスポット市場と同じタイミングで日々行われます。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="間接送電権市場の3つの要点。商品は連系線・方向ごとの1週間24時間型。売り手はJEPXのみで売り量は週のmin（運用容量−マージン−経過措置計画量）＝空容量が上限。買い手の事業者が入札しシングルプライスで約定し日々決済される、という整理図"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="20" width="420" height="48" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="35" y="40" font-size="10.5" fill="#1a1a2e" font-weight="bold">商品</text>
+            <text x="35" y="58" font-size="9.5" fill="#4a5568">連系線・方向ごとの「A→B向き・1週間（土〜金）・24時間型」。値差が見込める連系線だけ商品化</text>
+            <rect x="20" y="78" width="420" height="48" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="35" y="98" font-size="10.5" fill="#1a1a2e" font-weight="bold">売り＝JEPXのみ</text>
+            <text x="35" y="116" font-size="9.5" fill="#4a5568">売り量＝週の min（運用容量−マージン−経過措置計画量）＝空容量が上限（B-02の親戚）</text>
+            <rect x="20" y="136" width="420" height="48" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="35" y="156" font-size="10.5" fill="#1a1a2e" font-weight="bold">買い＝事業者が入札</text>
+            <text x="35" y="174" font-size="9.5" fill="#4a5568">シングルプライスオークションで約定（スポットと同じ方式）。決済は日々行われる</text>
+          </svg>
+          <figcaption>図3: 間接送電権市場の仕組み。売り手はJEPXだけで、発行量は連系線の空容量が上限</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 値差収益のゆくえと制度のいま</h2>
+        <p>
+          ここで素朴な疑問が湧きます。間接送電権の精算で支払われる「値差ぶんのお金」は、<strong>どこから来る</strong>のでしょうか。
+        </p>
+        <p>
+          §1の分断の例をもう一度見てください。分断したコマでは、買い側のエリアBは<strong>14円で支払い</strong>、
+          売り側のエリアAは<strong>9円で受け取ります</strong>。連系線を流れた電気について、
+          市場にはこの差額——値差5円 × 流れた量——が<strong>誰のものでもないお金</strong>として残ります。これを
+          <span class="term">値差収益<span class="term-tooltip">市場分断時にスポット市場で生じる、買いエリア側の支払いと売りエリア側の受け取りの差額。間接送電権の精算の原資であり、連系線の増強費用にも充てられる。</span></span>と呼びます（図4）。
+        </p>
+        <p>
+          値差収益の使いみちは2つあります。ひとつは、いま学んだ<strong>間接送電権の精算の原資</strong>。
+          もうひとつは、<strong>連系線の増強費用</strong>です
+          （<a href="../b-congestion/03-congestion-countermeasures-map.html">B-03: 混雑対策の全体地図──運用・接続・増強</a> の「設備を増やす」層を思い出してください）。
+          混雑が生んだお金が、混雑の恒久対策に還流する——うまくできた循環です。
+        </p>
+        <p>
+          最後に、制度のいまに触れておきます。導入から約5年が経ち、2025年3月に
+          JEPX・資源エネルギー庁の検討会が制度の見直しを<strong>とりまとめ</strong>ました（末尾の<a href="#references">参考資料</a>）。
+          方向性は主に3つです。いずれも「とりまとめられた方向性」であり、最終的な姿はその後の検討・実施によります。
+        </p>
+        <ul>
+          <li><strong>対象連系線の追加</strong>：値差の期待値が基準（0.01円/kWh）を上回る連系線・方向について、2026年度分から商品を追加する</li>
+          <li><strong>年間商品の追加検討</strong>：長期の相対取引のヘッジに使えるよう、週間に加えて1年間の商品を検討（2026年度以降のできるだけ早い導入を目指す）</li>
+          <li><strong>売り値の見直し</strong>：JEPXの売り入札価格を、一律の最低価格から実際の値差の実績に連動させる方式へ（2026年度の取引から適用）</li>
+        </ul>
+        <p>
+          これでE領域は一巡です。計画値の出どころ（E-01・E-02）、調整力の市場（E-03）、抑制のルール（E-04〜E-06）、
+          取引と連系線混雑（E-07）、そして値差リスクのヘッジ（本ユニット）——
+          市場と系統運用の接点を、入口から出口まで通して見たことになります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 215" role="img"
+               aria-label="分断したコマでは買いエリアが14円で支払い売りエリアが9円で受け取るため差額が値差収益として市場に残り、それが間接送電権の精算の原資と連系線の増強費用に充てられることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="e8-ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- 左: 分断したコマ -->
+            <rect x="20" y="40" width="170" height="120" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="105" y="62" font-size="10.5" text-anchor="middle" fill="#1a1a2e" font-weight="bold">分断したコマ</text>
+            <text x="35" y="90" font-size="9.5" fill="#dc2626">買いエリア: 14円で支払う</text>
+            <text x="35" y="112" font-size="9.5" fill="#16a34a">売りエリア: 9円で受け取る</text>
+            <text x="35" y="140" font-size="9.5" fill="#4a5568">差額 5円 × 流れた量が残る</text>
+            <!-- 中央: 値差収益 -->
+            <line x1="193" y1="100" x2="240" y2="100" stroke="#4a5568" stroke-width="2" marker-end="url(#e8-ah4)"></line>
+            <rect x="245" y="75" width="90" height="50" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="290" y="96" font-size="10.5" text-anchor="middle" fill="#d97706" font-weight="bold">値差収益</text>
+            <text x="290" y="114" font-size="9" text-anchor="middle" fill="#4a5568">誰のものでもない</text>
+            <!-- 右: 使いみち2つ -->
+            <line x1="338" y1="88" x2="368" y2="62" stroke="#4a5568" stroke-width="2" marker-end="url(#e8-ah4)"></line>
+            <line x1="338" y1="112" x2="368" y2="138" stroke="#4a5568" stroke-width="2" marker-end="url(#e8-ah4)"></line>
+            <rect x="285" y="20" width="155" height="40" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="362" y="38" font-size="9.5" text-anchor="middle" fill="#1a1a2e">間接送電権の</text>
+            <text x="362" y="52" font-size="9.5" text-anchor="middle" fill="#1a1a2e">精算の原資</text>
+            <rect x="285" y="140" width="155" height="40" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="362" y="158" font-size="9.5" text-anchor="middle" fill="#1a1a2e">連系線の増強費用へ</text>
+            <text x="362" y="172" font-size="9.5" text-anchor="middle" fill="#1a1a2e">（B-03の「増強」）</text>
+            <!-- 下部注記 -->
+            <text x="230" y="203" font-size="9.5" text-anchor="middle" fill="#4a5568">混雑が生んだお金が、値差の補償と混雑の恒久対策に還流する</text>
+          </svg>
+          <figcaption>図4: 値差収益のゆくえ。分断で市場に残る差額が、間接送電権の精算と連系線増強の原資になる</figcaption>
+        </figure>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（精算の計算） -->
+        <div class="exercise" data-exercise-id="e-08-ex01" data-type="numeric">
+          <h3>演習 1: 間接送電権の損益</h3>
+          <div class="exercise-problem">
+            <p>
+              ある事業者が、A→B向きの間接送電権を 1 kWh あたり 0.8円 で購入した。
+              対象の週に、A→B向きのエリア間値差が 2.3円/kWh 発生した。
+              この権利 1 kWh あたりの差し引き損益は何円か（受け取りをプラスとする）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              差し引き損益:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 円/kWh
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-08-ex01",
+          "type": "numeric",
+          "correct": 1.5,
+          "tolerance": 0,
+          "unit": "円/kWh",
+          "explanation": "精算で値差 2.3円 を受け取り、権利の購入代金 0.8円 を支払っているので、差し引き 2.3 − 0.8 = ＋1.5円/kWh です。エリアをまたぐ取引でこの週に値差2.3円の持ち出しが生じていても、この受け取りでほぼ相殺できます（権利代0.8円が保険料にあたる）。値差が出なければ受け取りは0円で、権利代0.8円は掛け捨てになります。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（売り量の計算） -->
+        <div class="exercise" data-exercise-id="e-08-ex02" data-type="numeric">
+          <h3>演習 2: 間接送電権の売り量</h3>
+          <div class="exercise-problem">
+            <p>
+              ある連系線のある週について、運用容量 600 MW、マージン 80 MW、経過措置計画量 20 MW とする
+              （いずれも週を通じて一定とする）。この週のA→B向き間接送電権の売り量（発行量）は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              売り量:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-08-ex02",
+          "type": "numeric",
+          "correct": 500,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "売り量は「当該期間の min（運用容量 − マージン − 経過措置計画量）」で決まります。600 − 80 − 20 = 500 MW。この式は「B-02: 運用容量とマージン」で学んだ空き容量（運用容量 − マージン − 計画潮流）と同じ発想で、間接送電権が連系線の空容量を上限として発行されることを表しています。週間商品なので、本来は週の中で最も小さいコマの値を使いますが、本問は週を通じて一定なので引き算そのままです。"
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（間接送電権の性質） -->
+        <div class="exercise" data-exercise-id="e-08-ex03" data-type="multi-choice">
+          <h3>演習 3: 間接送電権の性質</h3>
+          <div class="exercise-problem">
+            <p>間接送電権に関する記述として、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="e-08-ex03" value="1">
+              <span>間接送電権は、電気を物理的に送る権利ではなく、エリア間値差を受け取る（逆向きなら支払う）金銭的な権利である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-08-ex03" value="2">
+              <span>値差の精算を受けられるのは、スポット市場で同じ時間帯に約定した電気の取引の範囲内である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-08-ex03" value="3">
+              <span>売り手はJEPXのみであり、買った権利をほかの事業者へ転売することはできない</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-08-ex03" value="4">
+              <span>間接送電権を持っていれば、市場分断が起きても連系線の物理的な利用枠が優先的に確保される</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-08-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1・2・3が正しい。間接送電権は金銭的な権利であり（1）、スポット市場で同じ時間帯に約定した電力取引の範囲内で精算され（2）、売り手はJEPXのみで転売はできません（3）。4は誤りです。間接送電権を買っても、連系線の物理的な利用枠が確保されるわけではありません。物理的な流れの配分は間接オークション（E-07: 卸電力市場と間接オークション）の約定処理が行い、間接送電権はその結果生じる値差をお金で埋め合わせる仕組みです。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.jepx.jp/electricpower/news/pdf/jepx20190405.pdf"
+               target="_blank" rel="noopener noreferrer">日本卸電力取引所（JEPX）「間接送電権取引市場について」2019年4月（権利の定義・商品・オークション方式・売り量の式・決済）［PDF］</a>
+          </li>
+          <li>
+            <a href="https://www.jepx.jp/company/conference/pdf/TRCF20250326.pdf"
+               target="_blank" rel="noopener noreferrer">JEPX・資源エネルギー庁「間接送電権の制度・在り方等に関する検討会 とりまとめ」2025年3月（導入経緯、対象連系線の追加・年間商品・売り値見直しの方向性）［PDF］</a>
+          </li>
+          <li>
+            <a href="https://www.jepx.jp/electricpower/market-data/transmission_rights/"
+               target="_blank" rel="noopener noreferrer">JEPX「間接送電権市場」（市場データ：商品別の売り入札量・約定量・約定価格の実物が見られる）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="07-wholesale-market-and-indirect-auction.html" class="unit-nav-prev">&larr; 卸電力市場と間接オークション</a>
+      <a href="../f-dispatch-system/index.html" class="unit-nav-next">次の領域へ: F 中央給電指令所システム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>
