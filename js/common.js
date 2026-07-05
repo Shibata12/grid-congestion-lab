@@ -65,6 +65,8 @@ const SITE_STRUCTURE = {
         summary: '潮流が送電容量を超えるかの判定と、単一設備故障を想定するN-1基準を学ぶ。' },
       { id: 'b-02', title: '運用容量とマージン', file: '02-operating-capacity-and-margin.html', exerciseCount: 3,
         summary: '運用容量が4つの限度の最小値で決まること、マージン・空き容量の内訳、地内混雑と連系線混雑の違いを学ぶ。B-01で預けた「送電容量の区別」の回収。' },
+      { id: 'b-03', title: '混雑対策の全体地図──運用・接続・増強', file: '03-congestion-countermeasures-map.html', exerciseCount: 3,
+        summary: '混雑への打ち手を「運用でしのぐ／枠を賢く使う（コネクト&マネージ3本柱）／設備を増やす（増強・マスタープラン）」の3層の地図に整理する。B領域完結。' },
     ],
   },
   c: {

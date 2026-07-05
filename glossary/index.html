@@ -158,6 +158,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b" id="term-n-1-curtailment">
+        <dt>N-1電制</dt>
+        <dd>
+          <p>設備故障（N-1）を検知したとき、瞬時に自動で電源の出力を制限する仕組み。これを条件とすることで、N-1基準のために事前に残していた容量の余裕まで平常時に活用できる。N-1の守り方を「事前の余裕」から「事後の瞬時制御」に変える取組で、コネクト&マネージの3本柱の1つ。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>、<a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e,b" id="term-area-price-spread">
         <dt>エリア間値差</dt>
         <dd>
@@ -318,6 +328,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b" id="term-grid-reinforcement">
+        <dt>系統増強</dt>
+        <dd>
+          <p>送電線・変圧器の新設や増設によって、系統の容量そのものを増やすこと。混雑の恒久的な解決策だが、大規模なものは完成までに長い時間と大きな費用がかかるため、費用と便益を評価して計画される。進め方は、個別の接続要請を契機とするプル型から、将来シナリオを見据えて計画的・先行的に整備するプッシュ型へ転換した。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="c" id="term-grid-model">
         <dt>系統モデル</dt>
         <dd>
@@ -341,9 +361,9 @@
       <div class="glossary-entry" data-domain="e" id="term-connect-manage">
         <dt>コネクト&マネージ</dt>
         <dd>
-          <p>既存の送変電設備を最大限活用して、送電線への接続可能量を増やす日本版の取組。「想定潮流の合理化」「N-1電制」「ノンファーム型接続」の3つの対策からなる。</p>
+          <p>既存の送変電設備を最大限活用して、送電線への接続可能量を増やす日本版の取組。「想定潮流の合理化」「N-1電制」「ノンファーム型接続」の3つの対策からなる。設備を増やさずに使える枠を広げる、混雑対策の「接続の工夫」層にあたる。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+            関連ユニット: <a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>、<a href="../units/e-market/05-non-firm-connection.html">E-05</a>
           </p>
         </dd>
       </div>
@@ -564,6 +584,16 @@
           <p>系統の健全性を評価するために仮定する設備故障のケース。N-1基準では、送電線や変圧器などが1つ停止する想定故障を1つずつ仮定し、各ケースで過負荷が生じないか確認する。大量の想定故障を高速にチェックする方法はLODFを参照。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>、<a href="../units/d-algorithms/04-contingency-analysis-and-lodf.html">D-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b,e" id="term-flow-assumption-rationalization">
+        <dt>想定潮流の合理化</dt>
+        <dd>
+          <p>空き容量の計算で、「接続済みの全電源が最大出力で同時に発電する」という保守的な想定をやめ、電源の実際の稼働傾向などを反映した実態に近い想定で潮流を見積もり直すこと。設備を増やさずに空き容量を広げられる。コネクト&マネージの3本柱の1つ。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>、<a href="../units/e-market/05-non-firm-connection.html">E-05</a>
           </p>
         </dd>
       </div>
@@ -854,6 +884,16 @@
           <p>需給ひっ迫時の融通や周波数維持など万一の事態に備え、連系線の運用容量の一部としてあらかじめ確保しておく容量。広域機関（OCCTO）が算出・確保し、公表している。平常時の取引には使えないため、空き容量の計算で差し引く。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-master-plan">
+        <dt>マスタープラン（広域系統長期方針）</dt>
+        <dd>
+          <p>正式名称は広域系統長期方針（広域連系系統のマスタープラン）。再エネ主力電源化などの将来シナリオに基づき、日本全体の系統増強の長期展望を費用便益の評価とともに示したもの。OCCTOが2023年3月に公表。プッシュ型の系統整備の土台となる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>
           </p>
         </dd>
       </div>
