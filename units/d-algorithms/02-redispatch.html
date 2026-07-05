@@ -31,6 +31,21 @@
         ポイントは、<strong>需給バランスを保ちながら</strong>潮流を容量内に収めることです。
       </p>
 
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../b-congestion/01-congestion-and-n1.html">B-01</a>：減らすべき量＝過負荷量（潮流 − 送電容量）</li>
+          <li><a href="01-ptdf-sensitivity.html">D-01</a>：PTDF＝出力を1 MW動かしたとき線路の潮流が動く割合。潮流変化＝PTDF × 出力変更の<strong>かけ算</strong></li>
+          <li><a href="../e-market/02-simultaneous-balancing.html">E-02</a>：需要と供給は常に一致（同時同量）——総発電量は勝手に変えられない</li>
+        </ul>
+        <p style="margin:0">
+          <strong>安心してください</strong>：本ユニットの新しい式は実質<strong>1本</strong>で、
+          それもD-01のかけ算を<strong>割り算に読み替えるだけ</strong>です。
+        </p>
+      </div>
+
       <!-- ページ内目次 -->
       <nav class="page-toc" aria-label="ページ内目次">
         <h2>目次</h2>
@@ -99,6 +114,11 @@
 
       <section class="knowledge-section" id="section-2">
         <h2>2. 2台ペアの再給電量を求める</h2>
+        <p>
+          先に、答えの形だけ見ておきましょう。過負荷が 30 MW で、ペアの「効きの差」が 0.4 なら、
+          必要な入れ替え量は 30 ÷ 0.4 ＝ 75 MW——<strong>割り算1回</strong>です。
+          ここからは、この割り算がどこから出てくるのかを順に追いかけます。
+        </p>
         <p>
           もっとも基本の単位は、発電機2台のペアです。混雑線路 L への寄与（PTDF）が大きい発電機Aを Δ だけ下げ、
           寄与の小さい発電機Bを同じ Δ だけ上げます。このとき、L の潮流変化は D-01 の感度の式を足し合わせて、

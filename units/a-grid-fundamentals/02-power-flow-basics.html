@@ -30,6 +30,21 @@
         <strong><a href="../e-market/01-bg-and-generation-plan.html">E-01: BGと発電計画値</a> で学んだ発電計画値が、ここで潮流計算の入力（注入）になります。</strong>
       </p>
 
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="01-kirchhoff.html">A-01</a>：KCL——母線に入る電力の合計と、出ていく電力の合計は等しい</li>
+          <li><a href="01-kirchhoff.html">A-01</a>：KVL＋オームの法則——ループでは、電圧のつじつまが合うように流れ方が決まる</li>
+          <li><a href="../e-market/01-bg-and-generation-plan.html">E-01</a>：発電計画値・需要計画値（E-01が未読なら「各母線の発電と需要の予定表」と思えばOKです）</li>
+        </ul>
+        <p style="margin:0">
+          <strong>安心してください</strong>：本ユニットの式は2本だけ。
+          ①注入＝発電 − 負荷（引き算）、②反比例分配（比率）——どちらも四則演算です。
+        </p>
+      </div>
+
       <!-- ページ内目次 -->
       <nav class="page-toc" aria-label="ページ内目次">
         <h2>目次</h2>
@@ -47,7 +62,9 @@
         <p>
           系統では、発電機・負荷・送電線が <span class="term">母線<span class="term-tooltip">複数の設備が接続する接続点。回路でいう節点（ノード）に相当する。バスともいう。</span></span>（バス）に集まって接続します。
           ある母線について、そこに正味でどれだけ電力が注ぎ込まれているかを<strong>注入</strong>と呼びます。
-          発電は電力を送り込むので＋（プラス）、負荷は引き出すので−（マイナス）として扱い、母線の注入は次のように書けます。
+          発電は電力を送り込むので＋（プラス）、負荷は引き出すので−（マイナス）として扱います。
+          たとえば、発電 100 MW と負荷 30 MW がつながる母線なら、正味 100 − 30 ＝ <strong>＋70 MW</strong> が注ぎ込まれている——これが注入です。
+          式で書くと次のとおりです。
         </p>
         <div class="math-block"
              data-tex="P_{\text{inj}} = P_{\text{gen}} - P_{\text{load}}"
@@ -159,7 +176,10 @@
           交流系統では、経路の「流れにくさ」は主に <span class="term">リアクタンス<span class="term-tooltip">交流における電流の流れにくさ（誘導性）。本ユニットでは“電気的な距離”として扱う。厳密な交流理論は後続ユニットで扱う。</span></span> X で決まります。
           ここでは X を<strong>「電気的な距離」</strong>と捉えてください（リアクタンスの厳密な意味は
           <a href="03-impedance-reactance.html">A-03: インピーダンスとリアクタンス</a> で改めて扱います）。
-          2つの経路に分かれる場合、潮流は<strong>リアクタンスに反比例</strong>して分配され、経路1の潮流は次式で表せます。
+          2つの経路に分かれる場合、潮流は<strong>リアクタンスに反比例</strong>して分配されます。
+          感覚としては「流れにくさの<strong>逆の比</strong>で分ける」——X₁ = 2 と X₂ = 4 なら、
+          近い経路1に 4/6、遠い経路2に 2/6。<strong>比をひっくり返して分けるだけ</strong>です。
+          式で書くと、経路1の潮流は次のとおりです。
         </p>
         <div class="math-block"
              data-tex="P_1 = P \cdot \dfrac{X_2}{X_1 + X_2}"

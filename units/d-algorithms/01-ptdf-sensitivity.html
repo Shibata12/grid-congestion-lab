@@ -31,6 +31,21 @@
         どの発電機を動かせば潮流が減るかを<strong>感度分析</strong>で見積もれるようになります。
       </p>
 
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02</a>：ループでは潮流はリアクタンスに<strong>反比例して分配</strong>される（X₁=2とX₂=4なら、2/3 と 1/3 に分かれる）</li>
+          <li><a href="../b-congestion/01-congestion-and-n1.html">B-01</a>：潮流が送電容量を超えると混雑（過負荷）。減らすべき量＝潮流 − 容量</li>
+          <li><a href="../e-market/01-bg-and-generation-plan.html">E-01</a>：各母線の注入は発電計画値・需要計画値から決まる（出力を変えれば注入が変わる）</li>
+        </ul>
+        <p style="margin:0">
+          <strong>安心してください</strong>：本ユニットの新しい式は、実質<strong>かけ算1本</strong>です。
+          PTDFという横文字も、A-02の反比例分配の「分配率」に名前が付いたものにすぎません。
+        </p>
+      </div>
+
       <!-- ページ内目次 -->
       <nav class="page-toc" aria-label="ページ内目次">
         <h2>目次</h2>
@@ -51,7 +66,13 @@
           これに答えるのが<strong>感度</strong>、すなわち「注入の変化が各送電線の潮流をどれだけ動かすか」という情報です。
         </p>
         <p>
-          その代表的な指標が <span class="term">PTDF<span class="term-tooltip">Power Transfer Distribution Factor。ある母線の注入を1単位変えたとき、ある送電線の潮流が変化する割合。</span></span>
+          具体例から入りましょう。ある混雑線路について、ある発電機の出力を <strong>10 MW</strong> 上げたら、
+          その線路の潮流が <strong>6 MW</strong> 増えたとします。「動かした10に対して、動いた6」——
+          割合 <strong>0.6</strong> が、この発電機のこの線路への<strong>効き</strong>です。
+          この割合さえ知っていれば、「20 MW 下げたら 0.6 × 20 ＝ 12 MW 減る」も、かけ算だけで見積もれます。
+        </p>
+        <p>
+          いまの「効きの割合」に付いている名前が <span class="term">PTDF<span class="term-tooltip">Power Transfer Distribution Factor。ある母線の注入を1単位変えたとき、ある送電線の潮流が変化する割合。</span></span>
           （Power Transfer Distribution Factor、潮流分布係数）です。PTDFは、ある母線 k の注入を1単位だけ増やしたとき、
           ある送電線 ℓ の潮流がどれだけ変化するかの割合として定義されます。
         </p>
@@ -152,6 +173,7 @@
         <h2>3. 感度分析と混雑への活用</h2>
         <p>
           PTDFが分かると、発電機の出力変更が混雑線路の潮流をどれだけ動かすかを、かけ算で見積もれます。
+          §1の冒頭でやった「10 MW × 0.6 ＝ 6 MW」——あのかけ算を式の形にしただけです。
           母線 k の出力を ΔP_k 変えたときの、送電線 ℓ の潮流変化 ΔP_ℓ は次式です。
         </p>
         <div class="math-block"
