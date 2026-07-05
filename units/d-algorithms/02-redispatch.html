@@ -170,6 +170,31 @@
           </svg>
           <figcaption>図2: 75 MWの再給電（A−75・B+75）で潮流が130→100 MWになり混雑解消</figcaption>
         </figure>
+
+        <div class="callout">
+          <p style="margin:0 0 var(--space-sm)">
+            <strong>ここまでを「自分の言葉」で言ってみる</strong>——式を見ずに、次の3つの問いに答えてみてください。
+          </p>
+          <p style="margin:0 0 var(--space-sm)">
+            <strong>問1. なぜ発電機は2台セットで動かす？</strong><br>
+            ——需要と供給は常に一致していなければならず、総発電量を勝手に変えられないから。
+            どこかを下げたら、同じ量だけどこかで上げる。
+          </p>
+          <p style="margin:0 0 var(--space-sm)">
+            <strong>問2. なぜ「Aを下げてBを上げる」と混雑線路の潮流が減る？</strong><br>
+            ——同じ1 MWでも、混雑線路への効き（PTDF）はAの方が大きいから。
+            Aを1 MW下げると潮流は PTDF_A ぶん減り、Bを1 MW上げると PTDF_B ぶん増える。
+            差し引きで、<strong>1 MWの入れ替えにつき（PTDF_A − PTDF_B）だけ潮流が減る</strong>。
+          </p>
+          <p style="margin:0 0 var(--space-sm)">
+            <strong>問3. では、何MW入れ替えればいい？</strong><br>
+            ——1 MWの入れ替えで（PTDF_A − PTDF_B）減るのだから、
+            減らしたい量（過負荷量）をこの「1 MWあたりの効き」で割ればいい。それがΔの式のすべて。
+          </p>
+          <p style="margin:0">
+            この3つに自分の言葉で答えられれば、式を忘れても自分で組み立て直せます。
+          </p>
+        </div>
       </section>
 
       <section class="knowledge-section" id="section-3">
@@ -284,6 +309,37 @@
           "type": "ordering",
           "correct": ["a", "b", "c", "d", "e"],
           "explanation": "まず混雑を検出し(a)、各発電機のPTDF(感度)を把握して(b)、効率の良いペアと必要量を決め(c)、需給を保って出力を変更し(d)、最後に潮流が収まったか再確認します(e)。需給バランスを崩さないよう、下げと上げを同量にするのが要点です。"
+        }
+        </script>
+
+        <!-- 演習4: numeric（必要再給電量・初見の数字） -->
+        <div class="exercise" data-exercise-id="d-02-ex04" data-type="numeric">
+          <h3>演習 4: 必要な再給電量（別のケースで）</h3>
+          <div class="exercise-problem">
+            <p>
+              本文とは別のケースで解いてみよう。混雑線路 M の送電容量は 110 MW、いまの潮流は 138 MW である。
+              発電機EのPTDFは 0.55、発電機FのPTDFは 0.15。
+              Eを下げ、同量だけFを上げる再給電で混雑をちょうど解消したい。必要な再給電量 Δ は何 MW か。
+              （今回は過負荷量から自分で求めてください）
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              再給電量 Δ:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-02-ex04",
+          "type": "numeric",
+          "correct": 70,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "まず過負荷量を自分で求めます: 138 − 110 = 28 MW。次に「1 MWの入れ替えあたりの効き」がPTDFの差 0.55 − 0.15 = 0.40 なので、Δ = 28 ÷ 0.40 = 70 MW。Eを70 MW下げ、Fを70 MW上げると、Mの潮流は 138 − 0.40×70 = 138 − 28 = 110 MW でちょうど容量に収まり、総発電量は変わらず需給も保たれます。§2の3つの問い（なぜ2台・なぜ差・なぜ割り算）で組み立てられたか確認してみてください。"
         }
         </script>
 

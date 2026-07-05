@@ -46,7 +46,7 @@ const SITE_STRUCTURE = {
     units: [
       { id: 'a-01', title: 'オームの法則とキルヒホッフの法則', file: '01-kirchhoff.html', exerciseCount: 5,
         summary: 'オームの法則(V=R·I)と、キルヒホッフの電流則(KCL)・電圧則(KVL)を、系統解析の出発点として理解する。' },
-      { id: 'a-02', title: '潮流計算の基礎', file: '02-power-flow-basics.html', exerciseCount: 3,
+      { id: 'a-02', title: '潮流計算の基礎', file: '02-power-flow-basics.html', exerciseCount: 5,
         summary: '母線への注入と、放射状・ループ系統での潮流の決まり方を学ぶ。発電計画値が潮流計算の入力になる。' },
       { id: 'a-03', title: 'インピーダンスとリアクタンス', file: '03-impedance-reactance.html', exerciseCount: 3,
         summary: '交流回路の視点から抵抗・リアクタンス・インピーダンスの関係を概念的に整理し、なぜ送電線でリアクタンスが支配的かを学ぶ。A-02の“電気的な距離”の裏付け。' },
@@ -95,7 +95,7 @@ const SITE_STRUCTURE = {
     units: [
       { id: 'd-01', title: 'PTDFと感度分析', file: '01-ptdf-sensitivity.html', exerciseCount: 3,
         summary: '注入変化が送電線潮流に与える割合(PTDF)と、混雑解消に向けた感度分析を学ぶ。' },
-      { id: 'd-02', title: '再給電（リディスパッチ）', file: '02-redispatch.html', exerciseCount: 3,
+      { id: 'd-02', title: '再給電（リディスパッチ）', file: '02-redispatch.html', exerciseCount: 4,
         summary: 'PTDFを使い、需給を保ちながら複数の発電機の出力調整で混雑を解消する手順を学ぶ。' },
       { id: 'd-03', title: 'SCUC/SCEDの概要', file: '03-scuc-sced-overview.html', exerciseCount: 3,
         summary: '再給電を最適化問題として定式化する。目的関数（発電コスト最小）と制約（需給・潮流・出力上下限）、SCUCとSCEDの違い、二段階構成を学ぶ。' },

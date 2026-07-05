@@ -157,7 +157,8 @@
         </p>
         <p>
           交流系統では、経路の「流れにくさ」は主に <span class="term">リアクタンス<span class="term-tooltip">交流における電流の流れにくさ（誘導性）。本ユニットでは“電気的な距離”として扱う。厳密な交流理論は後続ユニットで扱う。</span></span> X で決まります。
-          ここでは X を<strong>「電気的な距離」</strong>と捉えてください（リアクタンスの厳密な意味は、A領域の後続ユニットで改めて扱います）。
+          ここでは X を<strong>「電気的な距離」</strong>と捉えてください（リアクタンスの厳密な意味は
+          <a href="03-impedance-reactance.html">A-03: インピーダンスとリアクタンス</a> で改めて扱います）。
           2つの経路に分かれる場合、潮流は<strong>リアクタンスに反比例</strong>して分配され、経路1の潮流は次式で表せます。
         </p>
         <div class="math-block"
@@ -298,6 +299,66 @@
           "type": "choice",
           "correct": "2",
           "explanation": "潮流計算は、各母線の注入（発電計画値・需要計画値）を入力として、物理法則（KCL・KVL・オームの法則）から各送電線の潮流と各母線の電圧を求める計算です。線路の潮流は計算の「出力」であって入力ではないため選択肢1は逆です。E-01「BGと発電計画値」で確定した発電計画値が、ここで注入として潮流計算に入ります。"
+        }
+        </script>
+
+        <!-- 演習4: numeric（放射状・初見の数字） -->
+        <div class="exercise" data-exercise-id="a-02-ex04" data-type="numeric">
+          <h3>演習 4: 放射状系統の潮流（別の系統で）</h3>
+          <div class="exercise-problem">
+            <p>
+              本文とは別の系統で解いてみよう。母線 1 ─ 2 ─ 3 が直列につながった放射状系統がある。
+              母線1の発電計画値は 140 MW、母線2の負荷は 85 MW、母線3の負荷は 55 MW である（送電損失は無視する）。
+              このとき、<strong>線路B（母線2→母線3）</strong>の潮流は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              線路Bの潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-02-ex04",
+          "type": "numeric",
+          "correct": 55,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "放射状系統では、各線路の潮流は「その線路の下流にある負荷の合計」です。線路Bの下流には母線3の負荷 55 MW だけがあるので、潮流は 55 MW。発電計画値の140 MWは線路A（下流に母線2と母線3の両方 ＝ 85 + 55 = 140 MW）の潮流であって、線路Bの潮流ではない点に注意してください。どの線路の下流に何があるかを見るのがコツです。"
+        }
+        </script>
+
+        <!-- 演習5: numeric（ループ分配・初見の数字） -->
+        <div class="exercise" data-exercise-id="a-02-ex05" data-type="numeric">
+          <h3>演習 5: ループ系統の潮流分配（別の系統で）</h3>
+          <div class="exercise-problem">
+            <p>
+              母線Xから母線Yへ 160 MW を送電する。XとYの間には2つの経路があり、
+              経路1のリアクタンスは X₁ = 5、経路2のリアクタンスは X₂ = 3 である。
+              潮流はリアクタンスに反比例して分配されるとき、<strong>経路2</strong>の潮流は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              経路2の潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-02-ex05",
+          "type": "numeric",
+          "correct": 100,
+          "tolerance": 0.5,
+          "unit": "MW",
+          "explanation": "反比例分配なので、経路2の潮流は「相手のリアクタンス」を分子にして P2 = P × X1 / (X1 + X2) = 160 × 5 / (5 + 3) = 100 MW。残りの 60 MW が経路1に流れます。今回はリアクタンスが小さいのは経路2（X2 = 3 < X1 = 5）なので、多く流れるのも経路2です。本文の式（P1 = P × X2 / (X1 + X2)）を丸暗記するのではなく、「小さい方に多く流れる」「分子は相手のX」で組み立てられるかがポイントです。"
         }
         </script>
 
