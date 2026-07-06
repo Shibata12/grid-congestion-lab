@@ -184,12 +184,13 @@ function urlTop() { return `${ROOT}index.html`; }
 function urlDomain(key) { return `${ROOT}units/${SITE_STRUCTURE[key].folder}/index.html`; }
 function urlUnit(key, file) { return `${ROOT}units/${SITE_STRUCTURE[key].folder}/${file}`; }
 function urlGlossary() { return `${ROOT}glossary/index.html`; }
+function urlReview() { return `${ROOT}review/index.html`; }
 
 /* ============================================================
    進捗管理（第8章）  exercise-engine.js からも利用する
    ============================================================ */
 const STORAGE_KEY = 'gcl-progress';
-const PROGRESS_VERSION = 1;
+const PROGRESS_VERSION = 2;
 
 /* localStorage が使えない環境（古い file:// 等）でも壊れないようにする */
 function safeStorage() {
@@ -213,10 +214,24 @@ function getProgress() {
     if (!data || typeof data !== 'object' || !data.exercises) {
       return { version: PROGRESS_VERSION, exercises: {} };
     }
-    return data;
+    return migrateProgress(data);
   } catch (e) {
     return { version: PROGRESS_VERSION, exercises: {} };
   }
+}
+
+/** v1（status/lastAttemptのみ）→ v2（履歴フィールド付き）への自動移行（第8章 8.2） */
+function migrateProgress(data) {
+  if (data.version >= PROGRESS_VERSION) return data;
+  Object.keys(data.exercises).forEach((id) => {
+    const rec = data.exercises[id];
+    rec.attempts = 1;
+    rec.firstTry = null; /* v1では初回結果が不明 */
+    rec.streak = rec.status === 'correct' ? 1 : 0;
+  });
+  data.version = PROGRESS_VERSION;
+  writeProgress(data);
+  return data;
 }
 
 function writeProgress(data) {
@@ -225,18 +240,33 @@ function writeProgress(data) {
   try { store.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { /* 容量超過等は無視 */ }
 }
 
-/** 演習の判定結果を保存する（第8章 8.3）。status: 'correct' | 'incorrect' */
+/** 演習の判定結果を保存する（第8章 8.3）。status: 'correct' | 'incorrect'
+    attempts（通算回数）・firstTry（初回結果）・streak（連続正解）も更新する。 */
 function setExerciseStatus(exerciseId, status) {
   const data = getProgress();
-  data.exercises[exerciseId] = { status, lastAttempt: new Date().toISOString() };
+  const prev = data.exercises[exerciseId] || {};
+  const attempts = (prev.attempts || 0) + 1;
+  const firstTry = (prev.attempts || 0) > 0
+    ? (prev.firstTry !== undefined ? prev.firstTry : null)
+    : status;
+  const streak = status === 'correct' ? (prev.streak || 0) + 1 : 0;
+  data.exercises[exerciseId] = {
+    status,
+    lastAttempt: new Date().toISOString(),
+    attempts,
+    firstTry,
+    streak,
+  };
   writeProgress(data);
 }
 
-/** 演習の記録を削除する（「やり直す」で未着手に戻す / 第8章 8.3） */
+/** 演習を未着手に戻す（「やり直す」/ 第8章 8.3）。
+    statusだけ削除し、attempts・firstTry・streakの履歴は保持する。 */
 function clearExerciseStatus(exerciseId) {
   const data = getProgress();
-  if (data.exercises[exerciseId]) {
-    delete data.exercises[exerciseId];
+  const rec = data.exercises[exerciseId];
+  if (rec) {
+    delete rec.status;
     writeProgress(data);
   }
 }
@@ -246,11 +276,14 @@ function getExerciseStatus(exerciseId) {
   return getProgress().exercises[exerciseId] || null;
 }
 
-/** すべての進捗を消去する（第8章 8.5） */
+/** すべての進捗を消去する（第8章 8.5）。復習キューも一緒に消す */
 function resetAllProgress() {
   const store = safeStorage();
   if (store) {
-    try { store.removeItem(STORAGE_KEY); } catch (e) { /* noop */ }
+    try {
+      store.removeItem(STORAGE_KEY);
+      store.removeItem(REVIEW_KEY);
+    } catch (e) { /* noop */ }
   }
 }
 
@@ -285,6 +318,134 @@ function unitState(unit) {
   if (correct === count) return 'done';
   if (correct > 0) return 'progress';
   return 'none';
+}
+
+/* ============================================================
+   復習キュー（第8章 8.7）
+   review/index.html の描画と、exercise-engine.js の done 記録が使う。
+   ============================================================ */
+const REVIEW_KEY = 'gcl-review';
+const REVIEW_MAX = 10;
+
+/** streakに応じた復習期限（日）: 7 → 14 → 28 → 56（上限） */
+function reviewIntervalDays(streak) {
+  if (streak <= 1) return 7;
+  if (streak === 2) return 14;
+  if (streak === 3) return 28;
+  return 56;
+}
+
+/** 端末ローカル日付の 'YYYY-MM-DD'（キューの日替わり判定に使う） */
+function localDateString(d) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** SITE_STRUCTURE から全演習IDを列挙する */
+function allExerciseIds() {
+  const ids = [];
+  DOMAIN_KEYS.forEach((key) => {
+    SITE_STRUCTURE[key].units.forEach((unit) => {
+      for (let i = 1; i <= (unit.exerciseCount || 0); i += 1) {
+        ids.push(`${unit.id}-ex${String(i).padStart(2, '0')}`);
+      }
+    });
+  });
+  return ids;
+}
+
+/** 演習ID → { domainKey, unit, exNumber, url }。未知のIDは null */
+function exerciseInfo(exerciseId) {
+  const m = /^([a-f])-(\d+)-ex(\d+)$/.exec(exerciseId);
+  if (!m) return null;
+  const domainKey = m[1];
+  const domain = SITE_STRUCTURE[domainKey];
+  if (!domain) return null;
+  const unitId = `${m[1]}-${m[2]}`;
+  const unit = domain.units.find((u) => u.id === unitId);
+  if (!unit) return null;
+  return { domainKey, unit, exNumber: parseInt(m[3], 10), url: urlUnit(domainKey, unit.file) };
+}
+
+/** 出題対象（due）の演習を集める（第8章 8.7）。
+    不正解＝常に対象、正解＝streakに応じた復習期限を過ぎたら対象。 */
+function collectDueExercises(now) {
+  const data = getProgress();
+  const incorrect = [];
+  const stale = [];
+  allExerciseIds().forEach((id) => {
+    const rec = data.exercises[id];
+    if (!rec || !rec.status) return; /* 未着手・やり直し中は対象外 */
+    if (rec.status === 'incorrect') {
+      incorrect.push({ id, last: Date.parse(rec.lastAttempt) || 0 });
+      return;
+    }
+    const days = (now - (Date.parse(rec.lastAttempt) || 0)) / 86400000;
+    const limit = reviewIntervalDays(rec.streak || 1);
+    if (days >= limit) stale.push({ id, overdue: days - limit });
+  });
+  incorrect.sort((a, b) => a.last - b.last);   /* 放置が長い順 */
+  stale.sort((a, b) => b.overdue - a.overdue); /* 期限超過が大きい順 */
+  return { incorrect, stale };
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+  }
+  return arr;
+}
+
+/** 今日の復習キューを作る（不正解優先→期限超過、最大 REVIEW_MAX 問、領域を混ぜてシャッフル） */
+function buildReviewQueue() {
+  const due = collectDueExercises(Date.now());
+  const picked = due.incorrect.concat(due.stale).slice(0, REVIEW_MAX).map((e) => e.id);
+  return shuffleArray(picked);
+}
+
+function readReviewState() {
+  const store = safeStorage();
+  if (!store) return null;
+  try {
+    const raw = store.getItem(REVIEW_KEY);
+    if (!raw) return null;
+    const state = JSON.parse(raw);
+    if (!state || typeof state !== 'object' || !Array.isArray(state.queue)) return null;
+    if (!Array.isArray(state.done)) state.done = [];
+    return state;
+  } catch (e) {
+    return null;
+  }
+}
+
+function writeReviewState(state) {
+  const store = safeStorage();
+  if (!store) return;
+  try { store.setItem(REVIEW_KEY, JSON.stringify(state)); } catch (e) { /* noop */ }
+}
+
+/** 今日のキューを取得する（日付が変わっていれば再生成）。復習ページが呼ぶ */
+function getTodayReview() {
+  const today = localDateString(new Date());
+  let state = readReviewState();
+  if (!state || state.date !== today) {
+    state = { date: today, queue: buildReviewQueue(), done: [] };
+    writeReviewState(state);
+  }
+  return state;
+}
+
+/** 判定済みの演習を当日キューの done へ記録する（キュー未生成の日は何もしない）。
+    復習モード経由かどうかは問わない（第7章 7.7）。 */
+function markReviewDone(exerciseId) {
+  const state = readReviewState();
+  if (!state || state.date !== localDateString(new Date())) return;
+  if (state.queue.indexOf(exerciseId) === -1) return;
+  if (state.done.indexOf(exerciseId) === -1) {
+    state.done.push(exerciseId);
+    writeReviewState(state);
+  }
 }
 
 /* ============================================================
@@ -337,6 +498,9 @@ function buildHeader() {
   const glossaryLink = el('a', { href: urlGlossary() }, '用語集');
   if (isGlossary) glossaryLink.setAttribute('aria-current', 'page');
   menu.appendChild(el('li', {}, glossaryLink));
+  const reviewLink = el('a', { href: urlReview() }, '復習');
+  if (document.body.dataset.page === 'review') reviewLink.setAttribute('aria-current', 'page');
+  menu.appendChild(el('li', {}, reviewLink));
 
   toggle.addEventListener('click', () => {
     const open = menu.classList.toggle('is-open');
@@ -484,7 +648,7 @@ function renderPrevResults() {
   document.querySelectorAll('.exercise[data-exercise-id]').forEach((ex) => {
     const id = ex.dataset.exerciseId;
     const rec = getExerciseStatus(id);
-    if (!rec) return;
+    if (!rec || !rec.status) return; /* 未着手・やり直し中（statusなし）は表示しない */
     const date = (rec.lastAttempt || '').slice(0, 10);
     const verdict = rec.status === 'correct' ? '正解' : '不正解';
     const note = el('p', {
@@ -493,6 +657,99 @@ function renderPrevResults() {
     const problem = ex.querySelector('.exercise-problem') || ex.querySelector('h3');
     if (problem) problem.insertAdjacentElement('beforebegin', note);
   });
+}
+
+/* ============================================================
+   復習ページのレンダリング（第6章 6.6 / 第8章 8.7）
+   .review-queue と .weakness-summary を持つページで動作する。
+   ============================================================ */
+function renderReviewPage() {
+  const queueBox = document.querySelector('.review-queue');
+  if (!queueBox) return;
+
+  const data = getProgress();
+
+  /* 解答履歴が1件もない場合の案内 */
+  if (Object.keys(data.exercises).length === 0) {
+    queueBox.appendChild(el('p', { class: 'review-empty' },
+      'まだ解答の記録がありません。ユニットの演習を解くと、時間をあけてここに復習問題が並びます。'));
+    renderWeaknessSummary(data);
+    return;
+  }
+
+  const state = getTodayReview();
+
+  if (state.queue.length === 0) {
+    queueBox.appendChild(el('p', { class: 'review-empty' },
+      '今日の復習はありません。不正解のままの問題や、正解から時間が経った問題が出てくると、ここに並びます。'));
+    renderWeaknessSummary(data);
+    return;
+  }
+
+  const remaining = state.queue.filter((id) => state.done.indexOf(id) === -1).length;
+  queueBox.appendChild(el('p', { class: 'review-status' },
+    remaining === 0
+      ? `今日の ${state.queue.length} 問はすべて解き直しました。おつかれさまでした。`
+      : `今日の復習: ${state.queue.length} 問（残り ${remaining} 問）`));
+
+  const ol = el('ol', { class: 'review-list' });
+  state.queue.forEach((id) => {
+    const info = exerciseInfo(id);
+    if (!info) return; /* 構成から消えた古いIDは表示しない */
+    const done = state.done.indexOf(id) !== -1;
+    const label = `${info.unit.id.toUpperCase()}「${info.unit.title}」 演習${info.exNumber}`;
+    const badge = el('span', {
+      class: 'review-badge',
+      style: `--badge-color:${domainColorVar(info.domainKey)}`,
+    }, info.domainKey.toUpperCase());
+    const body = done
+      ? el('span', { class: 'review-item-label' }, label)
+      : el('a', { class: 'review-item-label', href: `${info.url}?review=1&ex=${id}` }, label);
+    const mark = el('span', { class: 'review-item-status' }, done ? '✅' : '');
+    ol.appendChild(el('li', { class: `review-item${done ? ' is-done' : ''}` }, [badge, body, mark]));
+  });
+  queueBox.appendChild(ol);
+  queueBox.appendChild(el('p', { class: 'review-note' },
+    '不正解のままの問題と、正解から時間が経った問題（正解を重ねるほど間隔が延びます）から、1日最大10問を選んでいます。'));
+
+  renderWeaknessSummary(data);
+}
+
+/** 領域ごとの「不正解のまま」「初回つまずき（今は正解）」を集計して表示する */
+function renderWeaknessSummary(data) {
+  const box = document.querySelector('.weakness-summary');
+  if (!box) return;
+  const rows = [];
+  DOMAIN_KEYS.forEach((key) => {
+    let incorrect = 0;
+    let stumbled = 0;
+    SITE_STRUCTURE[key].units.forEach((unit) => {
+      for (let i = 1; i <= (unit.exerciseCount || 0); i += 1) {
+        const rec = data.exercises[`${unit.id}-ex${String(i).padStart(2, '0')}`];
+        if (!rec) continue;
+        if (rec.status === 'incorrect') incorrect += 1;
+        else if (rec.status === 'correct' && rec.firstTry === 'incorrect') stumbled += 1;
+      }
+    });
+    if (incorrect > 0 || stumbled > 0) rows.push({ key, incorrect, stumbled });
+  });
+  if (rows.length === 0) {
+    box.appendChild(el('p', { class: 'review-empty' }, '目立った弱点は記録されていません。'));
+    return;
+  }
+  const ul = el('ul', { class: 'weakness-list' });
+  rows.forEach((row) => {
+    const badge = el('span', {
+      class: 'review-badge',
+      style: `--badge-color:${domainColorVar(row.key)}`,
+    }, row.key.toUpperCase());
+    const parts = [];
+    if (row.incorrect > 0) parts.push(`不正解のまま ${row.incorrect} 問`);
+    if (row.stumbled > 0) parts.push(`初回つまずき ${row.stumbled} 問（今は正解）`);
+    ul.appendChild(el('li', {}, [badge,
+      el('span', {}, `${SITE_STRUCTURE[row.key].name}: ${parts.join(' ／ ')}`)]));
+  });
+  box.appendChild(ul);
 }
 
 /* ============================================================
@@ -569,6 +826,7 @@ function init() {
   renderDomainTopPage();   // .unit-list があるときのみ動作
   renderMath();            // .math-block があるときのみ動作
   renderPrevResults();     // .exercise があるときのみ動作
+  renderReviewPage();      // .review-queue があるときのみ動作
   setupGlossary();         // .glossary-list があるときのみ動作
 }
 
@@ -583,6 +841,8 @@ function init() {
     resetAllProgress,
     domainProgress,
     unitState,
+    markReviewDone,
+    urlReview,
   };
 
   if (document.readyState === 'loading') {

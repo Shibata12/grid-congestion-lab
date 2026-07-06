@@ -9,7 +9,7 @@
 (function () {
   'use strict';
 
-  const { setExerciseStatus, clearExerciseStatus } = window.GCL;
+  const { setExerciseStatus, clearExerciseStatus, markReviewDone, urlReview } = window.GCL;
 
 /* ------------------------------------------------------------
    ユーティリティ
@@ -52,6 +52,204 @@ function setEquals(a, b) {
   const sa = [...a].map(String).sort();
   const sb = [...b].map(String).sort();
   return sa.every((v, i) => v === sb[i]);
+}
+
+/* ------------------------------------------------------------
+   数字替えバリアント（第7章 7.6）
+   numeric / matrix の演習は、問題文中の数字（span.var[data-var]）を
+   差し替えた別バージョンを answer-data の variants に持てる。
+   バリアント0 ＝ 素のHTML＋answer-dataの基本フィールド。
+   ------------------------------------------------------------ */
+const VARIANT_TYPES = ['numeric', 'matrix'];
+
+/** 演習が持つバリアント数（バリアント0を含む） */
+function variantCount(data) {
+  return 1 + ((data.variants && data.variants.length) || 0);
+}
+
+/** root内の .var[data-var] の元テキスト（バリアント0の値）を保存する */
+function saveVarOriginals(root) {
+  root.querySelectorAll('.var[data-var]').forEach((node) => {
+    if (node.dataset.orig === undefined) node.dataset.orig = node.textContent;
+  });
+}
+
+/** root内の .var[data-var] を vars で差し替える（vars=null でバリアント0に戻す） */
+function applyVars(root, vars) {
+  root.querySelectorAll('.var[data-var]').forEach((node) => {
+    if (!vars) {
+      node.textContent = node.dataset.orig;
+    } else if (vars[node.dataset.var] !== undefined) {
+      node.textContent = vars[node.dataset.var];
+    }
+  });
+}
+
+/** 現在表示中のバリアント番号（DOMに保持。初期値0） */
+function activeVariant(ex) {
+  return parseInt(ex.dataset.activeVariant || '0', 10);
+}
+
+/** 演習にバリアントを適用する（数字差し替え＋「数字替え版」チップ）。
+    skipVars=true はシナリオユニット用（数字はユニット側で一括差し替え済み）。 */
+function setExerciseVariant(ex, data, idx, skipVars) {
+  ex.dataset.activeVariant = String(idx);
+  if (!skipVars) {
+    applyVars(ex, idx === 0 ? null : (data.variants[idx - 1].vars || null));
+  }
+  const h3 = ex.querySelector('h3');
+  let chip = ex.querySelector('.variant-chip');
+  if (idx > 0) {
+    if (!chip && h3) {
+      chip = document.createElement('span');
+      chip.className = 'variant-chip';
+      chip.textContent = '数字替え版';
+      h3.appendChild(chip);
+    }
+  } else if (chip) {
+    chip.remove();
+  }
+}
+
+/** 判定・解説に使う実効データ（表示中バリアントの correct/explanation 等を反映） */
+function effectiveData(ex, data) {
+  const idx = activeVariant(ex);
+  if (idx === 0 || !data.variants || !data.variants[idx - 1]) return data;
+  const v = data.variants[idx - 1];
+  const eff = Object.assign({}, data);
+  ['correct', 'tolerance', 'unit', 'explanation'].forEach((k) => {
+    if (v[k] !== undefined) eff[k] = v[k];
+  });
+  return eff;
+}
+
+/** 0〜n-1 から current 以外をランダムに選ぶ（n>=2 前提） */
+function pickOtherVariant(current, n) {
+  let idx = Math.floor(Math.random() * (n - 1));
+  if (idx >= current) idx += 1;
+  return idx;
+}
+
+/* ------------------------------------------------------------
+   シナリオ一括替え（第7章 7.6 総合演習用）
+   script.scenario-data があるユニットでは、演習単位ではなく
+   ユニット単位で数字セット（シナリオ）を切り替える。
+   ------------------------------------------------------------ */
+const scenario = { data: null, index: 0 };
+
+function getScenarioData() {
+  const script = document.querySelector('script.scenario-data');
+  if (!script) return null;
+  try {
+    const data = JSON.parse(script.textContent);
+    return data && Array.isArray(data.scenarios) && data.scenarios.length > 0 ? data : null;
+  } catch (e) {
+    console.error('scenario-data の JSON 解析に失敗しました:', e);
+    return null;
+  }
+}
+
+function setupScenario() {
+  scenario.data = getScenarioData();
+  if (!scenario.data) return;
+  saveVarOriginals(document.body);
+  const box = document.querySelector('.scenario-controls');
+  if (!box) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'btn-scenario';
+  btn.textContent = '別の数字で解き直す';
+  const label = document.createElement('span');
+  label.className = 'scenario-label';
+  updateScenarioLabel(label);
+  btn.addEventListener('click', () => {
+    applyScenario(pickOtherVariant(scenario.index, scenario.data.scenarios.length + 1));
+    updateScenarioLabel(label);
+  });
+  box.append(btn, label);
+}
+
+function updateScenarioLabel(label) {
+  label.textContent = scenario.index === 0
+    ? '（いまの数字: 基本シナリオ）'
+    : `（いまの数字: 数字替え版 ${scenario.index}）`;
+}
+
+/** シナリオを一括適用する: 全varを差し替え、全演習の入力・フィードバックをリセットする。
+    保存済みの進捗は変更しない（新しく解答したときに上書きされる / 第7章 7.6）。 */
+function applyScenario(idx) {
+  scenario.index = idx;
+  applyVars(document.body, idx === 0 ? null : (scenario.data.scenarios[idx - 1].vars || null));
+  document.querySelectorAll('.exercise[data-exercise-id]').forEach((ex) => {
+    const handler = types[ex.dataset.type];
+    const data = getAnswerData(ex);
+    if (!handler || !data) return;
+    // 数字に依存しない演習（choice等）は variants 省略可（第7章 7.6）。数値系のみ警告する
+    if (idx > 0 && VARIANT_TYPES.indexOf(ex.dataset.type) !== -1
+        && (!data.variants || data.variants.length < idx)) {
+      console.warn('シナリオに対応する variants がありません:', ex.dataset.exerciseId);
+    }
+    const fb = ex.querySelector('.exercise-feedback');
+    if (fb) { fb.hidden = true; fb.replaceChildren(); fb.classList.remove('is-correct', 'is-incorrect'); }
+    handler.reset(ex);
+    ex.classList.remove('is-locked');
+    const checkBtn = ex.querySelector('.btn-check');
+    if (checkBtn) checkBtn.disabled = false;
+    setExerciseVariant(ex, data, idx, true);
+  });
+}
+
+/* ------------------------------------------------------------
+   復習モード（第7章 7.7）
+   ?review=1&ex=<演習ID> で開かれたら、該当演習を強調し
+   バリアント／シナリオを替えて出題する。
+   ------------------------------------------------------------ */
+const reviewParams = new URLSearchParams(window.location.search);
+const reviewTarget = reviewParams.get('review') === '1' ? reviewParams.get('ex') : null;
+
+function reviewPageUrl() {
+  return typeof urlReview === 'function' ? urlReview() : '../../review/index.html';
+}
+
+function setupReviewMode() {
+  if (!reviewTarget) return;
+  const ex = document.querySelector(`.exercise[data-exercise-id="${CSS.escape(reviewTarget)}"]`);
+  if (!ex) return;
+
+  /* 別の数字で出題する（バリアント／シナリオがある場合） */
+  if (scenario.data) {
+    applyScenario(1 + Math.floor(Math.random() * scenario.data.scenarios.length));
+    const label = document.querySelector('.scenario-label');
+    if (label) updateScenarioLabel(label);
+  } else {
+    const data = getAnswerData(ex);
+    if (data && VARIANT_TYPES.indexOf(ex.dataset.type) !== -1 && variantCount(data) > 1) {
+      setExerciseVariant(ex, data, 1 + Math.floor(Math.random() * (variantCount(data) - 1)));
+    }
+  }
+
+  const banner = document.createElement('div');
+  banner.className = 'review-banner';
+  const p = document.createElement('p');
+  p.textContent = '復習モード — この問題を解き直しましょう。数字が変わっている場合があります。';
+  const back = document.createElement('a');
+  back.href = reviewPageUrl();
+  back.textContent = '← 復習ページへ戻る';
+  banner.append(p, back);
+  ex.insertAdjacentElement('beforebegin', banner);
+  ex.classList.add('is-review-target');
+  window.setTimeout(() => { ex.scrollIntoView({ block: 'start' }); }, 0);
+}
+
+/** 判定後のフィードバックに「復習ページへ戻る」リンクを付ける（復習モードの対象演習のみ） */
+function appendReviewReturnLink(ex) {
+  const fb = ex.querySelector('.exercise-feedback');
+  if (!fb) return;
+  const link = document.createElement('a');
+  link.className = 'review-return';
+  link.href = reviewPageUrl();
+  link.textContent = '復習ページへ戻る →';
+  fb.appendChild(link);
 }
 
 /* ------------------------------------------------------------
@@ -444,11 +642,19 @@ function retryExercise(ex, handler) {
   ex.classList.remove('is-locked');
   const checkBtn = ex.querySelector('.btn-check');
   if (checkBtn) checkBtn.disabled = false;
-  // 進捗を未着手に戻す（第8章 8.3）
+  // 進捗を未着手に戻す（statusのみ削除。履歴は残る / 第8章 8.3）
   clearExerciseStatus(ex.dataset.exerciseId);
   // 前回結果の表示があれば消す
   const prev = ex.querySelector('.exercise-prev-result');
   if (prev) prev.remove();
+  // 数字替え: バリアントを持つ演習は別の数字で解き直す（第7章 7.6）。
+  // シナリオユニットでは個別に回転させない（数珠つなぎの整合を保つ）。
+  if (!scenario.data) {
+    const data = getAnswerData(ex);
+    if (data && VARIANT_TYPES.indexOf(ex.dataset.type) !== -1 && variantCount(data) > 1) {
+      setExerciseVariant(ex, data, pickOtherVariant(activeVariant(ex), variantCount(data)));
+    }
+  }
 }
 
 function escapeHtml(s) {
@@ -475,18 +681,24 @@ function initExercise(ex) {
 
   if (type === 'ordering') setupOrdering(ex);
   if (type === 'diagram-label') setupDiagram(ex);
+  saveVarOriginals(ex); // バリアント0の数字を保存（第7章 7.6）
 
   const checkBtn = ex.querySelector('.btn-check');
   if (!checkBtn) return;
   checkBtn.addEventListener('click', () => {
-    const isCorrect = handler.judge(ex, data);
+    const eff = effectiveData(ex, data); // 表示中バリアントの正解データで判定する
+    const isCorrect = handler.judge(ex, eff);
     setExerciseStatus(ex.dataset.exerciseId, isCorrect ? 'correct' : 'incorrect');
-    showFeedback(ex, handler, data, isCorrect);
+    if (markReviewDone) markReviewDone(ex.dataset.exerciseId); // 当日の復習キューにあればdone記録
+    showFeedback(ex, handler, eff, isCorrect);
+    if (reviewTarget === ex.dataset.exerciseId) appendReviewReturnLink(ex);
   });
 }
 
 function init() {
+  setupScenario(); // scenario-data があるユニットのみ動作
   document.querySelectorAll('.exercise[data-exercise-id]').forEach(initExercise);
+  setupReviewMode(); // ?review=1&ex=… で開かれたときのみ動作
 }
 
   if (document.readyState === 'loading') {

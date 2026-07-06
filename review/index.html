@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>復習 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-page="review">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="review-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../index.html">トップ</a> &gt;
+      <span>復習</span>
+    </nav>
+
+    <h1>復習</h1>
+    <p>
+      一度解いた演習を、時間をあけて解き直すページです。
+      不正解のままの問題と、正解してから時間が経った問題の中から、1日最大10問を選んで出題します。
+      正解を重ねるほど、その問題が出題される間隔は延びていきます（7日 → 14日 → 28日 → 56日）。
+      数字替えに対応した問題は、前回と違う数字で出題されます。
+    </p>
+
+    <section class="review-today">
+      <h2>今日の復習</h2>
+      <div class="review-queue"><!-- common.js が生成 --></div>
+    </section>
+
+    <section class="review-weakness">
+      <h2>弱点サマリ</h2>
+      <div class="weakness-summary"><!-- common.js が生成 --></div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../js/common.js"></script>
+</body>
+</html>
