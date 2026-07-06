@@ -208,8 +208,8 @@
           <h3>演習 1: 出力変更による潮流変化</h3>
           <div class="exercise-problem">
             <p>
-              ある混雑線路 L に対して、発電機AのPTDFは 0.6 である。
-              発電機Aの出力を 15 MW <strong>増やした</strong>とき、線路Lの潮流は何 MW 変化するか
+              ある混雑線路 L に対して、発電機AのPTDFは <span class="var" data-var="ptdf">0.6</span> である。
+              発電機Aの出力を <span class="var" data-var="dp">15</span> MW <strong>増やした</strong>とき、線路Lの潮流は何 MW 変化するか
               （増加を正として符号付きで答えよ）。
             </p>
           </div>
@@ -229,7 +229,19 @@
           "correct": 9,
           "tolerance": 0,
           "unit": "MW",
-          "explanation": "ΔP_L = PTDF × ΔP_gen = 0.6 × (+15) = +9 MW。出力を増やすと、PTDFが正の線路の潮流も同じ向きに増えます。混雑している線路では、逆に出力を下げて潮流を減らすことを考えます。"
+          "explanation": "ΔP_L = PTDF × ΔP_gen = 0.6 × (+15) = +9 MW。出力を増やすと、PTDFが正の線路の潮流も同じ向きに増えます。混雑している線路では、逆に出力を下げて潮流を減らすことを考えます。",
+          "variants": [
+            {
+              "vars": { "ptdf": "0.8", "dp": "20" },
+              "correct": 16,
+              "explanation": "ΔP_L = PTDF × ΔP_gen = 0.8 × (+20) = +16 MW。出力を増やすと、PTDFが正の線路の潮流も同じ向きに増えます。PTDFが大きい発電機は、線路Lへの「効き」が強いことが分かります。"
+            },
+            {
+              "vars": { "ptdf": "0.25", "dp": "40" },
+              "correct": 10,
+              "explanation": "ΔP_L = PTDF × ΔP_gen = 0.25 × (+40) = +10 MW。出力を増やすと、PTDFが正の線路の潮流も同じ向きに増えます。PTDFが小さい発電機は、大きく動かしても線路Lへの効きは小さいことが分かります。"
+            }
+          ]
         }
         </script>
 
@@ -238,7 +250,7 @@
           <h3>演習 2: 混雑解消に必要な出力変更</h3>
           <div class="exercise-problem">
             <p>
-              混雑線路 L の潮流を 12 MW 減らしたい。発電機AのPTDFが 0.4 のとき、
+              混雑線路 L の潮流を <span class="var" data-var="dl">12</span> MW 減らしたい。発電機AのPTDFが <span class="var" data-var="ptdf">0.4</span> のとき、
               発電機Aの出力を何 MW 変更すればよいか（変更量の大きさ[MW]を答えよ）。
             </p>
           </div>
@@ -258,7 +270,19 @@
           "correct": 30,
           "tolerance": 0,
           "unit": "MW",
-          "explanation": "ΔP_L = PTDF × ΔP_gen より、必要な出力変更 = ΔP_L ÷ PTDF = 12 ÷ 0.4 = 30 MW。発電機Aを30 MW下げると線路Lの潮流が12 MW減ります。PTDFが小さいほど、同じ効果を得るのに大きく動かす必要があります。なお実際は需給維持のため、別の母線で同量(30 MW)を上げる再給電をペアで行います。"
+          "explanation": "ΔP_L = PTDF × ΔP_gen より、必要な出力変更 = ΔP_L ÷ PTDF = 12 ÷ 0.4 = 30 MW。発電機Aを30 MW下げると線路Lの潮流が12 MW減ります。PTDFが小さいほど、同じ効果を得るのに大きく動かす必要があります。なお実際は需給維持のため、別の母線で同量(30 MW)を上げる再給電をペアで行います。",
+          "variants": [
+            {
+              "vars": { "dl": "24", "ptdf": "0.6" },
+              "correct": 40,
+              "explanation": "ΔP_L = PTDF × ΔP_gen より、必要な出力変更 = ΔP_L ÷ PTDF = 24 ÷ 0.6 = 40 MW。発電機Aを40 MW下げると線路Lの潮流が24 MW減ります。PTDFが小さいほど、同じ効果を得るのに大きく動かす必要があります。なお実際は需給維持のため、別の母線で同量(40 MW)を上げる再給電をペアで行います。"
+            },
+            {
+              "vars": { "dl": "15", "ptdf": "0.3" },
+              "correct": 50,
+              "explanation": "ΔP_L = PTDF × ΔP_gen より、必要な出力変更 = ΔP_L ÷ PTDF = 15 ÷ 0.3 = 50 MW。発電機Aを50 MW下げると線路Lの潮流が15 MW減ります。PTDFが小さいほど、同じ効果を得るのに大きく動かす必要があります。なお実際は需給維持のため、別の母線で同量(50 MW)を上げる再給電をペアで行います。"
+            }
+          ]
         }
         </script>
 

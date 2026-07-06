@@ -245,8 +245,8 @@
           <h3>演習 2: 節点の電流収支</h3>
           <div class="exercise-problem">
             <p>
-              ある節点に4本の導線が接続している。導線①から 8 A、導線②から 5 A が流入し、
-              導線③へ 4 A が流出している。残る導線④に流れる電流（流出方向）は何 A か。
+              ある節点に4本の導線が接続している。導線①から <span class="var" data-var="i1">8</span> A、導線②から <span class="var" data-var="i2">5</span> A が流入し、
+              導線③へ <span class="var" data-var="i3">4</span> A が流出している。残る導線④に流れる電流（流出方向）は何 A か。
             </p>
           </div>
           <div class="exercise-input">
@@ -265,7 +265,19 @@
           "correct": 9,
           "tolerance": 0,
           "unit": "A",
-          "explanation": "KCLより、流入の総和(8 + 5 = 13 A)が流出の総和に等しくなります。すでに流出が4 Aなので、導線④には 13 − 4 = 9 A が流出します。"
+          "explanation": "KCLより、流入の総和(8 + 5 = 13 A)が流出の総和に等しくなります。すでに流出が4 Aなので、導線④には 13 − 4 = 9 A が流出します。",
+          "variants": [
+            {
+              "vars": { "i1": "10", "i2": "7", "i3": "6" },
+              "correct": 11,
+              "explanation": "KCLより、流入の総和(10 + 7 = 17 A)が流出の総和に等しくなります。すでに流出が6 Aなので、導線④には 17 − 6 = 11 A が流出します。"
+            },
+            {
+              "vars": { "i1": "9", "i2": "6", "i3": "7" },
+              "correct": 8,
+              "explanation": "KCLより、流入の総和(9 + 6 = 15 A)が流出の総和に等しくなります。すでに流出が7 Aなので、導線④には 15 − 7 = 8 A が流出します。"
+            }
+          ]
         }
         </script>
 
@@ -338,7 +350,7 @@
         <div class="exercise" data-exercise-id="a-01-ex05" data-type="numeric">
           <h3>演習 5: オームの法則</h3>
           <div class="exercise-problem">
-            <p>抵抗 4 Ω の両端に 12 V の電圧をかけた。この抵抗に流れる電流は何 A か。</p>
+            <p>抵抗 <span class="var" data-var="r">4</span> Ω の両端に <span class="var" data-var="v">12</span> V の電圧をかけた。この抵抗に流れる電流は何 A か。</p>
           </div>
           <div class="exercise-input">
             <label>
@@ -356,7 +368,19 @@
           "correct": 3,
           "tolerance": 0,
           "unit": "A",
-          "explanation": "オームの法則 I = V / R より、I = 12 / 4 = 3 A。電圧が大きいほど電流は多く、抵抗が大きいほど電流は少なくなります。"
+          "explanation": "オームの法則 I = V / R より、I = 12 / 4 = 3 A。電圧が大きいほど電流は多く、抵抗が大きいほど電流は少なくなります。",
+          "variants": [
+            {
+              "vars": { "r": "5", "v": "20" },
+              "correct": 4,
+              "explanation": "オームの法則 I = V / R より、I = 20 / 5 = 4 A。電圧が大きいほど電流は多く、抵抗が大きいほど電流は少なくなります。"
+            },
+            {
+              "vars": { "r": "8", "v": "40" },
+              "correct": 5,
+              "explanation": "オームの法則 I = V / R より、I = 40 / 8 = 5 A。電圧が大きいほど電流は多く、抵抗が大きいほど電流は少なくなります。"
+            }
+          ]
         }
         </script>
 
