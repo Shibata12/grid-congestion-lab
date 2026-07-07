@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D-06: 最適化を「解く」──LP/MIPの直感とソルバー - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="d" data-unit="d-06">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">D: 混雑計算のアルゴリズム</a> &gt;
+      <span>最適化を「解く」</span>
+    </nav>
+
+    <article>
+      <h1>D-06: 最適化を「解く」──LP/MIPの直感とソルバー</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        D領域の本編は <a href="05-integrated-exercise.html">D-05: 総合演習</a> で一巡しました。ここからは<strong>発展編</strong>です。
+        <a href="03-scuc-sced-overview.html">D-03: SCUC/SCEDの概要</a> では、再給電を「目的関数＋制約条件」の最適化問題として
+        <strong>立てる</strong>ところまでを学び、「アルゴリズムの詳細には踏み込まない」と預けていました。本ユニットがその回収です。
+        立てた問題を<strong>解く</strong>とはどういうことか——SCEDが速く解ける理由（LP）と、SCUCが重い理由（MIP）を、
+        2変数の例をグラフで解きながら、直感レベルで説明できるようになります。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="03-scuc-sced-overview.html">D-03</a>：SCUC/SCED ＝ 発電コスト最小化（目的関数）を、需給・潮流・出力上下限（制約条件）のもとで解く</li>
+          <li><a href="03-scuc-sced-overview.html">D-03</a>：SCUCは起動停止（0/1）、SCEDは出力配分（連続量）を決める</li>
+          <li><a href="../f-dispatch-system/04-computation-timing.html">F-04: 中給システムの演算タイミングと時間断面</a>：SCUCは早めに数回、SCEDは直前に多数回</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：単体法・内点法・分枝限定法は「名前と発想」までで、アルゴリズムの中身や実装には踏み込みません。
+          市販・オープンソースのソルバーが何をしてくれるかの土地勘がつけば、本ユニットは合格です。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 「解く」とは何をすることか：LPとMIP</a></li>
+          <li><a href="#section-2">2. 2変数のSCEDをグラフで解く</a></li>
+          <li><a href="#section-3">3. LPが速い理由：最適解は「角」にある</a></li>
+          <li><a href="#section-4">4. 0/1が入ると難しい：組合せ爆発と分枝限定法</a></li>
+          <li><a href="#section-5">5. ソルバーと実務：SEは何をするのか</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 「解く」とは何をすることか：LPとMIP</h2>
+        <p>
+          D-03で立てた問題を思い出します——「発電コスト min Σ c<sub>k</sub>P<sub>k</sub> を、
+          需給バランス・潮流制約・出力上下限のもとで最小にする」。
+          これを<strong>解く</strong>とは、<strong>制約をすべて満たし、かつコストが最小になる変数の値の組（P₁, P₂, …）を実際に求める</strong>ことです。
+        </p>
+        <p>
+          このとき、変数の種類で問題の性格が大きく変わります。
+        </p>
+        <ul>
+          <li>
+            <strong>SCED</strong>：変数は出力 P<sub>k</sub> という<strong>連続量</strong>だけ。目的関数も制約もすべて1次式（線形）なので、
+            この形の問題を<span class="term">線形計画法<span class="term-tooltip">Linear Programming（LP）。目的関数と制約条件がすべて1次式（線形）で、変数が連続量の最適化問題（およびその解法）。最適解は実行可能領域の頂点に現れ、単体法・内点法などで非常に大規模な問題も高速に解ける。SCEDはLPとして解ける。</span></span>（<strong>LP</strong>）といいます。
+          </li>
+          <li>
+            <strong>SCUC</strong>：出力に加えて、各発電機の<strong>起動／停止 u<sub>k</sub> ∈ {0, 1}</strong> という
+            <strong>整数（0か1か）</strong>の変数が混ざります。連続量と整数が混在するこの形を
+            <span class="term">混合整数計画法<span class="term-tooltip">Mixed Integer Programming（MIP）。連続量の変数と整数（0/1など）の変数が混在する最適化問題（およびその解法）。整数変数の組合せの数が爆発的に増えるため、LPよりはるかに計算が重い。SCUCは起動停止の0/1変数を含むMIP。</span></span>（<strong>MIP</strong>）といいます。
+          </li>
+        </ul>
+        <p>
+          結論を先に言うと——<strong>LPは「速い」、MIPは「重い」</strong>。
+          F-04で見た「SCEDは直前に多数回、SCUCは早めに数回」というタイミング設計は、まさにこの計算量の差の裏返しです。
+          なぜそうなるのかを、小さな例で体感しましょう。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 2変数のSCEDをグラフで解く</h2>
+        <p>
+          発電機が2台なら、紙の上で解けます。次の問題を考えます（数字はD-03の形式に合わせた例です）。
+        </p>
+        <ul>
+          <li>発電機A：単価 8千円/MWh、出力 0〜150 MW ／ 発電機B：単価 12千円/MWh、出力 0〜150 MW</li>
+          <li>需給バランス：P<sub>A</sub> + P<sub>B</sub> = 200（総需要 200 MW）</li>
+          <li>潮流制約：線路Lに対して PTDF<sub>A</sub> = 0.6、PTDF<sub>B</sub> = 0.2、容量 88 MW</li>
+        </ul>
+        <div class="math-block"
+             data-tex="\min\; 8P_A + 12P_B \quad \text{s.t.}\; P_A + P_B = 200,\;\; 0.6P_A + 0.2P_B \le 88,\;\; 0 \le P_A, P_B \le 150"
+             data-fallback="min 8×P_A + 12×P_B ／ 条件: P_A+P_B=200、0.6×P_A+0.2×P_B≤88、0≤P_A≤150、0≤P_B≤150"></div>
+        <p>
+          横軸に P<sub>A</sub>、縦軸に P<sub>B</sub> をとると、<strong>制約は1本ずつの直線</strong>になります。
+          すべての制約を同時に満たす点の集まりを<span class="term">実行可能領域<span class="term-tooltip">最適化問題で、すべての制約条件を同時に満たす変数の値の組の集まり。LPでは直線（平面）で囲まれた多角形（多面体）になり、最適解はその頂点に現れる。</span></span>といいます。
+          この例では、需給バランスが「線」なので、実行可能領域は<strong>需給の線の上の一部分（線分）</strong>です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 260" role="img"
+               aria-label="横軸に発電機Aの出力、縦軸に発電機Bの出力をとったグラフ。需給バランスの直線、潮流制約の直線、出力上限の線で囲まれ、需給の線上の実行可能な線分が示される。単価の安いAを増やすほどコストが下がり、潮流制約とぶつかる角の点、発電機A=120、発電機B=80が最適解になることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 軸 -->
+            <line x1="70" y1="215" x2="440" y2="215" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="70" y1="25" x2="70" y2="215" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="255" y="248" font-size="10" text-anchor="middle" fill="#4a5568">発電機Aの出力 P_A（MW）</text>
+            <text x="30" y="120" font-size="10" text-anchor="middle" fill="#4a5568" transform="rotate(-90 30 120)">発電機Bの出力 P_B（MW）</text>
+            <text x="70" y="228" font-size="8.5" text-anchor="middle" fill="#4a5568">0</text>
+            <text x="286" y="228" font-size="8.5" text-anchor="middle" fill="#4a5568">120</text>
+            <text x="340" y="228" font-size="8.5" text-anchor="middle" fill="#4a5568">150</text>
+            <text x="62" y="76" font-size="8.5" text-anchor="end" fill="#4a5568">150</text>
+            <text x="62" y="142" font-size="8.5" text-anchor="end" fill="#4a5568">80</text>
+            <!-- P_B=150 上限 -->
+            <line x1="70" y1="72.5" x2="430" y2="72.5" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3"></line>
+            <text x="425" y="66" font-size="8.5" text-anchor="end" fill="#94a3b8">Bの上限 150</text>
+            <!-- P_A=150 上限 -->
+            <line x1="340" y1="25" x2="340" y2="215" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4 3"></line>
+            <text x="344" y="38" font-size="8.5" fill="#94a3b8">Aの上限 150</text>
+            <!-- 需給バランス線 -->
+            <line x1="70" y1="25" x2="430" y2="215" stroke="#2563eb" stroke-width="1.5"></line>
+            <text x="95" y="52" font-size="9" fill="#2563eb">需給：P_A＋P_B＝200</text>
+            <!-- 潮流制約線 -->
+            <line x1="214" y1="25" x2="334" y2="215" stroke="#dc2626" stroke-width="1.5"></line>
+            <text x="216" y="18" font-size="9" fill="#dc2626">潮流：0.6P_A＋0.2P_B＝88（これより右は違反）</text>
+            <!-- 実行可能な線分 -->
+            <line x1="160" y1="72.5" x2="286" y2="139" stroke="#16a34a" stroke-width="4"></line>
+            <text x="150" y="98" font-size="9" fill="#16a34a">実行可能領域（線分）</text>
+            <!-- コスト方向 -->
+            <text x="196" y="128" font-size="8.5" fill="#4a5568">安いAを増やすほどコスト減 →</text>
+            <!-- 最適解 -->
+            <circle cx="286" cy="139" r="5" fill="#dc2626"></circle>
+            <text x="294" y="152" font-size="9.5" fill="#dc2626">最適解（角）：P_A=120, P_B=80</text>
+          </svg>
+          <figcaption>図1: 2変数SCEDのグラフ解法。実行可能領域の端（角）で潮流制約が有効になり、そこが最適解</figcaption>
+        </figure>
+
+        <p>
+          解き方はこうです。単価はAの方が安い（8 &lt; 12）ので、<strong>Aをできるだけ増やしたい</strong>。
+          需給の線に沿ってAを増やしていくと、どこかで制約にぶつかります。Bの上限（P<sub>B</sub> ≤ 150、つまり P<sub>A</sub> ≥ 50）は
+          左端を決めるだけ。効いてくるのは<strong>潮流制約</strong>です——
+          0.6P<sub>A</sub> + 0.2(200 − P<sub>A</sub>) ≤ 88 を整理すると P<sub>A</sub> ≤ 120。
+          よって最適解は <strong>P<sub>A</sub> = 120、P<sub>B</sub> = 80</strong>、
+          コストは 8×120 + 12×80 = <strong>1,920 千円/時</strong>です。
+        </p>
+        <p>
+          ここで大事な観察が2つあります。第一に、最適解は実行可能領域（線分）の<strong>端＝角の点</strong>に来ました。
+          第二に、その角では潮流制約が<strong>ぴったり等号</strong>で成立しています
+          （0.6×120 + 0.2×80 = 88 ちょうど）。このように最適解で等号が成り立っている制約を
+          <span class="term">有効制約<span class="term-tooltip">最適解において等号（ぴったり上限・下限）で成立している制約条件。バインディング制約ともいう。最適解の形とコストを実際に決めているのは有効制約であり、有効制約を少し緩めるとコストが下がる（→シャドープライス）。</span></span>（バインディング制約）といいます。
+          <strong>答えを決めているのは有効制約</strong>です——もし線路Lの容量があと1MW広ければ、
+          安いAをもう少し使えてコストは下がったはず。この「制約1単位あたりの惜しさ」に値段をつけたものが、
+          次のユニットで学ぶ<strong>シャドープライス</strong>です（予告）。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. LPが速い理由：最適解は「角」にある</h2>
+        <p>
+          いまの観察は、2変数に限らない<strong>LPの一般的な性質</strong>です。
+          変数が増えると、実行可能領域は直線・平面で囲まれた<strong>多角形（多面体）</strong>になります。
+          目的関数は1次式＝「平らな坂」なので、坂を下りきった先は必ず多面体の<strong>頂点（角）</strong>です
+          （同率で最適な辺や面が現れることはあっても、頂点より内側だけが最適になることはありません）。
+        </p>
+        <p>
+          つまりLPでは、<strong>無限にある実行可能な点のうち、頂点だけを調べれば良い</strong>。
+          この性質を利用して、頂点から隣の「より良い頂点」へ賢く渡り歩くのが<strong>単体法（シンプレックス法）</strong>、
+          領域の内側を最短距離で突っ切るように近づくのが<strong>内点法</strong>です（本サイトでは名前まで）。
+          どちらも成熟した技術で、<strong>変数が数十万〜数百万あるLPでも実用時間で解けます</strong>。
+          SCEDが「直前に・多数回」実行できるのは、LPのこの速さがあるからです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 0/1が入ると難しい：組合せ爆発と分枝限定法</h2>
+        <p>
+          ではSCUCはなぜ重いのか。起動停止 u<sub>k</sub> は 0 か 1 のどちらかで、<strong>中間がありません</strong>。
+          「0.4だけ起動する」は許されないのです。すると原理的には、全発電機のオン・オフの組み合わせを考えることになります。
+          発電機が30台なら 2<sup>30</sup> ≒ <strong>約10億通り</strong>。1コマではなく48コマ分をまとめて決めるので、
+          組み合わせはさらに膨れ上がります。これが<strong>組合せ爆発</strong>で、しらみつぶしは不可能です。
+        </p>
+        <p>
+          そこで使われる代表的な発想が<strong>分枝限定法</strong>です。
+        </p>
+        <ul>
+          <li><strong>緩和</strong>：まず 0/1 の条件を「0〜1の小数でよい」ことにして、<strong>LPとして</strong>解いてみる（速い）。</li>
+          <li><strong>分枝</strong>：小数になった変数（例：u₃ = 0.4）について、「u₃ = 0 とした問題」と「u₃ = 1 とした問題」に<strong>枝分かれ</strong>させて、それぞれまた解く。</li>
+          <li><strong>限定</strong>：枝の途中で「この先をどう決めても、今見つかっている答えより良くならない」と分かった枝は、<strong>丸ごと切り捨てる</strong>。</li>
+        </ul>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="分枝限定法の木。まず0/1を小数でよいことにした緩和問題をLPとして解き、小数になった変数について0とする枝と1とする枝に分けてまた解く。見込みのない枝は切り捨てることで、10億通りをしらみつぶしにせず解を絞り込むことを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="145" y="15" width="170" height="42" rx="8" fill="#eef2ff" stroke="#6366f1"></rect>
+            <text x="230" y="32" font-size="10" text-anchor="middle" fill="#4338ca">緩和問題をLPで解く</text>
+            <text x="230" y="48" font-size="10" text-anchor="middle" fill="#1a1a2e">→ u₃ = 0.4（小数はダメ）</text>
+            <line x1="185" y1="57" x2="120" y2="92" stroke="#4a5568" stroke-width="1.2"></line>
+            <line x1="275" y1="57" x2="340" y2="92" stroke="#4a5568" stroke-width="1.2"></line>
+            <text x="125" y="72" font-size="9" fill="#4a5568">u₃ = 0 に固定</text>
+            <text x="288" y="72" font-size="9" fill="#4a5568">u₃ = 1 に固定</text>
+            <rect x="35" y="95" width="170" height="40" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="120" y="112" font-size="10" text-anchor="middle" fill="#1a1a2e">また解く → 次の小数で分枝…</text>
+            <text x="120" y="127" font-size="9" text-anchor="middle" fill="#4a5568">有望なら続ける</text>
+            <rect x="255" y="95" width="170" height="40" rx="8" fill="#fef2f2" stroke="#ef4444"></rect>
+            <text x="340" y="112" font-size="10" text-anchor="middle" fill="#1a1a2e">「これ以上良くならない」</text>
+            <text x="340" y="127" font-size="9" text-anchor="middle" fill="#dc2626">→ 枝ごと切り捨て（限定）</text>
+            <text x="230" y="170" font-size="10" text-anchor="middle" fill="#1a1a2e">切り捨てのおかげで、10億通りを全部見ずに済む——それでもLPよりずっと重い</text>
+            <text x="230" y="192" font-size="9.5" text-anchor="middle" fill="#4a5568">だからSCUC（MIP）は「早めに・数回」、SCED（LP）は「直前に・多数回」（F-04）</text>
+          </svg>
+          <figcaption>図2: 分枝限定法の発想。LP（緩和）を道具に、枝分かれと切り捨てで組合せ爆発に立ち向かう</figcaption>
+        </figure>
+
+        <p>
+          切り捨てがうまく効けば現実的な時間で解けますが、それでも<strong>LPを何百回・何千回も解く</strong>ことに変わりはなく、
+          MIPはLPよりはるかに重い。しかも実務では「厳密な最適でなくても、最適との差が0.1%以内なら良い」といった
+          <strong>妥協点（ギャップ）</strong>を設けて計算を打ち切ることもあります。
+          SCUCが前日など<strong>早めのタイミングで、回数を絞って</strong>実行されるのは、この重さゆえです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. ソルバーと実務：SEは何をするのか</h2>
+        <p>
+          ここまでの解法——単体法・内点法・分枝限定法——を、システム開発のたびに自作するわけではありません。
+          LP/MIPを解く技術は<span class="term">ソルバー<span class="term-tooltip">LP・MIPなどの最適化問題を解く既製のソフトウェアエンジン。モデル（目的関数・制約条件）とデータを渡すと最適解を返す。商用・オープンソースの汎用製品が存在し、SCUC/SCEDのようなシステムはソルバーを部品として組み込んで作られる。</span></span>と呼ばれる
+          <strong>既製のエンジン</strong>（商用・オープンソースの汎用製品）に集約されており、
+          SCUC/SCEDのようなシステムは、ソルバーを<strong>部品として組み込んで</strong>作られます。
+        </p>
+        <p>
+          だからシステムに関わるエンジニアの仕事の中心は、アルゴリズムの発明ではなく——
+        </p>
+        <ul>
+          <li><strong>モデルを正しく立てる</strong>：D-03の目的関数・制約条件を、対象の系統・制度に合わせて過不足なく数式化する。</li>
+          <li><strong>入力データを整える</strong>：系統データ（C-02）から作るPTDF、発電機の単価・上下限、需要と再エネの予測（F-07）——<strong>入力が違えば最適解も違う</strong>。</li>
+          <li><strong>計算時間と品質を管理する</strong>：ゲートクローズまでに解が出るか（F-04）、ギャップはどこまで許すか、解けなかったときのフォールバックはあるか。</li>
+        </ul>
+        <p>
+          「最適化は魔法の箱ではなく、<strong>モデルとデータの正しさがすべて</strong>」——これが本ユニットの締めくくりであり、
+          D領域の計算たち（PTDF・再給電・SCUC/SCED）が実システムで動くときの現場感覚です。
+          有効制約に「値段」をつける続きの話は、<a href="07-shadow-price-and-lmp.html">D-07: 混雑の値段──シャドープライスとLMP</a> で扱います。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（LPとMIP） -->
+        <div class="exercise" data-exercise-id="d-06-ex01" data-type="choice">
+          <h3>演習 1: SCEDはLP、SCUCはMIP</h3>
+          <div class="exercise-problem">
+            <p>SCEDが線形計画法（LP）で解け、SCUCが混合整数計画法（MIP）になる理由として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="d-06-ex01" value="1">
+              <span>SCEDの変数は出力（連続量）だけだが、SCUCには起動／停止（0か1）の整数変数が混ざるから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="d-06-ex01" value="2">
+              <span>SCEDは発電機が2台のときだけ使われ、SCUCは3台以上のときに使われるから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="d-06-ex01" value="3">
+              <span>SCEDには制約条件がなく、SCUCには制約条件があるから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-06-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "問題の型を分けるのは変数の種類です。SCEDは起動中の発電機の出力（連続量）を決めるのでLP、SCUCは「0.4だけ起動する」が許されない0/1の起動停止変数を含むのでMIPになります。台数（2）や制約の有無（3）は型の分かれ目ではありません——どちらも需給・潮流・上下限の制約を持ちます。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（グラフ解法・バリアント付き） -->
+        <div class="exercise" data-exercise-id="d-06-ex02" data-type="numeric">
+          <h3>演習 2: 2変数SCEDを解く</h3>
+          <div class="exercise-problem">
+            <p>
+              発電機A（単価 <span class="var" data-var="ca">8</span> 千円/MWh、出力 0〜150 MW）と
+              発電機B（単価 <span class="var" data-var="cb">12</span> 千円/MWh、出力 0〜150 MW）で、総需要 200 MW をまかなう
+              （P<sub>A</sub> + P<sub>B</sub> = 200）。線路Lの潮流制約は 0.6P<sub>A</sub> + 0.2P<sub>B</sub> ≤ <span class="var" data-var="cap">88</span>（MW）である。
+              発電コストが最小になるとき、発電機Aの出力 P<sub>A</sub> は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              P<sub>A</sub>:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-06-ex02",
+          "type": "numeric",
+          "correct": 120,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "単価はAの方が安い（8＜12）ので、Aをできるだけ増やします。需給から P_B = 200 − P_A を潮流制約に代入すると 0.6P_A + 0.2(200 − P_A) ≤ 88 → 0.4P_A ≤ 48 → P_A ≤ 120。よって最適解は P_A = 120 MW（P_B = 80 MW）。このとき潮流は 0.6×120 + 0.2×80 = 88 でちょうど容量——潮流制約が有効制約になっています。",
+          "variants": [
+            {
+              "vars": { "ca": "8", "cb": "12", "cap": "96" },
+              "correct": 140,
+              "explanation": "単価はAの方が安いので、Aをできるだけ増やします。P_B = 200 − P_A を潮流制約に代入すると 0.6P_A + 0.2(200 − P_A) ≤ 96 → 0.4P_A ≤ 56 → P_A ≤ 140。よって P_A = 140 MW（P_B = 60 MW）。容量が88→96に広がると、安いAをより多く使えます——制約を緩めるとコストが下がる、というシャドープライス（D-07）の入口です。"
+            },
+            {
+              "vars": { "ca": "14", "cb": "9", "cap": "88" },
+              "correct": 50,
+              "explanation": "今度は単価がBの方が安い（9＜14）ので、Bをできるだけ増やします。Bの上限は150 MWなので P_B = 150、需給から P_A = 50 MW。潮流を確認すると 0.6×50 + 0.2×150 = 60 ≤ 88 で違反なし。この場合の有効制約は潮流ではなく「Bの出力上限」です——単価の大小が変わると、どの制約が効くか（答えの形）も変わります。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（実行可能領域とLPの性質） -->
+        <div class="exercise" data-exercise-id="d-06-ex03" data-type="multi-choice">
+          <h3>演習 3: LPの性質</h3>
+          <div class="exercise-problem">
+            <p>線形計画法（LP）について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="d-06-ex03" value="1">
+              <span>実行可能領域は、すべての制約条件を同時に満たす点の集まりである</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-06-ex03" value="2">
+              <span>LPの最適解は、実行可能領域の頂点（角）に現れる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-06-ex03" value="3">
+              <span>最適解で等号が成り立っている制約（有効制約）が、答えの形とコストを実際に決めている</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-06-ex03" value="4">
+              <span>LPは変数が数万を超えると、原理的に解けなくなる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-06-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（実行可能領域の定義）、2（目的関数が平らな坂なので、下りきる先は必ず角。同率の辺・面はありえます）、3（有効制約が答えを決める。緩めればコストが下がる＝シャドープライスの土台）はいずれも正しい。4は誤りで、LPは単体法・内点法により数十万〜数百万変数でも実用時間で解けます。SCEDが直前に多数回実行できるのはこの速さのおかげです。"
+        }
+        </script>
+
+        <!-- 演習4: choice（組合せ爆発） -->
+        <div class="exercise" data-exercise-id="d-06-ex04" data-type="choice">
+          <h3>演習 4: 組合せ爆発</h3>
+          <div class="exercise-problem">
+            <p>発電機が30台あるとき、1つの時間断面での起動停止（オン・オフ）の組み合わせはおよそ何通りか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="d-06-ex04" value="1">
+              <span>約60通り（2 × 30）</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="d-06-ex04" value="2">
+              <span>約900通り（30 × 30）</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="d-06-ex04" value="3">
+              <span>約10億通り（2の30乗）</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-06-ex04",
+          "type": "choice",
+          "correct": "3",
+          "explanation": "各発電機が独立にオン／オフの2通りを取れるので、30台では 2×2×…×2 = 2^30 ≒ 10億7千万通りです。台数が1台増えるだけで組み合わせは2倍——これが組合せ爆発で、しらみつぶしが不可能な理由です。だからSCUCは、緩和（LPとして解く）・分枝・限定（見込みのない枝の切り捨て）を組み合わせた分枝限定法などで解かれ、それでもLPよりずっと重いため「早めに・数回」の実行になります。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/energy_environment/doji_shijo_kento/pdf/20251015_1.pdf"
+               target="_blank" rel="noopener noreferrer">経済産業省「同時市場の在り方等に関する検討会 第二次中間取りまとめ」（2025年10月15日。SCUC/SCEDの定式化と計算の枠組み）</a>
+          </li>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/pdf/008_02_00.pdf"
+               target="_blank" rel="noopener noreferrer">一般社団法人 送配電網協議会「次期中給システム開発に関する検討状況」（経済産業省 次世代電力系統ワーキンググループ 第8回 資料2。SCUC/SCEDの実装検討）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="05-integrated-exercise.html" class="unit-nav-prev">&larr; 総合演習──ある日の混雑管理を通しで解く</a>
+      <a href="07-shadow-price-and-lmp.html" class="unit-nav-next">混雑の値段──シャドープライスとLMP &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

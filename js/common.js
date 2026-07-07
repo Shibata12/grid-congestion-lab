@@ -66,7 +66,9 @@ const SITE_STRUCTURE = {
       { id: 'b-02', title: '運用容量とマージン', file: '02-operating-capacity-and-margin.html', exerciseCount: 3,
         summary: '運用容量が4つの限度の最小値で決まること、マージン・空き容量の内訳、地内混雑と連系線混雑の違いを学ぶ。B-01で預けた「送電容量の区別」の回収。' },
       { id: 'b-03', title: '混雑対策の全体地図──運用・接続・増強', file: '03-congestion-countermeasures-map.html', exerciseCount: 3,
-        summary: '混雑への打ち手を「運用でしのぐ／枠を賢く使う（コネクト&マネージ3本柱）／設備を増やす（増強・マスタープラン）」の3層の地図に整理する。B領域完結。' },
+        summary: '混雑への打ち手を「運用でしのぐ／枠を賢く使う（コネクト&マネージ3本柱）／設備を増やす（増強・マスタープラン）」の3層の地図に整理する。B領域本編の締めくくり。' },
+      { id: 'b-04', title: '安定度入門──運用容量を決める残り3つの限度', file: '04-stability-basics.html', exerciseCount: 4,
+        summary: '運用容量を決める4つの限度のうち熱容量以外の3つ（同期安定性・電圧安定性・周波数維持）が「なぜ限度になるのか」を、P-δカーブ・P-Vカーブ・系統分断の直感で学ぶ。B-02で名前だけ登場した安定度の回収。' },
     ],
   },
   c: {
@@ -102,7 +104,11 @@ const SITE_STRUCTURE = {
       { id: 'd-04', title: '想定故障計算とLODF', file: '04-contingency-analysis-and-lodf.html', exerciseCount: 3,
         summary: '停止した線路の潮流が残りへ上乗せされる割合（LODF）で、N-1の混雑チェックを足し算で高速に回す方法を学ぶ。B-01の転流の式化であり、Security Constrainedの完成形。' },
       { id: 'd-05', title: '総合演習──ある日の混雑管理を通しで解く', file: '05-integrated-exercise.html', exerciseCount: 8,
-        summary: '新しい知識ゼロの総仕上げ。1つの系統・1つのシナリオを、計画値→潮流→混雑判定→PTDF→再給電→N-1チェックまで、初見の数字で8問の数珠つなぎで通しで解く。' },
+        summary: '新しい知識ゼロの総仕上げ。1つの系統・1つのシナリオを、計画値→潮流→混雑判定→PTDF→再給電→N-1チェックまで、初見の数字で8問の数珠つなぎで通しで解く。D領域本編の締めくくり。' },
+      { id: 'd-06', title: '最適化を「解く」──LP/MIPの直感とソルバー', file: '06-lp-mip-and-solvers.html', exerciseCount: 4,
+        summary: '発展編。SCED=LPが速く解け、SCUC=MIPが重い理由を、2変数の例のグラフ解法（実行可能領域・頂点・有効制約）と分枝限定法の直感で学ぶ。D-03で預けた「解く」の中身の回収。' },
+      { id: 'd-07', title: '混雑の値段──シャドープライスとLMP', file: '07-shadow-price-and-lmp.html', exerciseCount: 4,
+        summary: '発展編。有効制約を1MW緩めたときのコスト改善＝シャドープライスを実際に計算し、母線ごとの電力の値段（LMP）と日本のゾーン制・米国のノーダル制の違いまでを学ぶ。D-06の「惜しさの値段」とF-06の約定価格の土台の回収。' },
     ],
   },
   e: {
@@ -147,6 +153,8 @@ const SITE_STRUCTURE = {
         summary: '実需給の中で周波数を守る需給制御の3層（GF＝秒・自律／LFC＝分・自動指令／EDC＝数分〜・経済配分）と、混雑管理（潮流・場所）との違い・接点を学ぶ。F-02「広域LFC」の回収でF領域完結。' },
       { id: 'f-06', title: '同時市場──kWhとΔkWを一緒に約定する', file: '06-simultaneous-market.html', exerciseCount: 3,
         summary: 'スポット市場（kWh）と需給調整市場（ΔkW）を、三部制入札とSCUC/SCEDによる1つの約定にまとめる「同時市場」の検討を、公開資料の範囲で学ぶ。E-07で予告した「市場と運用の一体最適化」の回収。' },
+      { id: 'f-07', title: '需要予測・再エネ予測──計算チェーンの最上流', file: '07-demand-and-renewable-forecast.html', exerciseCount: 4,
+        summary: '需要予測・再エネ予測がどう作られ（気温・曜日／気象予報）、なぜ外れ、外れにどう備えるか（予備力・調整力・直前のSCED）を学ぶ。F-02・F-04で名前だけ登場した「予測」の回収。' },
     ],
   },
 };

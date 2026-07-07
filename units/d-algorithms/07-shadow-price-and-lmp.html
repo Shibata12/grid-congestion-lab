@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D-07: 混雑の値段──シャドープライスとLMP - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="d" data-unit="d-07">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">D: 混雑計算のアルゴリズム</a> &gt;
+      <span>混雑の値段</span>
+    </nav>
+
+    <article>
+      <h1>D-07: 混雑の値段──シャドープライスとLMP</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の2本目です。<a href="06-lp-mip-and-solvers.html">D-06: 最適化を「解く」</a> の最後に、
+        「有効制約を1単位緩めたときの惜しさに値段をつけたものがシャドープライス」と予告しました。本ユニットがその回収です。
+        <strong>混雑には値段がつけられる</strong>——この一見不思議な事実を、D-06の例の続きで実際に計算し、
+        母線ごとの電力の値段＝<strong>LMP（ノーダルプライス）</strong>まで理解します。
+        <a href="../e-market/07-wholesale-market-and-indirect-auction.html">E-07: 卸電力市場と間接オークション</a> で学んだ
+        「市場分断の値差」の、理論の裏側にあたる話です。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="06-lp-mip-and-solvers.html">D-06</a>：最適解を決めているのは有効制約（等号で効いている制約）。2変数SCEDの例（A:8千円/B:12千円、潮流制約 0.6P_A＋0.2P_B ≤ 88）</li>
+          <li><a href="02-redispatch.html">D-02: 再給電（リディスパッチ）</a>：下げ＝上げのペア操作と、PTDF差で潮流への効きを計算する方法</li>
+          <li><a href="../e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>：連系線が混雑するとエリア間に値差が生まれる（市場分断）</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：シャドープライスの数学的な導出（双対問題・ラグランジュ乗数）には踏み込みません。
+          「制約1単位あたりのコスト改善」という意味と、混雑がLMPの値差になる仕組みがわかれば本ユニットは合格です。
+          海外制度・同時市場の記述は公開資料に基づく概要です（末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 制約の「惜しさ」に値段をつける：シャドープライス</a></li>
+          <li><a href="#section-2">2. D-06の例で計算してみる</a></li>
+          <li><a href="#section-3">3. 母線ごとの電力の値段：LMP（ノーダルプライス）</a></li>
+          <li><a href="#section-4">4. 日本のゾーン制と米国のノーダル制</a></li>
+          <li><a href="#section-5">5. まとめ：混雑は「制約」であり「値段」でもある</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 制約の「惜しさ」に値段をつける：シャドープライス</h2>
+        <p>
+          D-06の2変数SCEDでは、潮流制約が<strong>有効制約</strong>になり、
+          「容量があと1MW広ければ、安い発電機Aをもっと使えてコストが下がったのに」という<strong>惜しさ</strong>が残りました。
+          この惜しさは、実は正確に数値化できます。
+        </p>
+        <p>
+          <span class="term">シャドープライス<span class="term-tooltip">最適化問題で、ある制約を1単位緩めたときに目的関数（総コスト）が改善する量。制約の「窮屈さの値段」。有効でない（余裕のある）制約のシャドープライスは0。潮流制約のシャドープライスが「混雑の値段」、需給バランス制約のシャドープライスが「電力の値段」にあたる。</span></span>とは、
+          <strong>ある制約を1単位だけ緩めたとき、目的関数（総コスト）がいくら改善するか</strong>のことです。
+          言いかえると、制約の「窮屈さの値段」です。
+        </p>
+        <ul>
+          <li>余裕のある制約（有効でない制約）を緩めても、答えは変わりません——シャドープライスは<strong>0</strong>。</li>
+          <li>有効制約を緩めると、コストが下がります——その下がり幅がシャドープライス。<strong>大きいほど、その制約が高くついている</strong>。</li>
+        </ul>
+        <p>
+          SCUC/SCEDの制約に当てはめると、それぞれのシャドープライスには意味があります。
+          <strong>潮流制約</strong>のシャドープライスは「この送電線の容量1MWの価値」——すなわち<strong>混雑の値段</strong>。
+          <strong>需給バランス制約</strong>のシャドープライスは「需要1MW増を賄う追加コスト」——すなわち<strong>電力の値段</strong>です。
+          最適化を解くと、答え（出力配分）と一緒にこれらの値段が<strong>副産物として</strong>得られます。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. D-06の例で計算してみる</h2>
+        <p>
+          D-06の例の続きです。発電機A（8千円/MWh）・B（12千円/MWh）、需要200 MW、
+          線路Lの制約 0.6P<sub>A</sub> + 0.2P<sub>B</sub> ≤ 88 で、最適解は P<sub>A</sub> = 120、P<sub>B</sub> = 80、
+          コスト1,920千円/時でした。<strong>容量を88→89 MWに1MWだけ緩めたら</strong>、コストはいくら下がるでしょうか。
+        </p>
+        <p>
+          D-02の再給電と同じ発想で考えます。需給を保つには「Aを増やした分、Bを減らす」ペア操作しかできません。
+          Aを ΔP 増やし、Bを ΔP 減らすと、線路Lの潮流は PTDF差の分——(0.6 − 0.2) × ΔP = 0.4ΔP——だけ増えます。
+          容量の余地が1MW増えたのだから、0.4ΔP = 1、つまり <strong>ΔP = 2.5 MW</strong> の入れ替えができます。
+          コストは、1MWhあたりの単価差（12 − 8 = 4千円）× 2.5 MW ＝ <strong>10千円/時 下がる</strong>。
+        </p>
+        <div class="math-block"
+             data-tex="\text{シャドープライス} = \underbrace{\frac{1}{0.6-0.2}}_{\text{入れ替え可能量 2.5MW}} \times \underbrace{(12-8)}_{\text{単価差}} = 10\ \text{千円/時（容量1MWあたり）}"
+             data-fallback="シャドープライス = 1÷(0.6−0.2) × (12−8) = 2.5 × 4 = 10 千円/時（容量1MWあたり）"></div>
+        <p>
+          検算してみましょう。容量89 MWで解き直すと P<sub>A</sub> = 122.5、P<sub>B</sub> = 77.5、
+          コストは 8×122.5 + 12×77.5 = 980 + 930 = 1,910千円/時。たしかに<strong>10千円</strong>下がりました。
+          この「容量1MWあたり10千円/時」が、いまの断面での<strong>線路Lの混雑の値段</strong>です。
+          混雑対策の費用対効果——増強（B-03）や系統用蓄電池の設置場所——を考える出発点になる数字です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 母線ごとの電力の値段：LMP（ノーダルプライス）</h2>
+        <p>
+          次は<strong>需給バランス側</strong>の値段です。
+          <span class="term">LMP<span class="term-tooltip">Locational Marginal Price（地点別限界価格）。その母線（ノード）で需要が1MW増えたときの、系統全体の追加コスト。ノーダルプライスともいう。混雑がなければ全母線で同じ値になり、混雑があると母線ごとに異なる。米国のノーダル制市場では、この価格で取引が精算される。</span></span>
+          （Locational Marginal Price＝地点別限界価格、<strong>ノーダルプライス</strong>）とは、
+          「<strong>その母線で需要が1MW増えたとき、系統全体のコストがいくら増えるか</strong>」です。
+        </p>
+        <ul>
+          <li>
+            <strong>混雑がないとき</strong>：どの母線の需要が増えても、系統で一番安い「次の1MW」を出せる発電機（限界電源）が賄います。
+            送る経路に制約がないので、<strong>全母線のLMPは同じ</strong>——たとえば8千円/MWh。
+          </li>
+          <li>
+            <strong>混雑があるとき</strong>：話が変わります。安い電源から需要地への送電線が満杯だと、
+            場所によっては<strong>高い電源で賄うしかない</strong>。「どの発電機の1MWで賄えるか」が場所ごとに違うので、
+            <strong>LMPは母線ごとに違う値</strong>になります。
+          </li>
+        </ul>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 215" role="img"
+               aria-label="母線1に単価8千円の発電機A、母線2に単価12千円の発電機Bがあり、母線1から母線2への送電線が容量いっぱいで混雑している系統図。母線1のLMPは追加需要をAで賄えるため8千円、母線2は線路が満杯でBで賄うしかないため12千円となり、値差4千円が混雑の値段として現れることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 母線1 -->
+            <line x1="60" y1="60" x2="60" y2="140" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="60" y="50" font-size="10.5" text-anchor="middle" fill="#1a1a2e">母線1</text>
+            <circle cx="28" cy="100" r="14" fill="#fff" stroke="#16a34a" stroke-width="2"></circle>
+            <text x="28" y="104" font-size="11" text-anchor="middle" fill="#16a34a">G</text>
+            <line x1="42" y1="100" x2="57" y2="100" stroke="#16a34a" stroke-width="2"></line>
+            <text x="28" y="130" font-size="9" text-anchor="middle" fill="#15803d">A: 8千円</text>
+            <!-- 母線2 -->
+            <line x1="400" y1="60" x2="400" y2="140" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="400" y="50" font-size="10.5" text-anchor="middle" fill="#1a1a2e">母線2</text>
+            <circle cx="432" cy="100" r="14" fill="#fff" stroke="#d97706" stroke-width="2"></circle>
+            <text x="432" y="104" font-size="11" text-anchor="middle" fill="#d97706">G</text>
+            <line x1="403" y1="100" x2="418" y2="100" stroke="#d97706" stroke-width="2"></line>
+            <text x="432" y="130" font-size="9" text-anchor="middle" fill="#b45309">B: 12千円</text>
+            <!-- 送電線（混雑） -->
+            <line x1="63" y1="100" x2="397" y2="100" stroke="#dc2626" stroke-width="3"></line>
+            <text x="230" y="90" font-size="10" text-anchor="middle" fill="#dc2626">送電線：容量いっぱい（混雑中）</text>
+            <!-- 負荷矢印 -->
+            <line x1="230" y1="100" x2="230" y2="130" stroke="#4a5568" stroke-width="2" marker-end="url(#d7-ah)"></line>
+            <defs>
+              <marker id="d7-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- LMP -->
+            <rect x="20" y="158" width="180" height="42" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="110" y="175" font-size="10" text-anchor="middle" fill="#15803d">母線1のLMP ＝ 8千円/MWh</text>
+            <text x="110" y="192" font-size="8.5" text-anchor="middle" fill="#4a5568">追加1MWは安いAで賄える</text>
+            <rect x="260" y="158" width="180" height="42" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="350" y="175" font-size="10" text-anchor="middle" fill="#b45309">母線2のLMP ＝ 12千円/MWh</text>
+            <text x="350" y="192" font-size="8.5" text-anchor="middle" fill="#4a5568">線路が満杯 → Bで賄うしかない</text>
+          </svg>
+          <figcaption>図1: 混雑があるとLMPが割れる。値差4千円/MWhが「混雑の値段」として価格に現れる</figcaption>
+        </figure>
+
+        <p>
+          図1の2母線の例では、母線2の需要の追加1MWは、線路が満杯なのでBの12千円で賄うしかありません。
+          LMPは母線1で8千円、母線2で12千円——<strong>値差4千円/MWhの正体は、線路の混雑</strong>です。
+          これはE-07の市場分断で見た「エリア間値差」と同じ構図で、
+          違いは<strong>価格のつく単位が母線（ノード）ごとか、エリア（ゾーン）ごとか</strong>だけです。
+          さらに、ループ系統では追加1MWを<strong>複数の発電機のミックス</strong>で賄うこともあり
+          （例：Aから0.5MW＋Bから0.5MW → LMP = 0.5×8 + 0.5×12 = 10千円）、LMPは母線ごとに細かく変わります。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 日本のゾーン制と米国のノーダル制</h2>
+        <p>
+          「混雑を価格にどこまで映すか」で、世界の市場制度は大きく2つに分かれます。
+          <span class="term">ゾーン制とノーダル制<span class="term-tooltip">卸電力市場の価格の付け方の分類。ゾーン制はエリア（ゾーン）単位に1つの価格をつけ、エリア内の混雑は価格に映さず運用（再給電など）で処理する（日本・欧州）。ノーダル制は母線（ノード）ごとにLMPをつけ、地内混雑も価格に反映する（米国PJMなど）。</span></span>といいます。
+        </p>
+        <ul>
+          <li>
+            <strong>日本・欧州＝ゾーン制</strong>：価格はエリア（ゾーン）単位。連系線の混雑だけが
+            <strong>市場分断の値差</strong>（E-07）として価格に現れ、<strong>エリア内（地内）の混雑は価格に現れず</strong>、
+            再給電（D-02）などの<strong>運用</strong>で処理されます。価格が単純で参加しやすい一方、
+            「どの場所の電源が系統に貢献しているか」の価格シグナルは粗くなります。
+          </li>
+          <li>
+            <strong>米国（PJMなど）＝ノーダル制</strong>：数千の母線ごとにLMPがつき、
+            <strong>地内混雑も価格に反映</strong>されます。混雑の費用が誰の目にも見え、
+            発電所の立地や蓄電池の設置に<strong>場所のシグナル</strong>が働く一方、価格は複雑になり、
+            値差のヘッジ手段（FTR＝金融的送電権。日本の間接送電権〔<a href="../e-market/08-indirect-transmission-rights.html">E-08</a>〕のノーダル版の親戚）が必須になります。
+          </li>
+        </ul>
+        <p>
+          そして日本の<a href="../f-dispatch-system/06-simultaneous-market.html">F-06: 同時市場──kWhとΔkWを一緒に約定する</a> の検討では、
+          SCUC/SCEDで約定を決める仕組みが議論されていました。最適化は解くと同時にシャドープライスを産み出すので、
+          <strong>同時市場の約定価格の理論的な土台も、本ユニットで学んだ限界価格の考え方</strong>です
+          （価格をゾーンでつけるかノードでつけるかは制度設計の論点。末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. まとめ：混雑は「制約」であり「値段」でもある</h2>
+        <p>
+          D領域を通じて、混雑は「潮流 ≤ 容量」という<strong>制約</strong>として扱われてきました。
+          本ユニットで、その制約には<strong>値段</strong>がつくことを見ました。
+        </p>
+        <ul>
+          <li><strong>潮流制約のシャドープライス</strong> ＝ 送電容量1MWの価値 ＝ <strong>混雑の値段</strong>（§2で10千円/時と計算）</li>
+          <li><strong>需給制約のシャドープライス</strong> ＝ 母線ごとの電力の値段 ＝ <strong>LMP</strong>（混雑があると場所で割れる）</li>
+          <li>ゾーン制（日本）はこの値差を<strong>エリア単位でだけ</strong>市場に映し、地内混雑は運用（再給電）で処理する</li>
+        </ul>
+        <p>
+          運用の視点（D-02: 出力を動かして混雑を消す）と、市場の視点（E-07: 混雑が値差になる）は、
+          別々の話ではなく<strong>同じ最適化の表と裏</strong>——量で見れば再給電、お金で見ればシャドープライス——だったのです。
+          この視点は、混雑対策の費用対効果（増強すべきか、運用でしのぐか、蓄電池をどこに置くか）を
+          定量的に考えるときの共通言語になります。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（シャドープライスの意味） -->
+        <div class="exercise" data-exercise-id="d-07-ex01" data-type="choice">
+          <h3>演習 1: シャドープライスとは</h3>
+          <div class="exercise-problem">
+            <p>潮流制約のシャドープライスの説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="d-07-ex01" value="1">
+              <span>その送電線の容量を1単位緩めたときに、総発電コストが改善する量。制約の「窮屈さの値段」にあたる</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="d-07-ex01" value="2">
+              <span>その送電線を建設したときの工事費の総額</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="d-07-ex01" value="3">
+              <span>その送電線に流れている潮流の量をそのまま金額で表したもの</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-07-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "シャドープライスは「制約を1単位緩めたときの目的関数（総コスト）の改善量」です。容量に余裕がある（有効でない）制約では0になり、有効制約でだけ正の値になります。2の工事費は設備投資の話でシャドープライスとは別物（ただし、シャドープライスの累計が大きい線路は増強の便益が大きい、という判断材料にはなります）。3のような「潮流×単価」という定義ではありません。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（シャドープライスの計算・バリアント付き） -->
+        <div class="exercise" data-exercise-id="d-07-ex02" data-type="numeric">
+          <h3>演習 2: 混雑の値段を計算する</h3>
+          <div class="exercise-problem">
+            <p>
+              発電機A（単価 <span class="var" data-var="ca">8</span> 千円/MWh）と発電機B（単価 <span class="var" data-var="cb">12</span> 千円/MWh）が需要をまかなっており、
+              線路Lの潮流制約（PTDF<sub>A</sub> = <span class="var" data-var="pa">0.6</span>、PTDF<sub>B</sub> = <span class="var" data-var="pb">0.2</span>）が有効制約になっている。
+              需給を保つペア操作（Aを増やしBを同量減らす）を前提とすると、
+              線路Lの容量を1 MW緩めたとき、総コストは1時間あたり何千円下がるか（＝線路Lのシャドープライス）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              コストの改善:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 千円/時
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-07-ex02",
+          "type": "numeric",
+          "correct": 10,
+          "tolerance": 0.01,
+          "unit": "千円/時",
+          "explanation": "Aを ΔP 増やしBを ΔP 減らすと、線路Lの潮流は PTDF差 (0.6 − 0.2) × ΔP = 0.4ΔP 増えます。容量の余地1MWに対して 0.4ΔP = 1 → ΔP = 2.5 MW の入れ替えが可能。コストは単価差 (12 − 8) = 4千円 × 2.5 = 10千円/時 下がります。これが線路Lの容量1MWの価値＝混雑の値段です。",
+          "variants": [
+            {
+              "vars": { "ca": "8", "cb": "14", "pa": "0.6", "pb": "0.2" },
+              "correct": 15,
+              "explanation": "入れ替え可能量は 1 ÷ (0.6 − 0.2) = 2.5 MW。単価差は 14 − 8 = 6千円なので、コスト改善は 6 × 2.5 = 15千円/時。高い電源との単価差が大きいほど、同じ1MWの容量の価値（混雑の値段）は上がります。"
+            },
+            {
+              "vars": { "ca": "8", "cb": "12", "pa": "0.7", "pb": "0.2" },
+              "correct": 8,
+              "explanation": "入れ替え可能量は 1 ÷ (0.7 − 0.2) = 2 MW。単価差は 12 − 8 = 4千円なので、コスト改善は 4 × 2 = 8千円/時。PTDF差が大きい（入れ替えが線路に強く効く）ほど、容量1MWで入れ替えられる量は少なくなる——シャドープライスはPTDFにも依存します。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: matrix（3母線のLMP） -->
+        <div class="exercise" data-exercise-id="d-07-ex03" data-type="matrix">
+          <h3>演習 3: 3母線のLMPを埋める</h3>
+          <div class="exercise-problem">
+            <p>
+              発電機A（単価 8千円/MWh）と発電機B（単価 12千円/MWh）の系統で、混雑のため、
+              各母線の需要の「追加1MW」を賄う電源の組み合わせが次のように決まっている——
+              母線1：<strong>Aのみ</strong>／母線2：<strong>Bのみ</strong>／母線3：<strong>Aから0.5MW＋Bから0.5MW</strong>。
+              各母線のLMP（千円/MWh）を求めよ。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <table class="matrix-input">
+              <thead>
+                <tr><th></th><th>LMP（千円/MWh）</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>母線1（Aのみで賄う）</th>
+                  <td><input type="number" step="any" data-row="0" data-col="0" inputmode="decimal"></td>
+                </tr>
+                <tr>
+                  <th>母線2（Bのみで賄う）</th>
+                  <td><input type="number" step="any" data-row="1" data-col="0" inputmode="decimal"></td>
+                </tr>
+                <tr>
+                  <th>母線3（A 0.5＋B 0.5）</th>
+                  <td><input type="number" step="any" data-row="2" data-col="0" inputmode="decimal"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-07-ex03",
+          "type": "matrix",
+          "correct": [[8], [12], [10]],
+          "tolerance": 0.01,
+          "explanation": "LMPは「その母線の追加1MWを賄う電源のコスト」です。母線1はAの8千円、母線2はBの12千円。母線3はミックスなので 0.5×8 + 0.5×12 = 4 + 6 = 10千円/MWh。混雑がなければ全母線とも最安の8千円で同じになるはずで、この価格の割れ方こそが混雑の現れです。"
+        }
+        </script>
+
+        <!-- 演習4: multi-choice（ゾーン制とノーダル制） -->
+        <div class="exercise" data-exercise-id="d-07-ex04" data-type="multi-choice">
+          <h3>演習 4: ゾーン制とノーダル制</h3>
+          <div class="exercise-problem">
+            <p>ゾーン制とノーダル制について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="d-07-ex04" value="1">
+              <span>日本のスポット市場はエリア単位の価格（ゾーン制）で、連系線の混雑だけが市場分断の値差として価格に現れる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-07-ex04" value="2">
+              <span>ゾーン制では、エリア内（地内）の混雑は価格に現れず、再給電などの運用で処理される</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-07-ex04" value="3">
+              <span>米国のノーダル制では母線ごとにLMPがつき、地内混雑も価格に反映される</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-07-ex04" value="4">
+              <span>ノーダル制を採用すると、系統から混雑そのものが発生しなくなる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-07-ex04",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1・2はゾーン制（日本・欧州）の特徴、3はノーダル制（米国PJMなど）の特徴で、いずれも正しい。4は誤りで、価格制度を変えても送電線の容量という物理は変わらず、混雑は起きえます。ノーダル制は混雑を「価格に映して」市場参加者の行動（入札・立地）に織り込ませる方式であって、混雑をなくす魔法ではありません。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/energy_environment/doji_shijo_kento/pdf/20251015_1.pdf"
+               target="_blank" rel="noopener noreferrer">経済産業省「同時市場の在り方等に関する検討会 第二次中間取りまとめ」（2025年10月15日。SCUC/SCEDによる約定と価格算定の考え方、米国市場の参照）</a>
+          </li>
+          <li>
+            <a href="https://www.emsc.meti.go.jp/activity/emsc_system/pdf/078_04_01.pdf"
+               target="_blank" rel="noopener noreferrer">電力・ガス取引監視等委員会 制度設計専門会合 資料（卸電力市場・エリアプライスと市場分断の枠組み）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="06-lp-mip-and-solvers.html" class="unit-nav-prev">&larr; 最適化を「解く」──LP/MIPの直感とソルバー</a>
+      <a href="../e-market/index.html" class="unit-nav-next">次の領域へ: E 電力市場 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

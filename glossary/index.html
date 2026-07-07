@@ -378,6 +378,26 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="d" id="term-mip">
+        <dt>混合整数計画法（MIP）</dt>
+        <dd>
+          <p>Mixed Integer Programming。連続量の変数と整数（0/1など）の変数が混在する最適化問題（およびその解法）。整数変数には中間がないため組み合わせの数が爆発的に増え（発電機30台の起動停止で約10億通り）、LPよりはるかに計算が重い。分枝限定法（緩和・分枝・切り捨て）などで解く。SCUCは起動停止の0/1変数を含むMIPで、これが「SCUCは早めに・数回」の理由になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/06-lp-mip-and-solvers.html">D-06</a>、<a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f" id="term-renewable-forecast">
+        <dt>再エネ出力予測</dt>
+        <dd>
+          <p>太陽光・風力など自然変動電源の発電量を見積もること。気象予報を発電量に変換して行う（太陽光は日射量、風力は風速が決め手）。需要予測より誤差が大きくなりがちで、前線や台風など天気の急変時にはまとまった誤差が出る一方、エリア全体では個々の地点の誤差が打ち消し合う「ならし効果」も働く。どの送電線が混雑するかを左右する「場所の情報」でもある。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/07-demand-and-renewable-forecast.html">F-07</a>、<a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="d" id="term-redispatch">
         <dt>再給電（リディスパッチ）</dt>
         <dd>
@@ -458,6 +478,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="d" id="term-shadow-price">
+        <dt>シャドープライス</dt>
+        <dd>
+          <p>最適化問題で、ある制約を1単位緩めたときに目的関数（総コスト）が改善する量。制約の「窮屈さの値段」。余裕のある（有効でない）制約では0になる。SCUC/SCEDでは、潮流制約のシャドープライスが「その送電線の容量1MWの価値＝混雑の値段」、需給バランス制約のシャドープライスが「電力の値段（LMPの土台）」にあたる。最適化を解くと副産物として得られる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/07-shadow-price-and-lmp.html">D-07</a>、<a href="../units/d-algorithms/06-lp-mip-and-solvers.html">D-06</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="a,e" id="term-frequency">
         <dt>周波数（系統周波数）</dt>
         <dd>
@@ -473,7 +503,7 @@
         <dd>
           <p>連系線の事故などで系統が分断された場合でも、エリアの周波数変動を許容範囲に収められる送電量の限界。運用容量を決める4つの限度の1つ。連系線の潮流が大きいほど、失われたときの需給の急変も大きくなる。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/b-congestion/04-stability-basics.html">B-04</a>
           </p>
         </dd>
       </div>
@@ -504,6 +534,16 @@
           <p>各エリアを個別にではなく、全国を一体として同時に最適化することをねらう、開発中の中央給電指令所システム。全国大の最適化を担うメインシステムと、各エリアの系統情報を集めて連携するエリアシステムの2層で構成され、SCUC／SCEDや混雑計算などの機能を持つ。2032年度の運用開始が予定されている。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d" id="term-feasible-region">
+        <dt>実行可能領域</dt>
+        <dd>
+          <p>最適化問題で、すべての制約条件を同時に満たす変数の値の組の集まり。LPでは直線（平面）で囲まれた多角形（多面体）になり、目的関数が1次式（平らな坂）であることから、最適解は必ずその頂点（角）に現れる。この性質が、頂点を賢く辿る単体法などの高速な解法を可能にしている。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/06-lp-mip-and-solvers.html">D-06</a>
           </p>
         </dd>
       </div>
@@ -544,6 +584,16 @@
           <p>一般送配電事業者が、需給バランス・周波数維持に必要な調整力を市場を通じて広域的に調達する仕組み。発電事業者やデマンドレスポンス（DR）などが調整力を提供する。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/03-balancing-market.html">E-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f" id="term-demand-forecast">
+        <dt>需要予測</dt>
+        <dd>
+          <p>先のコマ（時間断面）の電力需要を見積もること。需要は気温（冷暖房）・曜日（平日/休日）・時刻（生活リズム）でかなり規則的に決まるため、過去の似た日の実績をベースに補正する類似日方式などで予測する。中給の計算チェーンの最上流にあたり、その誤差は計画・混雑計算・SCUC/SCEDのすべてに伝わる。実需給に近づくほど精度が上がるため、繰り返し更新される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/07-demand-and-renewable-forecast.html">F-07</a>、<a href="../units/f-dispatch-system/04-computation-timing.html">F-04</a>
           </p>
         </dd>
       </div>
@@ -598,6 +648,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="d" id="term-lp">
+        <dt>線形計画法（LP）</dt>
+        <dd>
+          <p>Linear Programming。目的関数と制約条件がすべて1次式（線形）で、変数が連続量の最適化問題（およびその解法）。最適解は実行可能領域の頂点に現れ、単体法・内点法により数十万〜数百万変数でも実用時間で解ける。SCEDは出力（連続量）だけを変数とするLPとして解け、この速さが「SCEDは直前に・多数回」を可能にする。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/06-lp-mip-and-solvers.html">D-06</a>、<a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="b,d" id="term-contingency">
         <dt>想定故障（コンティンジェンシー）</dt>
         <dd>
@@ -638,12 +698,42 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="d,e" id="term-zonal-nodal">
+        <dt>ゾーン制とノーダル制</dt>
+        <dd>
+          <p>卸電力市場の価格の付け方の分類。ゾーン制はエリア（ゾーン）単位に1つの価格をつけ、連系線の混雑だけが市場分断の値差として価格に現れる。エリア内（地内）の混雑は価格に映らず、再給電などの運用で処理される（日本・欧州）。ノーダル制は母線（ノード）ごとにLMPをつけ、地内混雑も価格に反映する（米国PJMなど）。前者は価格が単純で参加しやすく、後者は場所の価格シグナルが働く、という対比がある。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/07-shadow-price-and-lmp.html">D-07</a>、<a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d" id="term-solver">
+        <dt>ソルバー</dt>
+        <dd>
+          <p>LP・MIPなどの最適化問題を解く既製のソフトウェアエンジン。モデル（目的関数・制約条件）と入力データを渡すと最適解を返す。商用・オープンソースの汎用製品があり、SCUC/SCEDのようなシステムはソルバーを部品として組み込んで作られる。開発側の仕事の中心は、アルゴリズムの自作ではなく、モデルの正しい定式化・入力データの整備・計算時間と解の品質（ギャップ）の管理になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/06-lp-mip-and-solvers.html">D-06</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="a,c" id="term-per-unit">
         <dt>単位法（per-unit法・pu）</dt>
         <dd>
           <p>電圧・電力・インピーダンスなどを、あらかじめ決めた基準値に対する割合（pu）で表す方法。pu＝実際の値÷基準値。1.0puが基準（定格）ちょうど。電圧階級や変圧器をまたいで同じ物差しで比較でき、系統解析のデータは多くがpu・%で書かれる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/a-grid-fundamentals/05-three-phase-and-per-unit.html">A-05</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-out-of-step">
+        <dt>脱調</dt>
+        <dd>
+          <p>発電機が系統との同期（同じ周波数での歩調）を失い、運転を続けられなくなる現象。P-δカーブの山（δ=90°）を越えると、角度差が開くほど送れる電力が減って発電機がさらに加速する悪循環に入り、歩調を戻せなくなる。脱調した発電機は保護装置によって系統から切り離されるため、大きな供給力が一瞬で失われる。これを防ぐ送電量の限界が同期安定性の限度。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/04-stability-basics.html">B-04</a>、<a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
           </p>
         </dd>
       </div>
@@ -771,9 +861,9 @@
       <div class="glossary-entry" data-domain="b,a" id="term-voltage-stability">
         <dt>電圧安定性</dt>
         <dd>
-          <p>送電を増やしていくと、受電端の電圧を維持できなくなる限界。熱容量に余裕があっても、電圧の面で送電が制限されることがある。運用容量を決める4つの限度の1つ。</p>
+          <p>送電を増やしていくと、受電端の電圧を維持できなくなる限界。熱容量に余裕があっても、電圧の面で送電が制限されることがある。運用容量を決める4つの限度の1つ。P-Vカーブ（ノーズカーブ）の鼻先の手前に余裕を残す、が直感。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/b-congestion/04-stability-basics.html">B-04</a>、<a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
           </p>
         </dd>
       </div>
@@ -791,9 +881,9 @@
       <div class="glossary-entry" data-domain="b" id="term-synchronous-stability">
         <dt>同期安定性</dt>
         <dd>
-          <p>交流系統の発電機が同期（同じ周波数での歩調）を保って運転を続けられる限界。送電量が大きい状態で事故などのショックが加わると、発電機が歩調を乱して運転を続けられなくなる（脱調）おそれがある。運用容量を決める4つの限度の1つ。</p>
+          <p>交流系統の発電機が同期（同じ周波数での歩調）を保って運転を続けられる限界。送電量が大きい状態で事故などのショックが加わると、発電機が歩調を乱して運転を続けられなくなる（脱調）おそれがある。運用容量を決める4つの限度の1つ。P-δカーブの山（δ=90°）の手前に余裕を残す、が直感。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/b-congestion/04-stability-basics.html">B-04</a>
           </p>
         </dd>
       </div>
@@ -814,6 +904,16 @@
           <p>導体が発熱で傷まない範囲で送電線に流せる限界（熱的制約）。送電線そのものの物理的な上限で、運用容量を決める4つの限度の1つ。熱容量に余裕があっても、安定性や電圧の限度が先に効くことがある。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d,e" id="term-lmp">
+        <dt>ノーダルプライス（LMP）</dt>
+        <dd>
+          <p>Locational Marginal Price（地点別限界価格）。その母線（ノード）で需要が1MW増えたときの、系統全体の追加コスト。混雑がなければ全母線で同じ値（最安の限界電源の単価）になり、混雑があると「どの電源で賄えるか」が場所ごとに違うため母線ごとに異なる値になる。米国PJMなどのノーダル制市場では、このLMPで取引が精算され、地内混雑も価格に反映される。日本のエリアプライス（ゾーン制）のエリア間値差は、これをゾーン単位に粗くした親戚にあたる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/07-shadow-price-and-lmp.html">D-07</a>、<a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
           </p>
         </dd>
       </div>
@@ -864,6 +964,26 @@
           <p>ある母線の注入を1単位変えたとき、ある送電線の潮流が変化する割合（潮流分布係数）。線形近似（DC潮流）に基づき、リアクタンス分配率に等しい。混雑解消の感度分析や再給電の計算に使う。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/d-algorithms/01-ptdf-sensitivity.html">D-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-p-delta-curve">
+        <dt>P-δカーブ（電力相差角曲線）</dt>
+        <dd>
+          <p>母線間の位相角の差δと、送れる有効電力Pの関係を表す山型（サインカーブ）の曲線。P=(V₁V₂/X)sinδ で、δ=90°のとき最大送電電力 Pmax=V₁V₂/X となる。山の手前ではずれを引き戻す力が働くが、山を越えると戻れず脱調に至る。事故のショックで角度が振れても山を越えないよう、平常時の潮流を山の手前に抑える——これが同期安定性の限度の直感。DC潮流の式 P=(θ₁−θ₂)/X は、この曲線の坂の始まり（角度差が小さい範囲）の直線近似。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/04-stability-basics.html">B-04</a>、<a href="../units/c-grid-model/04-dc-and-ac-power-flow.html">C-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-p-v-curve">
+        <dt>P-Vカーブ（ノーズカーブ）</dt>
+        <dd>
+          <p>受電端へ送る電力Pと受電端電圧Vの関係を表す曲線。鼻（ノーズ）のような形をしており、送る電力を増やすほど電圧が下がり、ノーズの先端が送電できる限界になる。ノーズ付近では電圧低下の悪循環（電圧崩壊）が起きうるため、実際の運用では余裕を残した送電量までに制限する——これが電圧安定性の限度。受電端の近くで無効電力を供給（調相設備）するとノーズが右へ伸び、限界が増える。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/04-stability-basics.html">B-04</a>、<a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>
           </p>
         </dd>
       </div>
@@ -968,6 +1088,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="d" id="term-binding-constraint">
+        <dt>有効制約（バインディング制約）</dt>
+        <dd>
+          <p>最適化の最適解において、等号（ぴったり上限・下限）で成立している制約条件。最適解の形とコストを実際に決めているのは有効制約であり、有効制約を1単位緩めるとコストが下がる。この「1単位あたりの下がり幅」がシャドープライスで、混雑の値段（LMP）の土台になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/06-lp-mip-and-solvers.html">D-06</a>、<a href="../units/d-algorithms/07-shadow-price-and-lmp.html">D-07</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="a" id="term-active-power">
         <dt>有効電力（P）</dt>
         <dd>
@@ -984,6 +1114,16 @@
           <p>供給過剰や系統制約で出力抑制が必要なとき、どの電源から抑制するかの順序を定めた公開ルール。大枠は、火力等の抑制・調整 → 広域融通 → バイオマス → 自然変動電源 → 長期固定電源の順。再給電・調整力運用で下げる電源を選ぶ基準になる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/04-priority-dispatch.html">E-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f" id="term-reserve-capacity">
+        <dt>予備力（予備率）</dt>
+        <dd>
+          <p>需要予測に対して上乗せして確保しておく供給力。需要に対する比率を予備率（%）といい、予備率 =（供給力 − 需要予測）÷ 需要予測 × 100。需要予測の誤差や発電所の急な停止（電源脱落）に備える「量の備え」で、実需給の中でずれを埋める調整力（速さの備え）と役割を分担する。予備率が低下すると需給ひっ迫への警戒が始まる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/07-demand-and-renewable-forecast.html">F-07</a>、<a href="../units/e-market/03-balancing-market.html">E-03</a>
           </p>
         </dd>
       </div>

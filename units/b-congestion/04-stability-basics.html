@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B-04: 安定度入門──運用容量を決める残り3つの限度 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="b" data-unit="b-04">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">B: 系統混雑</a> &gt;
+      <span>安定度入門</span>
+    </nav>
+
+    <article>
+      <h1>B-04: 安定度入門──運用容量を決める残り3つの限度</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="02-operating-capacity-and-margin.html">B-02: 運用容量とマージン</a> で、運用容量は
+        <strong>4つの限度の最小値</strong>で決まると学びました。ただ、①熱容量は「導体が発熱で傷まない限界」と物理が見えた一方、
+        ②同期安定性・③電圧安定性・④周波数維持は<strong>名前と一言の説明だけ</strong>でした。本ユニットがその回収です。
+        3つの限度それぞれについて「<strong>何が起きて、なぜ流せる量の上限になるのか</strong>」を、直感レベルで説明できるようになります。
+        新しい数式は1本だけ。あとは曲線の形（山と鼻）で理解します。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="02-operating-capacity-and-margin.html">B-02</a>：運用容量 = min（熱容量, 同期安定性, 電圧安定性, 周波数維持）</li>
+          <li><a href="../c-grid-model/04-dc-and-ac-power-flow.html">C-04: DC潮流とAC潮流</a>：潮流は位相角の差で決まる（P = (θ₁−θ₂)/X は角度差が小さいときの近似）</li>
+          <li><a href="../a-grid-fundamentals/04-active-reactive-voltage.html">A-04: 有効電力・無効電力と電圧</a>：無効電力が電圧を支える。電圧の面で送電の上限がありうる</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：安定度の本格的な理論（発電機の動特性モデル・過渡安定度シミュレーション・等面積法）には踏み込みません。
+          「なぜ限度になるのか」の直感と、限度どうしの区別ができれば本ユニットは合格です。
+          枠組みはOCCTOの運用容量検討会の公開資料に基づきます（末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 宿題の確認：3つの限度が「名前だけ」だった</a></li>
+          <li><a href="#section-2">2. 同期安定性──引っ張り合いの限界（P-δカーブ）</a></li>
+          <li><a href="#section-3">3. 電圧安定性──支えの限界（P-Vカーブ）</a></li>
+          <li><a href="#section-4">4. 周波数維持──系統がちぎれた後の限界</a></li>
+          <li><a href="#section-5">5. まとめ：4つの限度の全体像</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 宿題の確認：3つの限度が「名前だけ」だった</h2>
+        <p>
+          B-02のおさらいから始めます。連系線などの運用容量は、次の4つの面の限度をすべて満たす<strong>最小値</strong>でした。
+        </p>
+        <div class="math-block"
+             data-tex="\text{運用容量} = \min(\text{熱容量},\ \text{同期安定性},\ \text{電圧安定性},\ \text{周波数維持})"
+             data-fallback="運用容量 = min（熱容量, 同期安定性, 電圧安定性, 周波数維持）"></div>
+        <p>
+          このうち<strong>熱容量</strong>は分かりやすい限度です——電流を流すほど導体が発熱し（ジュール熱）、
+          傷まない範囲で流せる限界が決まる。設備そのものの物理的な上限でした。
+          ところが残りの3つは、B-02では「脱調のおそれ」「電圧を維持できなくなる」「周波数変動を収められる限界」と、
+          <strong>結論だけを一言で</strong>述べていました。
+        </p>
+        <p>
+          共通のポイントを先に言ってしまいます。3つの限度はどれも、<strong>設備が壊れる話ではなく、
+          系統という「システム」が正常な状態を保てなくなる話</strong>です。導体はまだ熱的に余裕があるのに、
+          それより手前で「これ以上流すと、事故などのショックが起きたとき系統が耐えられない」という線が引かれる——
+          だからB-02の例のように、同期安定性（900 MW）が熱容量（1200 MW）より小さい、ということが普通に起こります。
+          では、その「耐えられない」とは何が起きることなのか。1つずつ見ていきます。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 同期安定性──引っ張り合いの限界（P-δカーブ）</h2>
+        <p>
+          <a href="../c-grid-model/04-dc-and-ac-power-flow.html">C-04: DC潮流とAC潮流</a> で、
+          潮流は母線間の<strong>位相角の差</strong>が生むこと、そして P = (θ₁−θ₂)/X という式は
+          「<strong>角度差が小さいとき</strong>」の近似（DC潮流の仮定③）であることを学びました。
+          では、角度差が小さくなかったら？ ここでその「本当の式」が登場します。
+          慣例に従い、位相角の差を δ（デルタ）と書きます。
+        </p>
+        <div class="math-block"
+             data-tex="P = \frac{V_1 V_2}{X}\,\sin\delta"
+             data-fallback="P = (V₁ × V₂ ÷ X) × sinδ（δ = 位相角の差）"></div>
+        <p>
+          潮流は角度差に比例し続けるのではなく、<strong>サインカーブ</strong>を描きます。
+          この曲線を<span class="term">P-δカーブ<span class="term-tooltip">位相角の差δと送れる有効電力Pの関係を表す山型（サインカーブ）の曲線。δ=90°で最大送電電力 Pmax=V₁V₂/X となり、それを超えると同期を保てなくなる。電力相差角曲線ともいう。</span></span>といいます。
+          δが小さいうちは坂道はほぼ直線で、C-04の近似式と一致します（V₁≒V₂≒1.0 puのとき）。
+          しかし坂には<strong>頂上</strong>があります——<strong>δ = 90°</strong>です。ここで送れる電力は最大になります。
+        </p>
+        <div class="math-block"
+             data-tex="P_{\max} = \frac{V_1 V_2}{X} \quad (\delta = 90^\circ,\ \sin\delta = 1)"
+             data-fallback="Pmax = V₁ × V₂ ÷ X（δ = 90°、sinδ = 1 のとき）"></div>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 235" role="img"
+               aria-label="横軸に位相角の差δ、縦軸に送れる電力Pをとった山型のP-δカーブ。δ=90度で最大送電電力Pmaxとなり、山の手前では角度差が開くほど強く引き戻す力が働くが、山を越えると戻る力を失って脱調に至ることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 軸 -->
+            <line x1="50" y1="200" x2="440" y2="200" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="50" y1="30" x2="50" y2="200" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="445" y="204" font-size="10" fill="#4a5568" text-anchor="end"> </text>
+            <text x="245" y="228" font-size="10" text-anchor="middle" fill="#4a5568">位相角の差 δ</text>
+            <text x="42" y="115" font-size="10" text-anchor="middle" fill="#4a5568" transform="rotate(-90 42 115)">送れる電力 P</text>
+            <!-- 目盛 -->
+            <text x="50" y="214" font-size="9" text-anchor="middle" fill="#4a5568">0°</text>
+            <text x="240" y="214" font-size="9" text-anchor="middle" fill="#4a5568">90°</text>
+            <text x="430" y="214" font-size="9" text-anchor="middle" fill="#4a5568">180°</text>
+            <line x1="240" y1="60" x2="240" y2="200" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="3 3"></line>
+            <!-- Pmax線 -->
+            <line x1="50" y1="60" x2="440" y2="60" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="6 4"></line>
+            <text x="330" y="52" font-size="10" fill="#2563eb">Pmax = V₁V₂/X（山の頂上）</text>
+            <!-- サインカーブ（模式） -->
+            <path d="M50,200 C155,13 325,13 430,200" fill="none" stroke="#1a1a2e" stroke-width="2"></path>
+            <!-- 運転点 -->
+            <circle cx="120" cy="110" r="5" fill="#16a34a"></circle>
+            <text x="120" y="97" font-size="9.5" text-anchor="middle" fill="#16a34a">運転点（山の手前）</text>
+            <!-- 脱調側 -->
+            <circle cx="301" cy="72" r="5" fill="none" stroke="#dc2626" stroke-width="2"></circle>
+            <text x="330" y="92" font-size="9.5" fill="#dc2626">山を越えると</text>
+            <text x="330" y="105" font-size="9.5" fill="#dc2626">戻れない → 脱調</text>
+            <!-- 注記 -->
+            <text x="135" y="185" font-size="9" fill="#16a34a">山の手前：ずれても引き戻す力が働く</text>
+          </svg>
+          <figcaption>図1: P-δカーブ（模式図）。山の手前では「戻る力」が働くが、山（δ=90°）を越えると戻れない</figcaption>
+        </figure>
+
+        <p>
+          なぜ90°が限界なのでしょうか。送電線を<strong>バネ</strong>だと思ってください。
+          山の手前（δ &lt; 90°）では、何かのはずみで角度差が開くと送る電力が増え、
+          送り側の発電機はより重い仕事を負わされて減速し、角度差は<strong>自然に元へ引き戻されます</strong>。
+          ところが山を越える（δ &gt; 90°）と逆です——角度差が開くほど送れる電力が<strong>減る</strong>ので、
+          送り側の発電機は仕事が軽くなってさらに加速し、角度差は開く一方になります。
+          バネが伸びきって切れるように、発電機は系統と歩調を合わせられなくなる——これが
+          <span class="term">脱調<span class="term-tooltip">発電機が系統との同期（同じ周波数での歩調）を失い、運転を続けられなくなる現象。脱調した発電機は保護装置によって系統から切り離される。</span></span>です。
+          脱調した発電機は保護装置で系統から切り離され、大きな供給力が一瞬で失われます。
+        </p>
+        <p>
+          ここで「潮流の大きさ」が効いてきます。平常時の運転点は山の坂の途中にあります。
+          短絡事故などのショックが起きると、事故の間は電力を送れず発電機が加速し、δが大きく<strong>振れます</strong>。
+          運転点が山の頂上に近い（＝流している潮流が大きい）ほど、<strong>振れの余裕がなく、山を越えて脱調しやすい</strong>のです。
+          数値例で見ましょう。V₁ = V₂ = 1.0 pu、X = 0.5 pu の送電ルートなら Pmax = 1.0×1.0÷0.5 = <strong>2.0 pu</strong>。
+          潮流 P = 1.0 pu で運転していれば sinδ = 0.5、つまり δ = 30° で、頂上（90°）まで余裕があります。
+          潮流 P = 1.8 pu なら sinδ = 0.9、δ ≒ 64° ——頂上はもう目前で、小さなショックでも危うい。
+          そこで「<strong>想定される事故が起きても脱調しない範囲</strong>」まで平常時の潮流を抑える——
+          これが同期安定性の限度が900 MWのように運用容量を決める理屈です。
+        </p>
+        <p>
+          振れの詳しい計算（どの事故でどれだけ振れるか）は、<strong>過渡安定度</strong>と呼ばれる分野の
+          シミュレーションで行われますが、本サイトの範囲外です。「山の手前で余裕を持って運転する」という絵が描ければ十分です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 電圧安定性──支えの限界（P-Vカーブ）</h2>
+        <p>
+          <a href="../a-grid-fundamentals/04-active-reactive-voltage.html">A-04: 有効電力・無効電力と電圧</a> で、
+          電圧は無効電力が支えていること、そして「熱容量に余裕があっても、電圧の面で送電の上限がありうる」ことを学びました。
+          その上限の正体を曲線で見ます。
+        </p>
+        <p>
+          送電線に電力を流すほど、線路のリアクタンスが無効電力を消費し、受電端の電圧を支える力が奪われていきます。
+          横軸に「受電端へ送る電力 P」、縦軸に「受電端の電圧 V」をとると、
+          <span class="term">P-Vカーブ<span class="term-tooltip">受電端へ送る電力Pと受電端電圧Vの関係を表す曲線。鼻（ノーズ）のような形をしており、ノーズの先端が送電できる限界。ノーズカーブともいう。</span></span>（形から<strong>ノーズカーブ</strong>とも呼ばれます）が描けます。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 225" role="img"
+               aria-label="横軸に送る電力P、縦軸に受電端電圧Vをとったノーズカーブ。送る電力を増やすと電圧が下がっていき、鼻先（ノーズ）が送電の限界となる。無効電力を受電端近くで支えるとノーズが右に伸びることも示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 軸 -->
+            <line x1="50" y1="195" x2="440" y2="195" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="50" y1="30" x2="50" y2="195" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="245" y="218" font-size="10" text-anchor="middle" fill="#4a5568">受電端へ送る電力 P</text>
+            <text x="42" y="112" font-size="10" text-anchor="middle" fill="#4a5568" transform="rotate(-90 42 112)">受電端の電圧 V</text>
+            <!-- 対策後のカーブ（薄く・先に描く） -->
+            <path d="M60,50 C230,55 370,70 424,108 C370,148 230,163 60,180" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="5 4"></path>
+            <text x="352" y="55 " font-size="9" fill="#16a34a">無効電力を地元で支えると</text>
+            <text x="352" y="67" font-size="9" fill="#16a34a">ノーズが右へ伸びる</text>
+            <!-- 基本のノーズカーブ -->
+            <path d="M60,58 C210,64 340,80 385,115 C340,152 210,168 60,185" fill="none" stroke="#1a1a2e" stroke-width="2"></path>
+            <!-- 運転点 -->
+            <circle cx="200" cy="66" r="5" fill="#16a34a"></circle>
+            <text x="200" y="52" font-size="9.5" text-anchor="middle" fill="#16a34a">運転点（上の枝）</text>
+            <!-- ノーズ -->
+            <circle cx="385" cy="115" r="5" fill="#dc2626"></circle>
+            <text x="380" y="103" font-size="9.5" text-anchor="end" fill="#dc2626">ノーズ＝送電の限界</text>
+            <!-- 下の枝 -->
+            <text x="150" y="160" font-size="9" fill="#4a5568">下の枝：不安定（実際には維持できない）</text>
+          </svg>
+          <figcaption>図2: P-Vカーブ（ノーズカーブ、模式図）。送るほど電圧が下がり、鼻先より先へは送れない</figcaption>
+        </figure>
+
+        <p>
+          送る電力を増やしていくと、受電端の電圧はじわじわ下がります（上の枝を右へ進む）。
+          そして<strong>鼻先（ノーズ）</strong>に達すると、それ以上はどう頑張っても送れません。
+          ノーズ付近では悪循環が起きます——電圧が下がると送りにくくなり、それでも需要が電力を求めると
+          さらに電圧が下がる……この崩れが進むと、広い範囲で電圧が維持できなくなります（<strong>電圧崩壊</strong>と呼ばれます）。
+          だから実際の運用では、ノーズぎりぎりではなく<strong>電圧を保てる余裕を残した送電量</strong>までに制限します。
+          これが電圧安定性の限度です。
+        </p>
+        <p>
+          対策も既習の知識で読めます。A-04で学んだ<strong>調相設備</strong>（コンデンサなど）を受電端の近くに置いて
+          無効電力を「地元で」供給すれば、線路に頼らず電圧を支えられるため、図2の緑の線のように
+          <strong>ノーズが右へ伸び、送れる限界が増えます</strong>。
+          電圧安定性の限度は、設備の増強だけでなく、無効電力の管理でも変わるのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 周波数維持──系統がちぎれた後の限界</h2>
+        <p>
+          最後の1つは、前の2つと視点が違います。同期安定性・電圧安定性は「送っている最中に系統が乱れないか」でしたが、
+          周波数維持の限度は「<strong>連系線がちぎれた後、残された系統が耐えられるか</strong>」の話です。
+        </p>
+        <p>
+          エリアどうしを結ぶ連系線ルートで事故が起き、系統が2つに<strong>分断</strong>されたとします。
+          それまで流れていた融通電力は、その瞬間にゼロになります。すると——
+          受け取っていた側のエリアは突然の<strong>供給不足</strong>、送っていた側は突然の<strong>供給過剰</strong>。
+          <a href="../e-market/02-simultaneous-balancing.html">E-02: 計画値同時同量</a> で学んだとおり、
+          需給のバランスの乱れは<strong>周波数</strong>の乱れになります（不足なら低下、過剰なら上昇）。
+        </p>
+        <p>
+          数値例で考えます。需要 10,000 MW のエリアが、連系線から 1,000 MW を受電しているとき分断が起きると、
+          エリアは瞬時に<strong>供給力の約10%を失います</strong>。
+          直後の周波数低下を受け止めるのは、<a href="../f-dispatch-system/05-frequency-control-and-congestion.html">F-05: 需給制御（GF・LFC・EDC）と混雑管理</a> で学んだ
+          ガバナフリーなどの調整力ですが、受け止められる変動には限りがあります。
+          もし受電が 2,000 MW だったら、失うのは20%——同じ事故でも、<strong>流していた量が大きいほど、分断後の需給の急変は大きくなる</strong>のです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="エリアBからエリアAへ連系線で1000MWを融通中に連系線が分断されると、受け側のエリアAは需要10000MWに対し供給9000MWで急に不足して周波数が低下し、送り側のエリアBは供給過剰となって周波数が上昇することを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- エリアB（送り側） -->
+            <rect x="20" y="35" width="170" height="105" rx="10" fill="#f0fdf4" stroke="#94a3b8"></rect>
+            <text x="105" y="55" font-size="11" text-anchor="middle" fill="#1a1a2e">エリアB（送り側）</text>
+            <text x="105" y="78" font-size="9.5" text-anchor="middle" fill="#4a5568">1,000 MW を送っていた</text>
+            <text x="105" y="122" font-size="10" text-anchor="middle" fill="#dc2626">分断後：供給過剰 → 周波数上昇 ↑</text>
+            <!-- エリアA（受け側） -->
+            <rect x="270" y="35" width="170" height="105" rx="10" fill="#eff6ff" stroke="#94a3b8"></rect>
+            <text x="355" y="55" font-size="11" text-anchor="middle" fill="#1a1a2e">エリアA（受け側）</text>
+            <text x="355" y="78" font-size="9.5" text-anchor="middle" fill="#4a5568">需要 10,000 / 自前 9,000 MW</text>
+            <text x="355" y="122" font-size="10" text-anchor="middle" fill="#dc2626">分断後：供給不足 → 周波数低下 ↓</text>
+            <!-- 連系線と分断 -->
+            <line x1="190" y1="88" x2="270" y2="88" stroke="#6366f1" stroke-width="3"></line>
+            <text x="230" y="78" font-size="9.5" text-anchor="middle" fill="#6366f1">連系線 1,000 MW→</text>
+            <line x1="222" y1="76" x2="238" y2="100" stroke="#dc2626" stroke-width="2.5"></line>
+            <line x1="238" y1="76" x2="222" y2="100" stroke="#dc2626" stroke-width="2.5"></line>
+            <text x="230" y="115" font-size="9" text-anchor="middle" fill="#dc2626">分断</text>
+            <!-- まとめ -->
+            <text x="230" y="170" font-size="10" text-anchor="middle" fill="#1a1a2e">流していた量が大きいほど、分断後の需給の急変が大きい</text>
+          </svg>
+          <figcaption>図3: 連系線の分断。融通していた1,000 MWが突然失われ、両側のエリアの周波数が乱れる</figcaption>
+        </figure>
+
+        <p>
+          そこで、「<strong>分断が起きても、周波数の変動を許容範囲に収められる送電量</strong>」に上限が引かれます。
+          これが周波数維持の限度です。B-02で学んだ<strong>マージン</strong>（万一の融通に備えた取り置き）と同じく、
+          「いざというときに系統を守る」ための枠が、連系線の使い方をかたちづくっているのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. まとめ：4つの限度の全体像</h2>
+        <p>
+          4つの限度が出そろいました。並べて整理します。
+        </p>
+        <ul>
+          <li><strong>① 熱容量</strong>：導体の発熱の限界。<strong>設備が傷む</strong>のを防ぐ（B-01）。</li>
+          <li><strong>② 同期安定性</strong>：引っ張り合い（位相角）の限界。事故のショックで<strong>脱調</strong>しないよう、P-δカーブの山の手前に余裕を残す（§2）。</li>
+          <li><strong>③ 電圧安定性</strong>：電圧の支えの限界。P-Vカーブの<strong>ノーズ</strong>の手前に余裕を残す。無効電力の管理（調相設備）で限界が変わる（§3）。</li>
+          <li><strong>④ 周波数維持</strong>：分断後の需給急変の限界。連系線がちぎれても<strong>周波数変動が許容範囲</strong>に収まる融通量まで（§4）。</li>
+        </ul>
+        <p>
+          ①は設備の話、②③は「送っている最中」のシステムの話、④は「ちぎれた後」のシステムの話——
+          性質の違う4つの物差しをすべて満たす最小値が運用容量です。どの物差しが効くか（最小になるか）は、
+          B-02で見たとおり連系線や季節・系統の状態によって異なります。
+        </p>
+        <p>
+          そして混雑管理の視点でのポイントはこうです。安定度の複雑な物理は、あらかじめ計算されて
+          「<strong>運用容量という1つの数字</strong>」に畳み込まれています。だからB-01の混雑判定も、
+          D領域のSCUC/SCEDの潮流制約も、この数字さえ守れば安定度まで守れる——
+          計算の現場（<a href="../d-algorithms/03-scuc-sced-overview.html">D-03: SCUC/SCEDの概要</a>）が
+          潮流の上限チェックに集中できるのは、この「事前の畳み込み」のおかげなのです。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: multi-choice（3つの限度のメカニズム） -->
+        <div class="exercise" data-exercise-id="b-04-ex01" data-type="multi-choice">
+          <h3>演習 1: 3つの限度のメカニズム</h3>
+          <div class="exercise-problem">
+            <p>運用容量を決める限度について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="b-04-ex01" value="1">
+              <span>同期安定性の限度は、事故のショックで発電機が歩調を乱して脱調しないよう、平常時の潮流をP-δカーブの山の手前に抑えるものである</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-04-ex01" value="2">
+              <span>電圧安定性の限度は、送電を増やすと受電端の電圧を支えきれなくなる（P-Vカーブのノーズ）ことから決まる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-04-ex01" value="3">
+              <span>周波数維持の限度は、連系線の分断で融通が突然失われたときの周波数変動を、許容範囲に収められる送電量の限界である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-04-ex01" value="4">
+              <span>同期安定性・電圧安定性の限度は、熱容量より必ず大きい</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-04-ex01",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（同期安定性＝脱調を防ぐため山の手前に余裕）、2（電圧安定性＝ノーズの手前に余裕）、3（周波数維持＝分断後の需給急変への備え）はいずれも正しい。4は誤りで、安定度の限度は熱容量より小さいことが普通にあります（B-02の例では同期安定性900 MW＜熱容量1200 MW）。だからこそ、導体に熱的な余裕があっても運用容量で潮流が制限されるのです。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（最大送電電力の計算・バリアント付き） -->
+        <div class="exercise" data-exercise-id="b-04-ex02" data-type="numeric">
+          <h3>演習 2: 最大送電電力を求める</h3>
+          <div class="exercise-problem">
+            <p>
+              送電端電圧 V₁ = <span class="var" data-var="v1">1.0</span> pu、受電端電圧 V₂ = <span class="var" data-var="v2">1.0</span> pu、
+              リアクタンス X = <span class="var" data-var="x">0.5</span> pu の送電ルートがある。
+              P-δカーブの山の頂上、すなわち最大送電電力 Pmax は何 pu か（小数第2位まで）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              Pmax:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> pu
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-04-ex02",
+          "type": "numeric",
+          "correct": 2.0,
+          "tolerance": 0.01,
+          "unit": "pu",
+          "explanation": "Pmax = V₁×V₂÷X = 1.0×1.0÷0.5 = 2.0 pu。P = (V₁V₂/X)sinδ は δ = 90°（sinδ = 1）で最大になり、その値が V₁V₂/X です。実際の運転はこの山の頂上より十分手前に抑えます——事故のショックで角度が振れても山を越えない（脱調しない）余裕を残すためです。",
+          "variants": [
+            {
+              "vars": { "v1": "1.0", "v2": "0.95", "x": "0.5" },
+              "correct": 1.9,
+              "explanation": "Pmax = V₁×V₂÷X = 1.0×0.95÷0.5 = 1.9 pu。受電端の電圧が低いと、同じリアクタンスでも山の高さ（送れる限界）が下がることに注意してください。電圧を支えること（A-04・§3）が、同期安定性の面でも限界を広げるのです。"
+            },
+            {
+              "vars": { "v1": "1.0", "v2": "1.0", "x": "0.4" },
+              "correct": 2.5,
+              "explanation": "Pmax = V₁×V₂÷X = 1.0×1.0÷0.4 = 2.5 pu。リアクタンスXが小さい（電気的に近い）ほど山は高くなります。送電線の増強（並列回線の追加でXが下がる）が安定度の限度も広げる、という関係が式から読み取れます。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: choice（潮流の大きさと同期安定性） -->
+        <div class="exercise" data-exercise-id="b-04-ex03" data-type="choice">
+          <h3>演習 3: なぜ潮流が大きいと危ないか</h3>
+          <div class="exercise-problem">
+            <p>平常時の潮流が大きいほど、同期安定性の面で危険になるのはなぜか。最も適切な説明を選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="b-04-ex03" value="1">
+              <span>運転点がP-δカーブの山の頂上（δ=90°）に近づくため、事故で角度が振れたときに山を越えて脱調しやすくなるから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-04-ex03" value="2">
+              <span>潮流が大きいと導体が発熱し、その熱で位相角が変わってしまうから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-04-ex03" value="3">
+              <span>潮流が大きいと周波数が自動的に下がり、発電機が停止してしまうから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-04-ex03",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "潮流が大きい＝運転点のδが大きい＝山の頂上までの余裕が小さい、ということです。事故のショックでδが振れたとき、余裕がなければ山を越えて戻れなくなり（脱調）ます。数値例では、P=1.0 puならδ=30°で余裕十分、P=1.8 puならδ≒64°で頂上目前でした。2は熱容量の話と位相角を混同しており（発熱は位相角を変えません）、3は周波数維持の話とも異なります（潮流の大きさが直接周波数を下げることはありません）。"
+        }
+        </script>
+
+        <!-- 演習4: choice（電圧安定性の対策） -->
+        <div class="exercise" data-exercise-id="b-04-ex04" data-type="choice">
+          <h3>演習 4: 電圧安定性を改善する</h3>
+          <div class="exercise-problem">
+            <p>受電端の電圧安定性を改善し、P-Vカーブのノーズを右へ伸ばす（送れる限界を増やす）手段として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="b-04-ex04" value="1">
+              <span>受電端の近くに調相設備（コンデンサ）を置き、無効電力を地元で供給する</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-04-ex04" value="2">
+              <span>送電線の導体を太くして、熱容量を大きくする</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-04-ex04" value="3">
+              <span>発電計画値の提出を早め、ゲートクローズまでの時間を延ばす</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-04-ex04",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "電圧を支えているのは無効電力です（A-04）。送電線経由で無効電力を送ると線路のリアクタンスで失われてしまうため、受電端の近く＝地元で調相設備が無効電力を供給すれば、電圧の支えが強くなり、ノーズが右へ伸びます（図2の緑の線）。2の熱容量の増強は熱の限界を広げますが、電圧の支えは変わりません——「熱容量に余裕があっても電圧で制限される」状況はそのまま残ります。3は計画手続きの話で、電圧の物理には影響しません。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/iinkai/unyouyouryou/index.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「運用容量検討会」（熱容量・同期安定性・電圧安定性・周波数維持の4つの面から運用容量を算出する枠組みの公開資料）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="03-congestion-countermeasures-map.html" class="unit-nav-prev">&larr; 混雑対策の全体地図──運用・接続・増強</a>
+      <a href="../c-grid-model/index.html" class="unit-nav-next">次の領域へ: C 系統モデル &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>
