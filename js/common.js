@@ -145,6 +145,8 @@ const SITE_STRUCTURE = {
         summary: '30分コマ・ゲートクローズの時間軸の上に、予測・混雑計算・SCUC（早め）・SCED（直前）がいつ・どのコマを対象に走るかを整理する。' },
       { id: 'f-05', title: '需給制御（GF・LFC・EDC）と混雑管理', file: '05-frequency-control-and-congestion.html', exerciseCount: 3,
         summary: '実需給の中で周波数を守る需給制御の3層（GF＝秒・自律／LFC＝分・自動指令／EDC＝数分〜・経済配分）と、混雑管理（潮流・場所）との違い・接点を学ぶ。F-02「広域LFC」の回収でF領域完結。' },
+      { id: 'f-06', title: '同時市場──kWhとΔkWを一緒に約定する', file: '06-simultaneous-market.html', exerciseCount: 3,
+        summary: 'スポット市場（kWh）と需給調整市場（ΔkW）を、三部制入札とSCUC/SCEDによる1つの約定にまとめる「同時市場」の検討を、公開資料の範囲で学ぶ。E-07で予告した「市場と運用の一体最適化」の回収。' },
     ],
   },
 };

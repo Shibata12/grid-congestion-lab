@@ -418,6 +418,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="f,e" id="term-three-part-offer">
+        <dt>三部制入札</dt>
+        <dd>
+          <p>同時市場の検討で議論されている発電側の入札方式（Three-Part Offer）。発電機ごとに「起動費」「最低出力費用」「限界費用カーブ（出力を1単位増やすときの費用）」の3点セットを登録・入札する。起動にかかるコストまで見えるため、SCUCが電源の起動・停止を含めてコスト最小の約定を計算できる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/06-simultaneous-market.html">F-06</a>、<a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e,b" id="term-market-split">
         <dt>市場分断</dt>
         <dd>
@@ -561,9 +571,9 @@
       <div class="glossary-entry" data-domain="e" id="term-spot-market">
         <dt>スポット市場（前日市場）</dt>
         <dd>
-          <p>JEPX（日本卸電力取引所）で翌日に受け渡す電気を取引する市場。1日を30分単位に区切った48商品を、前日の朝に締め切ってまとめて約定処理する。約定価格はコマごとに1つに決まる（シングルプライスオークション）。約定結果は発電計画値・需要計画値に反映される。エリアをまたぐ取引は間接オークションによりこの市場を通じて行われる。</p>
+          <p>JEPX（日本卸電力取引所）で翌日に受け渡す電気を取引する市場。1日を30分単位に区切った48商品を、前日の朝に締め切ってまとめて約定処理する。約定価格はコマごとに1つに決まる（シングルプライスオークション）。約定結果は発電計画値・需要計画値に反映される。エリアをまたぐ取引は間接オークションによりこの市場を通じて行われる。調整力（ΔkW）と一体で約定する「同時市場」への発展が検討されている。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
+            関連ユニット: <a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>、<a href="../units/f-dispatch-system/06-simultaneous-market.html">F-06</a>
           </p>
         </dd>
       </div>
@@ -681,9 +691,9 @@
       <div class="glossary-entry" data-domain="e" id="term-balancing-reserve">
         <dt>調整力</dt>
         <dd>
-          <p>需給の差（インバランス）を埋めるために一般送配電事業者が確保する供給力（上げ・下げ）。計画値同時同量のもとで、系統全体の同時同量を最終的に担保する役割を担う。</p>
+          <p>需給の差（インバランス）を埋めるために一般送配電事業者が確保する供給力（上げ・下げ）。計画値同時同量のもとで、系統全体の同時同量を最終的に担保する役割を担う。検討中の同時市場では、電気（kWh）と一体で約定する対象（ΔkW）になる。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/e-market/02-simultaneous-balancing.html">E-02</a>
+            関連ユニット: <a href="../units/e-market/02-simultaneous-balancing.html">E-02</a>、<a href="../units/f-dispatch-system/06-simultaneous-market.html">F-06</a>
           </p>
         </dd>
       </div>
@@ -784,6 +794,16 @@
           <p>交流系統の発電機が同期（同じ周波数での歩調）を保って運転を続けられる限界。送電量が大きい状態で事故などのショックが加わると、発電機が歩調を乱して運転を続けられなくなる（脱調）おそれがある。運用容量を決める4つの限度の1つ。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f,e" id="term-simultaneous-market">
+        <dt>同時市場</dt>
+        <dd>
+          <p>電気（kWh）と調整力（ΔkW）を、SCUC/SCEDによる1つの約定計算で同時に決める市場の構想。現在は別々の市場（スポット市場・需給調整市場）で取引されているため、市場間で供給力の取り合いが起き、系統全体でのメリットオーダーを徹底しにくい。米国PJM市場などを参考に、経済産業省の「同時市場の在り方等に関する検討会」で制度設計が検討されている（2025年10月に第二次中間取りまとめ）。最終的な仕様・導入時期は検討中。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/06-simultaneous-market.html">F-06</a>、<a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>、<a href="../units/e-market/03-balancing-market.html">E-03</a>、<a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>
           </p>
         </dd>
       </div>
