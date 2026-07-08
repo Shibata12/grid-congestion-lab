@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-10: インバランス料金──計画とのズレの値段 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-10">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>インバランス料金</span>
+    </nav>
+
+    <article>
+      <h1>E-10: インバランス料金──計画とのズレの値段</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        E領域の本編は <a href="09-integrated-exercise.html">E-09: 総合演習</a> で一巡しました。ここからは<strong>発展編</strong>です。
+        <a href="01-bg-and-generation-plan.html">E-01: BGと発電計画値</a> は「計画と実績の差＝インバランスは、
+        インバランス料金として精算される」と述べたまま、<strong>いくらで・どう決まるのか</strong>を預けていました。
+        本ユニットがその回収です。単価が調整力の実費に連動する理屈と、需給がひっ迫すると単価が跳ね上がる仕組み
+        （需給ひっ迫時補正）を理解し、「計画を守ると得、破ると実費」という制度の背骨を説明できるようになります。
+        新しい式は実質1本（かけ算）です。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="01-bg-and-generation-plan.html">E-01</a>：インバランス＝実績 − 計画（BG単位）。ズレは一般送配電事業者の調整力が埋める</li>
+          <li><a href="03-balancing-market.html">E-03: 需給調整市場</a>：その調整力は市場で調達され、動かせばkWhの費用がかかる</li>
+          <li><a href="../f-dispatch-system/07-demand-and-renewable-forecast.html">F-07: 需要予測・再エネ予測</a>：予備率＝需要予測に対する供給力の上乗せの比率</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：インバランス料金制度は<strong>見直しが続いている領域</strong>です。
+          本ユニットは2022年度に始まった現行制度の<strong>確定した枠組み</strong>を、2026年7月時点の公開資料（電力・ガス取引監視等委員会等）の範囲で扱います。
+          単価算定の細部（5分値の扱い等）や特例（再エネ出力制御時等）、最新の見直し議論の帰趨には踏み込みません。
+          実際の単価水準は公表サイトで確認できます（末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 宿題の確認：ズレの後始末は誰が払う？</a></li>
+          <li><a href="#section-2">2. 単価の決まり方：調整力の実費に連動する</a></li>
+          <li><a href="#section-3">3. 需給ひっ迫時補正：ひっ迫するほど高くなる</a></li>
+          <li><a href="#section-4">4. 支払いの向きと計算</a></li>
+          <li><a href="#section-5">5. 混雑との関係とまとめ</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 宿題の確認：ズレの後始末は誰が払う？</h2>
+        <p>
+          E-01のおさらいから始めます。BGの実績が計画からズレる（インバランスが出る）と、
+          そのズレは放置されるのではなく、<strong>一般送配電事業者が調整力を動かして埋めて</strong>います（E-03）。
+          調整力を動かせば、燃料費などの<strong>実費</strong>がかかります。では、その費用は誰が負担すべきでしょうか。
+        </p>
+        <p>
+          答えは制度としてはっきりしています——<strong>ズレさせた本人（BG）</strong>です。
+          計画を外した分の後始末の費用を、外した人が払う。この精算が
+          <span class="term">インバランス料金<span class="term-tooltip">計画と実績の差（インバランス）をBGが精算する料金。単価は、実需給でズレを埋めるのに実際に使われた調整力のkWh価格（限界的kWh価格）に基づき、30分コマごとに決まる。不足インバランスは支払い、余剰インバランスは受け取り。2022年度開始の現行制度。</span></span>です。
+          「ペナルティ（罰金）」ではなく「<strong>実費の付け替え</strong>」——ここが本ユニットの出発点です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="計画を下回った不足BGがインバランス料金を一般送配電事業者に支払い、一般送配電事業者はズレを埋めるために動かした調整力の費用を調整力提供者に支払う。計画を上回った余剰BGは対価を受け取る、というお金の流れの図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="e10-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <rect x="15" y="30" width="130" height="52" rx="8" fill="#fef2f2" stroke="#ef4444"></rect>
+            <text x="80" y="52" font-size="10" text-anchor="middle" fill="#1a1a2e">不足BG</text>
+            <text x="80" y="68" font-size="9" text-anchor="middle" fill="#4a5568">実績＜計画</text>
+            <rect x="15" y="110" width="130" height="52" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="80" y="132" font-size="10" text-anchor="middle" fill="#1a1a2e">余剰BG</text>
+            <text x="80" y="148" font-size="9" text-anchor="middle" fill="#4a5568">実績＞計画</text>
+            <rect x="185" y="66" width="130" height="60" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="250" y="90" font-size="10" text-anchor="middle" fill="#1a1a2e">一般送配電事業者</text>
+            <text x="250" y="106" font-size="9" text-anchor="middle" fill="#4a5568">調整力でズレを埋める</text>
+            <rect x="350" y="66" width="98" height="60" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="399" y="90" font-size="10" text-anchor="middle" fill="#1a1a2e">調整力の</text>
+            <text x="399" y="106" font-size="10" text-anchor="middle" fill="#1a1a2e">提供者（E-03）</text>
+            <line x1="145" y1="56" x2="182" y2="82" stroke="#dc2626" stroke-width="1.5" marker-end="url(#e10-ah)"></line>
+            <text x="150" y="48" font-size="9" fill="#dc2626">料金を支払う</text>
+            <line x1="182" y1="112" x2="145" y2="136" stroke="#16a34a" stroke-width="1.5" marker-end="url(#e10-ah)"></line>
+            <text x="152" y="152" font-size="9" fill="#16a34a">対価を受け取る</text>
+            <line x1="315" y1="96" x2="347" y2="96" stroke="#4a5568" stroke-width="1.5" marker-end="url(#e10-ah)"></line>
+            <text x="331" y="88" font-size="8.5" text-anchor="middle" fill="#4a5568">実費</text>
+            <text x="230" y="182" font-size="9.5" text-anchor="middle" fill="#4a5568">ズレの後始末にかかった実費を、ズレさせた側に付け替える精算</text>
+          </svg>
+          <figcaption>図1: インバランス料金のお金の流れ。罰金ではなく「後始末の実費の付け替え」</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 単価の決まり方：調整力の実費に連動する</h2>
+        <p>
+          「実費の付け替え」なら、単価は実費に連動しているべきです。現行制度（2022年度開始）の単価は、
+          まさにそう設計されています——<strong>その30分コマで、ズレを埋めるために実際に使われた調整力のkWh価格</strong>に基づきます。
+        </p>
+        <p>
+          E-03を思い出してください。調整力はメリットオーダー（安い順）で動かされます。
+          ズレが大きいコマほど、高い調整力まで動員することになる。このとき動かした中で<strong>いちばん高い価格</strong>
+          ——<strong>調整力の限界的kWh価格</strong>——が、そのコマのインバランス料金単価のベースになります。
+          「追加の1kWhを埋めるのにかかった費用」を単価にする、という考え方です。
+          実は <a href="../d-algorithms/07-shadow-price-and-lmp.html">D-07: 混雑の値段──シャドープライスとLMP</a> で学んだ
+          限界価格（追加1単位の費用）と同じ発想が、ここにも使われています。
+        </p>
+        <p>
+          単価は30分コマごとに算定され、全国大の広域運用を前提に決まります
+          （<strong>連系線が混雑しているときはエリアごとに分かれる</strong>——E-07の市場分断と同じ構図が、実需給の精算にも顔を出します）。
+          ふだんの単価は燃料費相場を映した十数円/kWh程度のことが多いですが、需給がひっ迫すると話が変わります。それが次の節です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 需給ひっ迫時補正：ひっ迫するほど高くなる</h2>
+        <p>
+          需給がひっ迫しているとき、ズレの重みは平常時と同じではありません。
+          供給に余裕がない中での不足インバランスは、停電のリスクに直結します。
+          そこで現行制度には<span class="term">需給ひっ迫時補正<span class="term-tooltip">需給がひっ迫したコマのインバランス料金単価を引き上げる仕組み。広域予備率が下がるほど単価が高くなるカーブが設定され、予備率3%相当では本則600円/kWh（経過措置として200円/kWhが適用されてきた。水準は見直しが続いている）。ひっ迫時に計画順守・供給増・需要抑制を促す価格シグナル。</span></span>が組み込まれています——
+          <strong>広域予備率（F-07で学んだ予備率の広域版）が低いコマほど、単価を引き上げる</strong>仕組みです。
+        </p>
+        <p>
+          水準の目安として、制度設計では<strong>広域予備率3%相当のとき本則600円/kWh</strong>とされ、
+          急激な負担増を避ける<strong>経過措置として200円/kWh</strong>が適用されてきました
+          （水準・カーブは見直しの議論が続いています。最新は<a href="#references">参考資料</a>の公表を確認してください）。
+          ふだんの十数円と比べると<strong>10倍以上</strong>——「ひっ迫時にズレさせると、桁違いに高くつく」ようにできています。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="横軸に広域予備率（右へ行くほど低下）、縦軸にインバランス料金単価をとった需給ひっ迫時補正のカーブの模式図。予備率に余裕があるうちは調整力の限界的kWh価格そのままだが、予備率が下がり始めると単価が立ち上がり、予備率3%相当で上限（本則600円、経過措置200円）に達する"
+               xmlns="http://www.w3.org/2000/svg">
+            <line x1="55" y1="175" x2="440" y2="175" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="55" y1="30" x2="55" y2="175" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="250" y="200" font-size="10" text-anchor="middle" fill="#4a5568">広域予備率（→ 右へ行くほど低下＝ひっ迫）</text>
+            <text x="47" y="102" font-size="10" text-anchor="middle" fill="#4a5568" transform="rotate(-90 47 102)">単価（円/kWh）</text>
+            <text x="130" y="190" font-size="9" text-anchor="middle" fill="#4a5568">余裕あり</text>
+            <text x="390" y="190" font-size="9" text-anchor="middle" fill="#dc2626">3%相当</text>
+            <!-- 通常水準 -->
+            <path d="M55,158 L240,156 C300,152 340,110 380,58 L425,52" fill="none" stroke="#dc2626" stroke-width="2"></path>
+            <text x="120" y="148" font-size="9" fill="#4a5568">ふだん＝調整力の限界的kWh価格（十数円程度のことが多い）</text>
+            <!-- 上限線 -->
+            <line x1="55" y1="52" x2="440" y2="52" stroke="#d97706" stroke-width="1.2" stroke-dasharray="6 4"></line>
+            <text x="60" y="44" font-size="9" fill="#b45309">上限：本則600円/kWh（経過措置200円/kWh・見直し継続中）</text>
+            <text x="290" y="95" font-size="9" fill="#dc2626">予備率が下がるほど単価上昇</text>
+          </svg>
+          <figcaption>図2: 需給ひっ迫時補正のイメージ（模式図）。ひっ迫するほど、ズレの値段が跳ね上がる</figcaption>
+        </figure>
+
+        <p>
+          ねらいは収入ではなく<strong>行動</strong>です。ひっ迫したコマで単価が跳ね上がると分かっていれば、
+          事業者は「計画をきちんと守る」「発電できるなら計画より多めでも出す（余剰の受取りも高単価）」
+          「需要側なら使用を絞る」方向に動きます。
+          つまり需給ひっ迫時補正は、ひっ迫時に系統を助ける行動を全員に促す<strong>価格シグナル</strong>なのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 支払いの向きと計算</h2>
+        <p>
+          精算のルールはシンプルです。<strong>不足インバランス（実績＜計画の発電、など足りない向きのズレ）は支払い、
+          余剰インバランス（多い向きのズレ）は受け取り</strong>。どちらも同じそのコマの単価で精算されます。
+        </p>
+        <div class="math-block"
+             data-tex="\text{精算額} = \text{インバランス量（kWh）} \times \text{その30分コマの単価（円/kWh）}"
+             data-fallback="精算額 = インバランス量（kWh）× その30分コマの単価（円/kWh）"></div>
+        <p>
+          数値例です。ある発電BGのあるコマの計画が 100 MWh、実績が 95 MWh だったとします。
+          インバランスは 95 − 100 = <strong>−5 MWh（不足）</strong>。そのコマの単価が 12円/kWh なら、
+          支払いは 5,000 kWh × 12円 = <strong>60,000円</strong>です。
+          もしこれが需給ひっ迫のコマ（単価200円/kWh）なら、同じ5MWhの不足で<strong>100万円</strong>——
+          ひっ迫時のズレがいかに高くつくかが分かります。
+        </p>
+        <p>
+          では「余剰なら受け取れるから、多めに発電しておけば儲かる？」——そうはなりません。
+          余剰の受取単価も<strong>そのコマの調整力価格次第</strong>で、高く売れる保証はなく、
+          計画的に売るなら市場（E-07）で売った方が確実です。制度は「わざとズレさせる得」が出ないよう設計されています。
+          BGの正攻法は3つ——<strong>予測を良くする</strong>（F-07）、<strong>BGを大きく組んでならす</strong>（E-01）、
+          そして<strong>ゲートクローズまでに計画を実態へ直す</strong>（スポット後の修正手段が時間前市場。詳しくは後続ユニットで扱います）。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 混雑との関係とまとめ</h2>
+        <p>
+          本サイトの主題である混雑との関係を整理して締めくくります。
+          <a href="../f-dispatch-system/05-frequency-control-and-congestion.html">F-05: 需給制御（GF・LFC・EDC）と混雑管理</a> の対比を思い出してください——
+          インバランスは<strong>量（系統全体の需給）</strong>の話で、<strong>場所（どの送電線か）</strong>は問いません。
+          再給電（D-02）のような混雑処理とは、守っているものが違います。
+        </p>
+        <p>
+          ただし接点はあります。連系線が混雑しているコマは、調整力の広域運用がエリアをまたげず、
+          <strong>インバランス料金単価もエリアごとに分かれます</strong>——市場分断（E-07）の実需給版です。
+          「混雑は市場の値差にも、実需給の精算単価にも顔を出す」と覚えておくと、制度の全体像がつながります。
+        </p>
+        <p>
+          まとめ——計画値同時同量（E-02）が制度として機能しているのは、
+          「<strong>計画を守ると得、破ると後始末の実費、ひっ迫時は桁違い</strong>」という値付けが背後にあるからです。
+          E-01で預けた「インバランス料金」の宿題、これで回収完了です。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（単価の決まり方） -->
+        <div class="exercise" data-exercise-id="e-10-ex01" data-type="choice">
+          <h3>演習 1: 単価は何に連動するか</h3>
+          <div class="exercise-problem">
+            <p>現行制度（2022年度〜）のインバランス料金単価の決まり方として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-10-ex01" value="1">
+              <span>その30分コマでズレを埋めるために実際に使われた調整力のkWh価格（限界的kWh価格）に基づいて決まる</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-10-ex01" value="2">
+              <span>前年度の全国の平均燃料費として、年度初めに1年分が固定される</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-10-ex01" value="3">
+              <span>各BGが自分の発電コストに応じて自由に設定する</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-10-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "インバランス料金は「ズレの後始末の実費の付け替え」なので、単価は実需給で実際に使われた調整力のkWh価格（メリットオーダーで動かした中でいちばん高い＝限界的kWh価格）に基づき、30分コマごとに決まります。年度固定（2）でも自己申告（3）でもありません。ズレが大きく高い調整力まで動員したコマほど、単価も高くなります。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（精算額の計算・バリアント付き） -->
+        <div class="exercise" data-exercise-id="e-10-ex02" data-type="numeric">
+          <h3>演習 2: 不足インバランスの支払い額</h3>
+          <div class="exercise-problem">
+            <p>
+              ある発電BGのあるコマの発電計画値は <span class="var" data-var="plan">100</span> MWh、実績は <span class="var" data-var="act">95</span> MWh だった。
+              そのコマのインバランス料金単価が <span class="var" data-var="price">12</span> 円/kWh のとき、このBGが支払う金額は何円か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              支払い額:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 円
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-10-ex02",
+          "type": "numeric",
+          "correct": 60000,
+          "tolerance": 0,
+          "unit": "円",
+          "explanation": "不足インバランス = 100 − 95 = 5 MWh = 5,000 kWh。支払い額 = 5,000 kWh × 12円/kWh = 60,000円。単位の換算（1 MWh = 1,000 kWh）を忘れないこと。計画に足りなかった5MWh分は一般送配電事業者が調整力で埋めており、その実費に相当する額をBGが負担します。",
+          "variants": [
+            {
+              "vars": { "plan": "200", "act": "188", "price": "15" },
+              "correct": 180000,
+              "explanation": "不足インバランス = 200 − 188 = 12 MWh = 12,000 kWh。支払い額 = 12,000 kWh × 15円/kWh = 180,000円。1 MWh = 1,000 kWh の換算に注意してください。"
+            },
+            {
+              "vars": { "plan": "50", "act": "47.5", "price": "200" },
+              "correct": 500000,
+              "explanation": "不足インバランス = 50 − 47.5 = 2.5 MWh = 2,500 kWh。支払い額 = 2,500 kWh × 200円/kWh = 500,000円。需給ひっ迫時補正で単価が200円/kWhに達したコマでは、わずか2.5MWhの不足でも50万円——ひっ迫時のズレは桁違いに高くつきます。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: choice（需給ひっ迫時補正のねらい） -->
+        <div class="exercise" data-exercise-id="e-10-ex03" data-type="choice">
+          <h3>演習 3: なぜひっ迫時に高くするのか</h3>
+          <div class="exercise-problem">
+            <p>需給ひっ迫時補正（広域予備率が低いコマほど単価を引き上げる仕組み）のねらいとして、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-10-ex03" value="1">
+              <span>ひっ迫時ほどズレの影響が重大なので、計画の順守・供給の上積み・需要の抑制を促す価格シグナルにするため</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-10-ex03" value="2">
+              <span>一般送配電事業者の利益を需給ひっ迫のたびに増やすため</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-10-ex03" value="3">
+              <span>スポット市場の価格を強制的に一定に固定するため</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-10-ex03",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "供給に余裕がない中での不足インバランスは停電リスクに直結します。ひっ迫コマの単価が跳ね上がると分かっていれば、事業者は計画を守る・出せるなら多めに出す（余剰の受取りも高単価）・需要を絞る方向に動きます——系統を助ける行動を促す価格シグナルが本質です。2は誤りで、料金は調整力の実費の付け替えであり利益目的ではありません。3も誤りで、スポット価格の固定とは無関係です。"
+        }
+        </script>
+
+        <!-- 演習4: multi-choice（BGの打ち手） -->
+        <div class="exercise" data-exercise-id="e-10-ex04" data-type="multi-choice">
+          <h3>演習 4: インバランスを減らす正攻法</h3>
+          <div class="exercise-problem">
+            <p>BGがインバランス（とその料金リスク）を減らす手段として、適切なものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="e-10-ex04" value="1">
+              <span>需要予測・再エネ予測の精度を上げる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-10-ex04" value="2">
+              <span>BGを大きく組んで、メンバー間でズレを打ち消し合う（ならし効果）</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-10-ex04" value="3">
+              <span>ゲートクローズまでに、計画を実態に合わせて修正する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-10-ex04" value="4">
+              <span>実績の値を計画に合わせて書き換えて報告する</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-10-ex04",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（予測の改善＝F-07）、2（BGのならし効果＝E-01で学んだBGを組む利点そのもの）、3（ゲートクローズまでの計画修正。スポット後の修正手段が時間前市場）はいずれも正攻法です。4は虚偽報告であり論外です——実績は計量データに基づいて確定するので、そもそも書き換えられません。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/enecho/denryoku_gas/denryoku_gas/pdf/022_07_02.pdf"
+               target="_blank" rel="noopener noreferrer">電力・ガス取引監視等委員会事務局「2022年度以降のインバランス料金制度について（中間とりまとめ）」（令和元年12月。調整力kWh価格連動・需給ひっ迫時補正の枠組み）</a>
+          </li>
+          <li>
+            <a href="https://www.imbalanceprices-cs.jp/"
+               target="_blank" rel="noopener noreferrer">一般送配電事業者9社「インバランス料金情報公表ウェブサイト」（実際の単価の公表・グラフ・CSV）</a>
+          </li>
+          <li>
+            <a href="https://www.egc.meti.go.jp/"
+               target="_blank" rel="noopener noreferrer">電力・ガス取引監視等委員会（制度の最新の見直し議論・専門会合資料）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="09-integrated-exercise.html" class="unit-nav-prev">&larr; 総合演習──ある日の連系線と市場を通しで解く</a>
+      <a href="11-intraday-market.html" class="unit-nav-next">時間前市場──スポットの後、ゲートクローズの前 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

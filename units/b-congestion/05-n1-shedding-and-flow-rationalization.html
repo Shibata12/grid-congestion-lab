@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B-05: コネクト&マネージの残り2本──N-1電制と想定潮流の合理化 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="b" data-unit="b-05">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">B: 系統混雑</a> &gt;
+      <span>N-1電制と想定潮流の合理化</span>
+    </nav>
+
+    <article>
+      <h1>B-05: コネクト&マネージの残り2本──N-1電制と想定潮流の合理化</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の2本目です。<a href="03-congestion-countermeasures-map.html">B-03: 混雑対策の全体地図</a> で、
+        コネクト&マネージの3本柱を紹介しました。そのうちノンファーム型接続は
+        <a href="../e-market/05-non-firm-connection.html">E-05</a> で深掘り済み。本ユニットは残りの2本——
+        <strong>N-1電制</strong>と<strong>想定潮流の合理化</strong>——を、
+        「<strong>何をどう計算して、使える枠が何MW広がるのか</strong>」まで数値例で理解します。
+        新しい式は実質2本、どちらも足し算・引き算です。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a>：並列2回線は、1回線故障の転流に備えて平常時は半分（残り1回線の容量）までしか流せない</li>
+          <li><a href="02-operating-capacity-and-margin.html">B-02: 運用容量とマージン</a>：空き容量 ＝ 運用容量 − マージン − すでに決まっている利用</li>
+          <li><a href="03-congestion-countermeasures-map.html">B-03</a>：コネクト&マネージ＝既存設備のまま、使える枠を広げる3本柱</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：各制度の適用条件の細目（対象系統・費用負担・契約形態）や、
+          リレーシステムの装置仕様には踏み込みません。OCCTO・資源エネルギー庁の公開資料の枠組みまでです
+          （末尾の<a href="#references">参考資料</a>）。数値例は仕組みを示すための例示値です。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. おさらい：3本柱のうち2本が「名前だけ」だった</a></li>
+          <li><a href="#section-2">2. N-1電制──守り方を変えて枠を広げる</a></li>
+          <li><a href="#section-3">3. 想定潮流の合理化──計算を現実的にして枠を掘り出す</a></li>
+          <li><a href="#section-4">4. 2本の比較と、3本柱の全体像</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. おさらい：3本柱のうち2本が「名前だけ」だった</h2>
+        <p>
+          B-03の地図を思い出します。コネクト&マネージは「既存の設備のまま、使える枠を広げる」3本柱でした——
+          ① 想定潮流の合理化、② N-1電制、③ ノンファーム型接続。
+          ③はE-05で深掘り済みですが、①②は「計算を現実的にする」「守り方を変える」という<strong>一言の説明だけ</strong>でした。
+          本ユニットで、その中身を数字で確かめます。
+          2本に共通する問いはこうです——「<strong>いまの枠は、何を前提に決まっているのか？　その前提は変えられないのか？</strong>」
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. N-1電制──守り方を変えて枠を広げる</h2>
+        <p>
+          B-01のおさらいから。並列2回線（各容量 100 MW）では、1回線が故障すると流れていた潮流が
+          残り1回線に<strong>転流</strong>します。だから平常時は合計 100 MW（残り1回線の容量）までしか流せない——
+          容量200 MW分の設備を、半分しか使えていないわけです。これが「<strong>事前に余裕を残す</strong>」守り方でした。
+        </p>
+        <p>
+          N-1電制はこの前提を変えます。系統に<strong>保護リレー</strong>（故障を検知して瞬時に動作する装置）を組み込み、
+          故障を検知したら<strong>あらかじめ決めておいた発電機を瞬時に自動遮断</strong>するのです。
+          この仕組みを<span class="term">転送遮断<span class="term-tooltip">故障の検知情報を通信で離れた場所へ転送し、あらかじめ決めておいた発電機を瞬時に自動遮断する保護リレーの仕組み。N-1電制を実現する装置側の技術。人の操作を介さず、事故後ただちに動作する。</span></span>といいます
+          （「電制」は<strong>電</strong>源<strong>制</strong>限の略です）。
+          事故後すぐに電源が減れば、転流してくる潮流も減る——だから<strong>平常時にもっと流してよい</strong>、という理屈です。
+        </p>
+        <p>
+          数値例で確かめます。並列2回線（各容量 100 MW）で、事故時に <strong>60 MW 分の電源を瞬時遮断</strong>できるとします。
+          平常時の合計潮流を F とすると、事故→転流で残り1回線に F が乗りますが、
+          電制が即座に 60 MW 減らすので、残るのは F − 60。これが容量 100 MW 以下ならよいので——
+        </p>
+        <div class="math-block"
+             data-tex="F - 60 \le 100 \quad\Rightarrow\quad F \le 160\ \text{MW}"
+             data-fallback="F − 60 ≤ 100 → F ≤ 160 MW（平常時の上限 ＝ 残り回線の容量 ＋ 電制できる量）"></div>
+        <p>
+          従来 100 MW だった平常時の上限が <strong>160 MW</strong> に——設備は1本も増やさずに、60 MW 分の枠が生まれました。
+          一般化すると「<strong>平常時の上限 ＝ 残り回線の容量 ＋ 電制できる量</strong>」です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 215" role="img"
+               aria-label="左は従来の守り方で、並列2回線に合計100MWまでしか流さず事故時の転流に備える。右はN-1電制で、平常時に160MWまで流し、事故時には保護リレーの転送遮断が瞬時に60MW分の電源を遮断して残り1回線を容量内に収める対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="15" y="20" width="210" height="170" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="120" y="42" font-size="10.5" text-anchor="middle" fill="#4a5568" font-weight="bold">従来：事前の余裕</text>
+            <line x1="45" y1="70" x2="195" y2="70" stroke="#1a1a2e" stroke-width="2.5"></line>
+            <line x1="45" y1="95" x2="195" y2="95" stroke="#1a1a2e" stroke-width="2.5"></line>
+            <text x="120" y="62" font-size="9" text-anchor="middle" fill="#4a5568">2回線（各100MW）</text>
+            <text x="120" y="125" font-size="10" text-anchor="middle" fill="#1a1a2e">平常時 合計 ≤ 100 MW</text>
+            <text x="120" y="145" font-size="9" text-anchor="middle" fill="#4a5568">（転流しても残り1回線に収まる量）</text>
+            <text x="120" y="172" font-size="9" text-anchor="middle" fill="#dc2626">設備の半分しか使えない</text>
+            <rect x="235" y="20" width="210" height="170" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="340" y="42" font-size="10.5" text-anchor="middle" fill="#b45309" font-weight="bold">N-1電制：事後の瞬時制御</text>
+            <line x1="265" y1="70" x2="415" y2="70" stroke="#1a1a2e" stroke-width="2.5"></line>
+            <line x1="265" y1="95" x2="415" y2="95" stroke="#1a1a2e" stroke-width="2.5"></line>
+            <text x="340" y="62" font-size="9" text-anchor="middle" fill="#4a5568">2回線（各100MW）＋保護リレー</text>
+            <text x="340" y="125" font-size="10" text-anchor="middle" fill="#1a1a2e">平常時 合計 ≤ 160 MW</text>
+            <text x="340" y="145" font-size="9" text-anchor="middle" fill="#4a5568">事故→転送遮断が瞬時に電源60MWを遮断</text>
+            <text x="340" y="160" font-size="9" text-anchor="middle" fill="#4a5568">→ 残り1回線は 160−60 = 100MW に収まる</text>
+            <text x="340" y="182" font-size="9" text-anchor="middle" fill="#16a34a">＋60MWの枠が生まれる</text>
+          </svg>
+          <figcaption>図1: N-1電制。守り方を「事前の余裕」から「事後の瞬時制御」に変えると、枠が広がる</figcaption>
+        </figure>
+
+        <p>
+          もちろん<strong>代償</strong>もあります。事故のたびに電源がまとまって急に落ちるので、
+          その分の需給ショックは調整力・予備力（E-03・F-07）で受け止める必要があります。
+          また、電制の対象になる発電事業者は「事故時には遮断される」条件を受け入れることになります——
+          E-05のノンファーム（混雑時に抑制される条件）と同じく、「<strong>条件つきで枠を広げる</strong>」発想です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 想定潮流の合理化──計算を現実的にして枠を掘り出す</h2>
+        <p>
+          もう1本は、装置ではなく<strong>計算の前提</strong>を変える取組です。
+          B-02の式を思い出してください——空き容量 ＝ 運用容量 − マージン − すでに決まっている利用。
+          この「すでに決まっている利用」を接続検討で見積もるとき、従来は
+          「<strong>接続済みの全電源が最大出力で同時に発電する</strong>」という保守的な想定（想定潮流）を使っていました。
+        </p>
+        <p>
+          しかし現実には、全電源が同時にフル出力になることはまずありません——太陽光は夜ゼロ、
+          電源の稼働には季節・時間の偏りがあります。そこで、<strong>実態に近い想定</strong>
+          （電源種別ごとの稼働実績などを反映）で想定潮流を見積もり直すのが合理化です。
+        </p>
+        <p>
+          数値例です。運用容量 900 MW・マージン 100 MW の送電ルートで——
+        </p>
+        <ul>
+          <li><strong>従来</strong>：全電源フル出力の想定潮流 700 MW → 空き容量 900 − 100 − 700 = <strong>100 MW</strong></li>
+          <li><strong>合理化後</strong>：実態的な最大同時潮流 550 MW → 空き容量 900 − 100 − 550 = <strong>250 MW</strong></li>
+        </ul>
+        <div class="math-block"
+             data-tex="\text{空き容量の増分} = \text{想定潮流の削減量} = 700 - 550 = 150\ \text{MW}"
+             data-fallback="空き容量の増分 ＝ 想定潮流の削減量 ＝ 700 − 550 ＝ 150 MW"></div>
+        <p>
+          <strong>150 MW の枠が「計算の見直しだけで」掘り出されました</strong>。
+          設備も守り方も変えていないので、追加のリスクはほぼありません。
+          E-05で学んだ「空き容量は保守的に見積もられがちで、空きゼロでも実際は流せる余地がある」——
+          その保守性を正面から解消するのが、この合理化です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="運用容量900MWの内訳を上下2段で比較する図。上段の従来はマージン100と全電源フル出力想定の想定潮流700で空き容量100しか残らない。下段の合理化後は実態的な想定潮流550に見直され、空き容量が250に広がる"
+               xmlns="http://www.w3.org/2000/svg">
+            <text x="230" y="24" font-size="10" text-anchor="middle" fill="#1a1a2e">運用容量 900 MW の内訳（数字は例示値）</text>
+            <!-- 従来 -->
+            <text x="30" y="62" font-size="9.5" fill="#4a5568">従来</text>
+            <rect x="70" y="45" width="40" height="30" fill="#fde68a" stroke="#d97706"></rect>
+            <rect x="110" y="45" width="280" height="30" fill="#fecaca" stroke="#dc2626"></rect>
+            <rect x="390" y="45" width="40" height="30" fill="#bbf7d0" stroke="#16a34a"></rect>
+            <text x="90" y="90" font-size="8.5" text-anchor="middle" fill="#b45309">ﾏｰｼﾞﾝ100</text>
+            <text x="250" y="64" font-size="9.5" text-anchor="middle" fill="#1a1a2e">想定潮流 700（全電源フル出力の想定）</text>
+            <text x="410" y="90" font-size="8.5" text-anchor="middle" fill="#15803d">空き100</text>
+            <!-- 合理化後 -->
+            <text x="30" y="132" font-size="9.5" fill="#4a5568">合理化後</text>
+            <rect x="70" y="115" width="40" height="30" fill="#fde68a" stroke="#d97706"></rect>
+            <rect x="110" y="115" width="220" height="30" fill="#fecaca" stroke="#dc2626"></rect>
+            <rect x="330" y="115" width="100" height="30" fill="#bbf7d0" stroke="#16a34a"></rect>
+            <text x="90" y="160" font-size="8.5" text-anchor="middle" fill="#b45309">ﾏｰｼﾞﾝ100</text>
+            <text x="220" y="134" font-size="9.5" text-anchor="middle" fill="#1a1a2e">想定潮流 550（実態的な想定）</text>
+            <text x="380" y="160" font-size="8.5" text-anchor="middle" fill="#15803d">空き250</text>
+            <text x="230" y="182" font-size="9.5" text-anchor="middle" fill="#16a34a">計算の見直しだけで、空き容量が +150 MW</text>
+          </svg>
+          <figcaption>図2: 想定潮流の合理化。想定を実態に近づけた分だけ、空き容量が掘り出される</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 2本の比較と、3本柱の全体像</h2>
+        <p>
+          2本を並べると、性格の違いがはっきりします。
+        </p>
+        <ul>
+          <li><strong>想定潮流の合理化</strong>：変えるのは<strong>計算の想定</strong>。設備・運用はそのままで、追加リスクはほぼなし。ただし掘り出せる量は「従来の想定がどれだけ保守的だったか」で決まります。</li>
+          <li><strong>N-1電制</strong>：変えるのは<strong>守り方</strong>。保護リレーという装置と、電制される電源側の合意が必要で、事故時の需給ショックという代償を調整力で受け止めます。そのかわり、合理化では出てこない枠を作れます。</li>
+        </ul>
+        <p>
+          そして3本目のノンファーム（E-05）は、合理化や電制で広げた枠も使い切ったあとの受け皿——
+          「<strong>混雑前提でも、まず接続する</strong>」でした。つまり3本柱は択一ではなく<strong>段階</strong>の関係です：
+          計算を直す（①）→ 守り方を変える（②）→ それでも足りなければ条件つきで接続する（③）。
+          どの段階でも、増えた接続の混雑は運用（再給電・出力制御）が最後に受け止めます——
+          B-03で学んだ「②層は①層とセットで成り立つ」の意味が、これで数字ごと腹落ちしたはずです。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: multi-choice（2本の性格） -->
+        <div class="exercise" data-exercise-id="b-05-ex01" data-type="multi-choice">
+          <h3>演習 1: 2本の取組の性格</h3>
+          <div class="exercise-problem">
+            <p>N-1電制と想定潮流の合理化について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="b-05-ex01" value="1">
+              <span>想定潮流の合理化は、設備を増やさず、空き容量の「計算の想定」を実態に近づける取組である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-05-ex01" value="2">
+              <span>N-1電制は、故障時に瞬時に電源を自動遮断する装置（転送遮断）を条件に、平常時により多く流せるようにする</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-05-ex01" value="3">
+              <span>N-1電制では、事故時に電制された電源分の需給ショックを、調整力・予備力で受け止める必要がある</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-05-ex01" value="4">
+              <span>想定潮流の合理化を行うと、送電線の熱容量そのものが大きくなる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-05-ex01",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（合理化＝計算の想定の見直し）、2（N-1電制＝事後の瞬時制御を条件に枠を広げる）、3（電制の代償＝事故時の需給ショックは調整力で受け止める）はいずれも正しい。4は誤りで、合理化が変えるのは「計算の想定」だけです——導体の熱容量など設備の物理的な限界は1MWも変わりません。変わるのは『保守的な想定で塞がれていた枠』が使えるようになることです。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（N-1電制の平常時上限・バリアント付き） -->
+        <div class="exercise" data-exercise-id="b-05-ex02" data-type="numeric">
+          <h3>演習 2: N-1電制で流せる上限</h3>
+          <div class="exercise-problem">
+            <p>
+              並列2回線（各回線の容量 <span class="var" data-var="cap">100</span> MW）の送電ルートに転送遮断装置を設置し、
+              1回線故障時には <span class="var" data-var="shed">60</span> MW 分の電源を瞬時に遮断できるようにした。
+              N-1基準（事故後の潮流が残り1回線の容量以下）を守れる、平常時の合計潮流の上限は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              平常時の上限:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-05-ex02",
+          "type": "numeric",
+          "correct": 160,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "平常時の合計潮流を F とすると、事故で残り1回線に F が転流しますが、電制が瞬時に60 MW減らすので残りは F − 60。これが容量100 MW以下であればよいので、F ≤ 100 + 60 = 160 MW。「平常時の上限 ＝ 残り回線の容量 ＋ 電制できる量」です。従来の100 MWと比べて、装置と条件だけで60 MWの枠が生まれました。",
+          "variants": [
+            {
+              "vars": { "cap": "120", "shed": "50" },
+              "correct": 170,
+              "explanation": "平常時の上限 ＝ 残り回線の容量 ＋ 電制できる量 ＝ 120 + 50 = 170 MW。事故時には転流した170 MWから電制で50 MWが即座に減り、残り120 MWが回線容量にちょうど収まります。"
+            },
+            {
+              "vars": { "cap": "100", "shed": "90" },
+              "correct": 190,
+              "explanation": "平常時の上限 ＝ 100 + 90 = 190 MW。電制できる量が大きいほど枠は広がりますが、事故時に90 MWもの電源が一斉に落ちる需給ショックも大きくなります——その分を受け止める調整力・予備力とのバランスが実務の論点になります。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: numeric（合理化の増分・バリアント付き） -->
+        <div class="exercise" data-exercise-id="b-05-ex03" data-type="numeric">
+          <h3>演習 3: 合理化で掘り出される空き容量</h3>
+          <div class="exercise-problem">
+            <p>
+              運用容量 <span class="var" data-var="op">900</span> MW・マージン <span class="var" data-var="mg">100</span> MW の送電ルートで、
+              従来の想定潮流（全電源フル出力）は <span class="var" data-var="old">700</span> MW だった。
+              想定潮流の合理化により、実態的な想定潮流が <span class="var" data-var="new">550</span> MW に見直された。
+              空き容量は何 MW 増えるか。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              空き容量の増分:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-05-ex03",
+          "type": "numeric",
+          "correct": 150,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "従来の空き容量 = 900 − 100 − 700 = 100 MW、合理化後 = 900 − 100 − 550 = 250 MW で、増分は 150 MW。式を見比べると、運用容量とマージンは変わらないので、増分は想定潮流の削減量（700 − 550 = 150 MW）にちょうど等しくなります——「想定を実態に近づけた分だけ、空きが掘り出される」構造です。",
+          "variants": [
+            {
+              "vars": { "op": "1,000", "mg": "120", "old": "760", "new": "640" },
+              "correct": 120,
+              "explanation": "従来の空き容量 = 1,000 − 120 − 760 = 120 MW、合理化後 = 1,000 − 120 − 640 = 240 MW で、増分は 120 MW。増分は想定潮流の削減量（760 − 640）に等しく、運用容量やマージンの値には依存しません。"
+            },
+            {
+              "vars": { "op": "800", "mg": "80", "old": "660", "new": "490" },
+              "correct": 170,
+              "explanation": "従来の空き容量 = 800 − 80 − 660 = 60 MW、合理化後 = 800 − 80 − 490 = 230 MW で、増分は 170 MW（＝想定潮流の削減量 660 − 490）。従来の想定が保守的だったルートほど、合理化で掘り出せる枠は大きくなります。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習4: choice（3本柱の関係） -->
+        <div class="exercise" data-exercise-id="b-05-ex04" data-type="choice">
+          <h3>演習 4: 3本柱の関係</h3>
+          <div class="exercise-problem">
+            <p>コネクト&マネージの3本柱（想定潮流の合理化・N-1電制・ノンファーム型接続）の関係として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="b-05-ex04" value="1">
+              <span>まず計算の見直し（合理化）や守り方の変更（N-1電制）で枠を広げ、それでも空きが足りない電源は混雑時の抑制を条件に接続する（ノンファーム）、という段階の関係にある</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-05-ex04" value="2">
+              <span>3本柱は排他的で、1つの送電線にはどれか1つしか適用できない</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-05-ex04" value="3">
+              <span>ノンファーム型接続が導入されたため、合理化とN-1電制は廃止された</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-05-ex04",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "3本柱は組み合わせて使う段階の関係です。①合理化で「計算上塞がれていた枠」を掘り出し、②N-1電制で「守り方を変えて」さらに広げ、③それでも足りない接続はノンファームが「混雑前提で」受け入れる。そして増えた接続の混雑は、運用（再給電・出力制御）が最後に受け止めます。2の排他的でも、3の廃止でもありません。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/grid/public/riyoukaikaku.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「電力ネットワーク利用の改革」（コネクト&マネージ——想定潮流の合理化・N-1電制・ノンファーム型接続の公開情報）</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/about/special/tokushu/saiene/keitouseiyaku.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「再エネの大量導入に向けて〜『系統制約』問題と対策」（コネクト&マネージの解説）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="04-stability-basics.html" class="unit-nav-prev">&larr; 安定度入門──運用容量を決める残り3つの限度</a>
+      <a href="06-local-and-distribution-congestion.html" class="unit-nav-next">基幹の外の混雑──ローカル系統・配電とDER &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

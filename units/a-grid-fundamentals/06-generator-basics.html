@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A-06: 発電機のきほん──種類・特性・SCUCに現れる制約 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="a" data-unit="a-06">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">A: 系統の基礎</a> &gt;
+      <span>発電機のきほん</span>
+    </nav>
+
+    <article>
+      <h1>A-06: 発電機のきほん──種類・特性・SCUCに現れる制約</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        A領域の本編は <a href="05-three-phase-and-per-unit.html">A-05: 三相交流と単位法（per-unit）</a> で完結しました。ここからは<strong>発展編</strong>です。
+        本サイトの発電機は、これまで「母線に電力を注入する<strong>丸にG</strong>」（A-02）でした。
+        しかし <a href="../d-algorithms/03-scuc-sced-overview.html">D-03: SCUC/SCEDの概要</a> の制約には
+        「起動停止」「出力上下限」という<strong>発電機の都合</strong>が現れています。その都合の物理的な出所——
+        電源の種類ごとの性質（起動時間・最低出力・出力変化速度）——を、系統運用の視点で整理します。
+        D-03や、コマをまたぐ最適化（後続のD-08）を読む土台になります。数式はゼロです。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="02-power-flow-basics.html">A-02: 潮流計算の基礎</a>：発電機は母線への注入（丸にG）として扱ってきた</li>
+          <li><a href="../e-market/07-wholesale-market-and-indirect-auction.html">E-07: 卸電力市場と間接オークション</a>：市場は「安い順」（メリットオーダー）で約定する</li>
+          <li><a href="../d-algorithms/03-scuc-sced-overview.html">D-03</a>：SCUCは起動停止、SCEDは出力配分を決め、出力上下限が制約だった</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：発電機の内部構造（タービン・ボイラ・励磁など）や熱力学には踏み込みません。
+          「<strong>系統運用の側から見える発電機の性質</strong>」だけを扱います（一般的な電力工学の内容のため、参考資料はありません）。
+          数値（起動に数時間、など）はオーダー感を示す目安です。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 電源の種類：役割分担がある</a></li>
+          <li><a href="#section-2">2. 回る電源、回らない電源</a></li>
+          <li><a href="#section-3">3. 運転の3つの制約：起動時間・最低出力・ランプ</a></li>
+          <li><a href="#section-4">4. いくらで発電するか：メリットオーダーの出所</a></li>
+          <li><a href="#section-5">5. まとめ：発電機の都合が数式になる</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 電源の種類：役割分担がある</h2>
+        <p>
+          発電機はどれも同じではありません。主な電源を、系統運用の目線——<strong>動かしやすさ</strong>——で並べてみます。
+        </p>
+        <ul>
+          <li><strong>原子力</strong>：一定出力で長期間運転する使い方に向きます。こまめな上げ下げはしません。</li>
+          <li><strong>水力（流れ込み式）</strong>：川の流れをそのまま使うため、出力は自然まかせ。これも一定運転に近い電源です。</li>
+          <li><strong>火力（石炭・LNG・石油）</strong>：燃料を燃やす電源。出力調整の主力ですが、後述のとおり型式で機動力が違います。</li>
+          <li><strong>ガスタービン（GT）・水力（貯水池式）</strong>：起動が速く、急な変化への切り札になります。</li>
+          <li>
+            <strong><span class="term">揚水発電<span class="term-tooltip">上下2つの池を持ち、電気が余るときに水を汲み上げて（充電に相当）、足りないときに落として発電する（放電に相当）水力発電。起動・出力変化が速く、系統にとって巨大な蓄電池のように働く。</span></span></strong>：
+            余るときに水を汲み上げ、足りないときに落として発電——<strong>巨大な蓄電池</strong>のように働く水力です。
+          </li>
+          <li><strong>太陽光・風力</strong>：自然変動電源（F-02）。出力は天候が決め、指令で「増やす」ことはできません（減らす＝出力制御はE-06）。</li>
+        </ul>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="電源を動かしやすさの軸に並べた図。左のほぼ一定運転側に原子力と流れ込み式水力、中ほどに石炭火力とLNG火力、右の機動力が高い側にガスタービン・貯水池式水力・揚水発電が並び、太陽光・風力は天候まかせで軸の外に置かれる"
+               xmlns="http://www.w3.org/2000/svg">
+            <line x1="30" y1="90" x2="430" y2="90" stroke="#94a3b8" stroke-width="1.5"></line>
+            <text x="30" y="70" font-size="9.5" fill="#4a5568">← ほぼ一定運転</text>
+            <text x="430" y="70" font-size="9.5" text-anchor="end" fill="#4a5568">機動力が高い →</text>
+            <g font-size="9" text-anchor="middle">
+              <rect x="40" y="100" width="80" height="34" rx="6" fill="#f0fdf4" stroke="#16a34a"></rect>
+              <text x="80" y="114" fill="#1a1a2e">原子力</text>
+              <text x="80" y="127" fill="#1a1a2e">流れ込み水力</text>
+              <rect x="140" y="100" width="70" height="34" rx="6" fill="#fffbeb" stroke="#d97706"></rect>
+              <text x="175" y="121" fill="#1a1a2e">石炭火力</text>
+              <rect x="228" y="100" width="70" height="34" rx="6" fill="#fffbeb" stroke="#d97706"></rect>
+              <text x="263" y="121" fill="#1a1a2e">LNG火力</text>
+              <rect x="316" y="100" width="114" height="34" rx="6" fill="#fef2f2" stroke="#ef4444"></rect>
+              <text x="373" y="114" fill="#1a1a2e">GT・貯水池水力</text>
+              <text x="373" y="127" fill="#1a1a2e">揚水発電</text>
+            </g>
+            <rect x="140" y="150" width="180" height="30" rx="6" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="230" y="169" font-size="9" text-anchor="middle" fill="#1a1a2e">太陽光・風力：出力は天候まかせ（軸の外）</text>
+            <text x="230" y="30" font-size="10" text-anchor="middle" fill="#1a1a2e">系統運用の目線＝「どれだけ思いどおりに動かせるか」</text>
+          </svg>
+          <figcaption>図1: 電源の役割分担。「動かしやすさ」で見ると、電源ごとの持ち場が見えてくる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 回る電源、回らない電源</h2>
+        <p>
+          もう1つ、系統の物理にとって大事な分け方があります。<strong>回っているか、回っていないか</strong>です。
+        </p>
+        <ul>
+          <li>
+            <strong><span class="term">同期発電機<span class="term-tooltip">タービンなどで回転子を回し、系統と同じ周波数に同期して回転しながら交流を発電する発電機。火力・水力・原子力はこの方式。B領域で学んだ「同期」（歩調を合わせて回る）の主体。</span></span></strong>：
+            火力・水力・原子力はみな、タービンで回転子を回して交流を作ります。
+            その回転は系統の周波数と<strong>同期</strong>しています——B-02・B-04で学んだ「同期」（歩調を合わせる）の主体は、この回転体でした。
+          </li>
+          <li>
+            <strong><span class="term">インバータ電源<span class="term-tooltip">太陽光（直流）や蓄電池、多くの風力のように、パワーエレクトロニクスの変換器（インバータ）を介して系統に接続する電源。回転体が系統と直結していない。</span></span></strong>：
+            太陽光は直流で発電し、蓄電池も直流です。これらは<strong>インバータ</strong>（電力変換器）で交流に変換して系統につながります。
+            多くの風力も変換器を介します。<strong>回転体が系統と直結していない</strong>のが特徴です。
+          </li>
+        </ul>
+        <p>
+          この違いは本ユニットでは「分類」として押さえれば十分ですが、伏線として一言だけ——
+          B-04の同期安定性は「回る電源どうしの引っ張り合い」の話でした。
+          回らない電源の比率が増えていくことは、系統の物理の土台が変わっていくということでもあります
+          （この深掘りは将来のユニット候補です）。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 運転の3つの制約：起動時間・最低出力・ランプ</h2>
+        <p>
+          発電機は「スイッチひとつで好きな出力が出る箱」ではありません。系統運用から見える代表的な制約が3つあります。
+        </p>
+        <ul>
+          <li>
+            <strong>① <span class="term">起動時間<span class="term-tooltip">発電機を停止状態から系統に並列し出力を出せる状態にするまでにかかる時間。冷えた大型汽力では数時間〜半日オーダー、ガスタービンは数十分、水力・揚水は数分と、電源種別で大きく異なる。SCUCが早めに実行される理由。</span></span></strong>：
+            冷えた状態の大型汽力（石炭など）はボイラをゆっくり温める必要があり、起動に<strong>数時間〜半日</strong>オーダーかかります。
+            GTは<strong>数十分</strong>、水力・揚水は<strong>数分</strong>——「思い立ってすぐ」は無理な電源があるのです。
+          </li>
+          <li>
+            <strong>② <span class="term">最低出力<span class="term-tooltip">運転を安定に保てる出力の下限。火力では燃焼の安定などから定格の3〜5割程度になることが多い。「起動したら最低ここまでは出てしまう」という性質で、SCUCの出力下限制約・供給過剰時の下げ代の限界として効く。</span></span></strong>：
+            運転を安定に保てる<strong>下限</strong>です（火力では燃焼の安定などから定格の3〜5割程度が目安）。
+            「起動したら、最低ここまでは出てしまう」——ゼロと最低出力の間では運転できません。
+          </li>
+          <li>
+            <strong>③ <span class="term">ランプ（出力変化速度）<span class="term-tooltip">発電機が出力を変えられる速さ。1分あたり何MW（定格の数%/分程度が目安）。30分コマの間に動ける量の上限を決め、コマとコマの計画をつなぐ時間結合制約の出所になる。</span></span></strong>：
+            出力を変えられる<strong>速さ</strong>です。1分あたり数MW〜（定格の数%/分程度）が目安。
+            たとえばランプ 3 MW/分の発電機は、30分コマの間に最大でも 3 × 30 = <strong>90 MW</strong> しか動けません。
+            計画は「階段を一段ずつ」しか登れないのです。
+          </li>
+        </ul>
+        <p>
+          このほか、「一度起動したら最低◯時間は運転する（最低運転時間）」「止めたら最低◯時間は再起動しない（最低停止時間）」、
+          起動のたびにかかる燃料などの<strong>起動費</strong>もあります（F-06の三部制入札で登場した「起動費」の正体です）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="横軸に時間、縦軸に出力をとった発電機の出力カーブ。起動指令からしばらくは出力ゼロの起動時間が続き、並列後は最低出力から始まり、ランプの傾きで徐々に上昇して定格出力に達する。ゼロと最低出力の間では運転できないことも示す"
+               xmlns="http://www.w3.org/2000/svg">
+            <line x1="50" y1="175" x2="440" y2="175" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="50" y1="30" x2="50" y2="175" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="245" y="198" font-size="10" text-anchor="middle" fill="#4a5568">時間 →</text>
+            <text x="42" y="102" font-size="10" text-anchor="middle" fill="#4a5568" transform="rotate(-90 42 102)">出力</text>
+            <!-- 起動時間 -->
+            <line x1="50" y1="175" x2="170" y2="175" stroke="#dc2626" stroke-width="3"></line>
+            <text x="110" y="163" font-size="9" text-anchor="middle" fill="#dc2626">① 起動時間（出力ゼロのまま）</text>
+            <!-- 最低出力ジャンプ -->
+            <line x1="170" y1="175" x2="170" y2="128" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"></line>
+            <line x1="50" y1="128" x2="440" y2="128" stroke="#d97706" stroke-width="1" stroke-dasharray="6 4"></line>
+            <text x="58" y="121" font-size="9" fill="#b45309">② 最低出力（ここ未満では運転できない）</text>
+            <!-- ランプ上昇 -->
+            <line x1="170" y1="128" x2="330" y2="52" stroke="#1a1a2e" stroke-width="2.5"></line>
+            <text x="270" y="105" font-size="9" fill="#1a1a2e">③ ランプの傾きでしか上げられない</text>
+            <!-- 定格 -->
+            <line x1="330" y1="52" x2="440" y2="52" stroke="#1a1a2e" stroke-width="2.5"></line>
+            <line x1="50" y1="52" x2="330" y2="52" stroke="#94a3b8" stroke-width="1" stroke-dasharray="6 4"></line>
+            <text x="58" y="45" font-size="9" fill="#4a5568">定格出力（最大）</text>
+          </svg>
+          <figcaption>図2: 発電機の出力カーブ。起動時間・最低出力・ランプの3つの制約が形を決める</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. いくらで発電するか：メリットオーダーの出所</h2>
+        <p>
+          E-07で、市場は「安い順」＝メリットオーダーで約定すると学びました。その「安い・高い」の正体が、
+          電源ごとの<strong>限界費用</strong>——追加で1kWh発電するのにかかる費用（主に燃料費）——です。
+        </p>
+        <ul>
+          <li><strong>水力・原子力・再エネ</strong>：燃料費がかからない（またはごく小さい）ため、限界費用は<strong>ほぼゼロ</strong>。市場で最初に約定していく側です。</li>
+          <li><strong>火力</strong>：燃料費がそのまま乗ります。おおむね石炭 → LNG → 石油の順に高くなり、需給が締まるほど高い電源まで動員されます。</li>
+        </ul>
+        <p>
+          そしてこれが、D-03の目的関数 min Σ c<sub>k</sub>P<sub>k</sub> の<strong>係数 c<sub>k</sub>（発電単価）の出所</strong>です。
+          E-10で学んだ「調整力の限界的kWh価格」も、動かした電源の限界費用の並びから決まっていました。
+          市場も最適化も精算も、根っこは同じ——<strong>電源ごとの燃料費の並び</strong>なのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. まとめ：発電機の都合が数式になる</h2>
+        <p>
+          本ユニットの性質たちが、D領域の最適化のどこに現れるかを対応表にします。
+        </p>
+        <ul>
+          <li><strong>起動時間</strong> → 直前には間に合わないから、SCUC（起動停止）は<strong>早めに</strong>実行される（F-04）。オン/オフが0/1変数になり、問題をMIPにする（D-06）。</li>
+          <li><strong>最低出力・最大出力</strong> → D-03の制約③「出力上下限」そのもの。オンのときは Pmin ≤ P ≤ Pmax。</li>
+          <li><strong>ランプ</strong> → 隣り合うコマの出力差の上限。<strong>コマとコマをつなぐ制約</strong>になる——1コマずつ独立には解けない理由で、続きは <a href="../d-algorithms/08-time-coupling-storage.html">D-08: コマをまたぐ制約</a> で扱います（予告）。</li>
+          <li><strong>限界費用・起動費</strong> → 目的関数の係数 c<sub>k</sub> と起動コスト項（F-06の三部制入札）。</li>
+        </ul>
+        <p>
+          「丸にG」の中身は、<strong>都合と値段を持った機械</strong>でした。
+          そしてSCUC/SCEDの数式の一行一行は、この都合と値段を写し取ったものです。
+          発電機の性質が分かると、最適化の制約が「なぜあるのか」まで読めるようになります。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: multi-choice（電源の特徴） -->
+        <div class="exercise" data-exercise-id="a-06-ex01" data-type="multi-choice">
+          <h3>演習 1: 電源の役割分担</h3>
+          <div class="exercise-problem">
+            <p>電源の特徴について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="a-06-ex01" value="1">
+              <span>ガスタービン（GT）や揚水発電は起動が速く、急な需給の変化への切り札になる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-06-ex01" value="2">
+              <span>原子力や流れ込み式水力は、一定出力で長く運転する使い方に向く</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-06-ex01" value="3">
+              <span>太陽光・風力の出力は天候が決めるため、指令で増やすことはできない</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-06-ex01" value="4">
+              <span>冷えた状態の大型石炭火力は、数分で起動して定格出力を出せる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-06-ex01",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（GT・揚水＝数十分〜数分で起動できる機動力）、2（原子力・流れ込み水力＝一定運転向き）、3（自然変動電源は増やす方向の指令はできない。減らす＝出力制御はE-06）はいずれも正しい。4は誤りで、冷えた大型汽力はボイラを温めるのに数時間〜半日オーダーかかります。この「すぐには起動できない」性質が、SCUCが早めに実行される理由です。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（ランプ制約・バリアント付き） -->
+        <div class="exercise" data-exercise-id="a-06-ex02" data-type="numeric">
+          <h3>演習 2: 30分後に出せる最大出力</h3>
+          <div class="exercise-problem">
+            <p>
+              現在の出力が <span class="var" data-var="p0">200</span> MW、ランプ（出力変化速度）が <span class="var" data-var="ramp">3</span> MW/分、
+              最大出力が <span class="var" data-var="pmax">350</span> MW の発電機がある。
+              30分後に出せる最大の出力は何 MW か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              30分後の最大出力:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-06-ex02",
+          "type": "numeric",
+          "correct": 290,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "ランプで30分間に増やせるのは 3 MW/分 × 30分 = 90 MW。現在の200 MWから最大 200 + 90 = 290 MW まで上げられます。最大出力350 MWにはまだ届きません（290 ≤ 350 なのでランプが効く側）。この「コマの間に動ける量の上限」が、コマとコマの計画をつなぐ制約（D-08）になります。",
+          "variants": [
+            {
+              "vars": { "p0": "280", "ramp": "4", "pmax": "350" },
+              "correct": 350,
+              "explanation": "ランプで30分間に増やせるのは 4 × 30 = 120 MW で、280 + 120 = 400 MW まで行けそうに見えます。しかし最大出力が350 MWなので、答えは min(400, 350) = 350 MW——今度は最大出力（上限）で頭打ちになります。ランプと上下限、どちらの制約が効くかは状況次第です。"
+            },
+            {
+              "vars": { "p0": "150", "ramp": "2", "pmax": "300" },
+              "correct": 210,
+              "explanation": "ランプで30分間に増やせるのは 2 × 30 = 60 MW。現在の150 MWから最大 150 + 60 = 210 MW まで（最大出力300 MWには届かず、ランプが効く側）。ランプが小さい発電機ほど、急な計画変更についていけないことが分かります。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: choice（同期発電機とインバータ電源） -->
+        <div class="exercise" data-exercise-id="a-06-ex03" data-type="choice">
+          <h3>演習 3: 回る電源、回らない電源</h3>
+          <div class="exercise-problem">
+            <p>同期発電機とインバータ電源の違いの説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-06-ex03" value="1">
+              <span>同期発電機は回転子が系統と同じ周波数に同期して回るのに対し、インバータ電源は電力変換器を介して接続され、回転体が系統と直結しない</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-06-ex03" value="2">
+              <span>同期発電機は直流を発電し、インバータ電源は交流を発電する</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-06-ex03" value="3">
+              <span>同期発電機は夜間に、インバータ電源は昼間にしか運転できない</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-06-ex03",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "火力・水力・原子力はタービンで回転子を回して交流を作る同期発電機で、その回転は系統周波数と同期しています（B-02・B-04の「同期」の主体）。太陽光や蓄電池は直流をインバータで交流に変換して接続するため、回転体が系統と直結しません。2は逆です（同期発電機が交流を発電。太陽光の発電は直流）。3のような昼夜の制限は方式とは無関係です（太陽光が昼だけなのは燃料＝日射の都合であって、インバータの都合ではありません）。"
+        }
+        </script>
+
+        <!-- 演習4: choice（SCUCとの接続） -->
+        <div class="exercise" data-exercise-id="a-06-ex04" data-type="choice">
+          <h3>演習 4: なぜSCUCの制約になるのか</h3>
+          <div class="exercise-problem">
+            <p>起動時間や最低出力が、SCUC（起動停止計画）で制約として扱われる理由として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-06-ex04" value="1">
+              <span>起動には時間がかかり、起動すれば最低出力までは必ず出てしまうため、直前になってから「どの発電機を使うか」を自由に変えられないから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-06-ex04" value="2">
+              <span>発電機は一度起動すると、二度と停止できないから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-06-ex04" value="3">
+              <span>SCUCは送電線をどこに建設するかを決める計算だから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-06-ex04",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "起動時間（数十分〜半日）のせいで「使いたくなってから起動」では間に合わず、最低出力のせいで「起動だけして出力ゼロで待機」もできません。だから、どれをオンにするかは先の時間断面まで見て早めに決める必要があり（F-04のSCUCのタイミング）、オン/オフの0/1変数として最適化の制約になります（D-06のMIP）。2は誤り（最低運転時間はあっても停止はできます）、3も誤り（送電線の建設は長期の設備形成の話で、SCUCの範囲外です）。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="05-three-phase-and-per-unit.html" class="unit-nav-prev">&larr; 三相交流と単位法（per-unit）</a>
+      <a href="07-frequency-and-inertia.html" class="unit-nav-next">周波数と慣性──なぜ50Hzに保てるのか &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

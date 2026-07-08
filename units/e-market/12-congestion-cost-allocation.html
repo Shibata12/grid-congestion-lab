@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-12: 混雑処理の費用は誰が負担するか - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-12">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>混雑処理の費用負担</span>
+    </nav>
+
+    <article>
+      <h1>E-12: 混雑処理の費用は誰が負担するか</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の3本目です。<a href="../d-algorithms/02-redispatch.html">D-02: 再給電（リディスパッチ）</a> では
+        「どれだけ動かすか」の計算を学びましたが、動かせば<strong>お金がかかります</strong>。
+        混雑処理の費用はどこから生まれ、いくらになり、最後は誰の財布から出ていくのか——
+        本ユニットは、混雑を「<strong>お金の流れ</strong>」の面から締めくくります。
+        D-07（混雑の値段）が理論編なら、こちらは制度編です。新しい式は1本（引き算とかけ算）。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../d-algorithms/02-redispatch.html">D-02</a>：再給電＝混雑解消のため、下げ（混雑側）と上げ（反対側）をペアで行う</li>
+          <li><a href="05-non-firm-connection.html">E-05: ノンファーム型接続</a>：ノンファーム電源は混雑時の出力制御が接続の条件</li>
+          <li><a href="../b-congestion/03-congestion-countermeasures-map.html">B-03</a>：恒久策は系統増強。ただし時間と費用がかかる</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：費用負担のルールは<strong>制度の見直しが続いている領域</strong>です。
+          本ユニットは2026年7月時点の公開資料に基づく大枠を扱い、精算単価の算定細目や個別の経過措置には踏み込みません。
+          検討が続いている論点は「検討中」と明示します（末尾の<a href="#references">参考資料</a>）。数値例は例示値です。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 再給電の費用はどこから生まれるか</a></li>
+          <li><a href="#section-2">2. 出力制御の場合：ノンファームは無補償</a></li>
+          <li><a href="#section-3">3. 誰が払うのか：託送料金と一般負担・特定負担</a></li>
+          <li><a href="#section-4">4. 費用の「見え方」：ゾーン制とノーダル制ふたたび</a></li>
+          <li><a href="#section-5">5. まとめ：費用が増強の判断材料になる</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 再給電の費用はどこから生まれるか</h2>
+        <p>
+          D-02の再給電を、お金の目で見直します。混雑側の発電機を下げ、反対側を上げる——
+          このペア操作で<strong>発電量の合計は変わりません</strong>。それでも費用が生まれるのはなぜでしょうか。
+        </p>
+        <ul>
+          <li><strong>下げた側</strong>：発電を減らすので、燃料費が<strong>浮きます</strong>（節約）。ただし下げられるのはたいてい<strong>安い電源</strong>です（混雑側にいるのが安い再エネ・大型電源だから混雑するのです）。</li>
+          <li><strong>上げた側</strong>：焚き増しで燃料費が<strong>余計にかかります</strong>。しかも上げられるのは、市場で約定していなかった＝<strong>高い電源</strong>です。</li>
+        </ul>
+        <p>
+          つまり<span class="term">混雑処理費用<span class="term-tooltip">混雑を運用（再給電・出力制御）で処理するためにかかる追加費用。再給電では「上げ側の焚き増し費 − 下げ側の節約費」＝安い電源を高い電源で置き換えるメリットオーダーの崩れがその正体。混雑が続く場所ほど累積し、系統増強の費用対効果を測る材料になる。</span></span>の正体は、
+          「<strong>安い電源を、高い電源で置き換える</strong>」こと——メリットオーダーの崩れです。
+        </p>
+        <div class="math-block"
+             data-tex="\text{再給電の追加費用} = (\text{上げ側の単価} - \text{下げ側の単価}) \times \text{動かした量}"
+             data-fallback="再給電の追加費用 ＝（上げ側の単価 − 下げ側の単価）× 動かした量"></div>
+        <p>
+          数値例です。単価 8千円/MWh の電源を 50 MW 下げ、単価 14千円/MWh の電源を 50 MW 上げて1時間運転すると、
+          追加費用は (14 − 8) × 50 = <strong>300千円（30万円）/時</strong>。
+          1回は小さくても、混雑が毎日・何時間も続く場所では、この費用が積み上がっていきます。
+          お気づきのとおり、この式はD-07のシャドープライスの計算と<strong>同じ形</strong>です——
+          混雑の値段とは、まさにこの置き換え費用のことでした。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 出力制御の場合：ノンファームは無補償</h2>
+        <p>
+          もう1つの混雑処理——出力制御（E-06）——のお金はどうでしょうか。
+          ここで効いてくるのが<strong>接続のときの約束</strong>です。
+          E-05で学んだとおり、ノンファーム型接続の電源は「混雑時に出力制御されること」を<strong>条件として</strong>接続しています。
+          だから現行ルールでは、混雑による出力制御に<strong>金銭補償はありません</strong>（無補償）。
+          発電事業者から見れば、抑制された分は売れなかった機会損失としてそのまま自分に残ります。
+        </p>
+        <p>
+          この「無補償」は、接続を早く・安く実現するための取引でした——
+          増強を待たずに接続できる代わりに、混雑リスクは自分持ち。
+          発電事業者は「抑制される見込み量」を織り込んで事業性を判断することになり、
+          だからこそ抑制見込みの情報公表や、抑制を減らす取組（系統用蓄電池の活用＝D-08など）が重要になります。
+          なお、費用負担や補償の在り方は同時市場の検討（F-06）とも絡んで<strong>議論が続いている論点</strong>です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 誰が払うのか：託送料金と一般負担・特定負担</h2>
+        <p>
+          §1の再給電費用は、指令を出した一般送配電事業者がいったん支払います。しかし送配電事業は地域独占なので、
+          その費用は最終的に<strong>託送料金</strong>（送配電網の利用料。電気料金の一部として全需要家が払う）などを通じて、
+          <strong>広く社会に</strong>行き着きます。
+        </p>
+        <p>
+          この「広く負担」には名前があります。B-03の系統増強の費用と合わせて、負担の区分を整理しましょう——
+          <span class="term">一般負担・特定負担<span class="term-tooltip">系統の費用を誰が負担するかの区分。一般負担は託送料金などを通じて需要家全体で広く負担するもの（系統全体の便益になる増強・運用費用など）。特定負担は原因者・受益者である特定の発電事業者などが個別に負担するもの（自分の接続のためだけの工事費など）。</span></span>です。
+        </p>
+        <ul>
+          <li><strong>一般負担</strong>：系統全体の便益になる費用は、託送料金などを通じて<strong>需要家全体で</strong>負担する。基幹系統の増強や、再給電などの運用費用はこちらが基本です。</li>
+          <li><strong>特定負担</strong>：特定の事業者のためだけの費用——たとえば自分の発電所をつなぐための引込線の工事——は、<strong>その事業者が個別に</strong>負担する。</li>
+        </ul>
+        <p>
+          つまり混雑のお金の流れはこうです：混雑が起きる → 再給電の追加費用が発生 → 一般送配電事業者が支払う →
+          託送料金などを通じて<strong>みんなで負担</strong>。混雑は「系統の問題」であると同時に、
+          <strong>電気料金にしみ出していく社会的コスト</strong>なのです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="混雑の発生から費用負担までのお金の流れ。混雑を再給電で処理すると追加費用が発生し、一般送配電事業者がいったん支払い、託送料金などを通じて需要家全体が広く負担する（一般負担）。ノンファーム電源の出力制御は無補償で、機会損失は発電事業者自身に残ることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="e12-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <rect x="15" y="30" width="120" height="48" rx="8" fill="#fef2f2" stroke="#ef4444"></rect>
+            <text x="75" y="50" font-size="10" text-anchor="middle" fill="#1a1a2e">混雑発生</text>
+            <text x="75" y="66" font-size="8.5" text-anchor="middle" fill="#4a5568">再給電で処理（D-02）</text>
+            <rect x="170" y="30" width="130" height="48" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="235" y="50" font-size="10" text-anchor="middle" fill="#1a1a2e">一般送配電事業者</text>
+            <text x="235" y="66" font-size="8.5" text-anchor="middle" fill="#4a5568">追加費用をいったん支払う</text>
+            <rect x="335" y="30" width="110" height="48" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="390" y="50" font-size="10" text-anchor="middle" fill="#1a1a2e">需要家全体</text>
+            <text x="390" y="66" font-size="8.5" text-anchor="middle" fill="#4a5568">託送料金で広く負担</text>
+            <line x1="135" y1="54" x2="167" y2="54" stroke="#4a5568" stroke-width="1.5" marker-end="url(#e12-ah)"></line>
+            <line x1="300" y1="54" x2="332" y2="54" stroke="#4a5568" stroke-width="1.5" marker-end="url(#e12-ah)"></line>
+            <text x="316" y="46" font-size="8" text-anchor="middle" fill="#4a5568">一般負担</text>
+            <rect x="15" y="120" width="285" height="48" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="157" y="140" font-size="10" text-anchor="middle" fill="#1a1a2e">ノンファーム電源の出力制御（E-05・E-06）</text>
+            <text x="157" y="156" font-size="8.5" text-anchor="middle" fill="#4a5568">無補償——機会損失は発電事業者自身に残る（接続時の条件）</text>
+            <text x="230" y="190" font-size="9.5" text-anchor="middle" fill="#4a5568">負担の在り方は、同時市場の検討とも絡んで議論が続いている</text>
+          </svg>
+          <figcaption>図1: 混雑のお金の流れ。再給電費用は託送料金で広く負担、ノンファームの抑制は無補償</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 費用の「見え方」：ゾーン制とノーダル制ふたたび</h2>
+        <p>
+          D-07の対比が、お金の面でも効いてきます。
+          日本（ゾーン制＋再給電）では、地内混雑の費用は市場価格に<strong>現れません</strong>。
+          運用費用として一般送配電事業者の帳簿に積まれ、託送料金に薄く広く溶けていきます——
+          <strong>確かに存在するのに、値札としては見えにくい</strong>のです。
+        </p>
+        <p>
+          一方、米国のノーダル制では地内混雑もLMPの価格差として<strong>市場にそのまま現れます</strong>。
+          誰でも「この線の混雑は年間いくら」と読める。
+          日本の同時市場の検討（F-06）でSCUC/SCEDが約定を決めるようになれば、
+          最適化の副産物であるシャドープライス（D-07）を通じて、
+          混雑費用の<strong>見える化</strong>が進む可能性があります（価格への反映のしかたは検討中の論点です）。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. まとめ：費用が増強の判断材料になる</h2>
+        <p>
+          最後に、B-03の地図に戻って締めくくります。混雑処理費用は「困った出費」であると同時に、
+          <strong>大事な判断材料</strong>です。ある送電ルートで再給電費用と抑制量が年々積み上がっているなら、
+          それは「増強（③層）の便益がそれだけ大きい」ことの証拠——
+          B-03で「運用の実績が増強を判断する材料になる」と学んだ循環の、具体的な中身がこの費用でした。
+        </p>
+        <ul>
+          <li><strong>費用の発生</strong>：再給電＝単価差×量（メリットオーダーの崩れ）。出力制御（ノンファーム）＝無補償の機会損失。</li>
+          <li><strong>費用の負担</strong>：運用費用は託送料金を通じて一般負担。接続個別の工事は特定負担。</li>
+          <li><strong>費用の活用</strong>：累積費用が大きい場所は増強・蓄電池設置の候補地（D-07のシャドープライス・D-08の場所の価値と同じ結論）。</li>
+        </ul>
+        <p>
+          混雑は物理（潮流）でも、計算（最適化）でも、そしてお金（費用と負担）でも語れる——
+          3つの言葉で同じものを見られるようになったら、混雑の全体像はもう手の中です。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（費用の正体） -->
+        <div class="exercise" data-exercise-id="e-12-ex01" data-type="choice">
+          <h3>演習 1: 再給電費用の正体</h3>
+          <div class="exercise-problem">
+            <p>再給電で発電量の合計は変わらないのに追加費用が発生する理由として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-12-ex01" value="1">
+              <span>下げられるのは安い電源、上げられるのは高い電源であることが多く、「安い電源を高い電源で置き換える」メリットオーダーの崩れが生じるから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-12-ex01" value="2">
+              <span>再給電を行うたびに、送電線の建設費を払い直す必要があるから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-12-ex01" value="3">
+              <span>発電量の合計が2倍になるから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-12-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "再給電は「下げ＝上げ」のペアなので発電量の合計は不変ですが、混雑側で下がるのは安い電源（だからこそたくさん流れて混雑する）、反対側で上がるのは市場で約定していなかった高い電源です。この単価差×動かした量が追加費用＝混雑処理費用の正体で、D-07のシャドープライスの計算と同じ形をしています。2の建設費は設備形成の話、3は誤り（合計は変わりません）。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（再給電費用・バリアント付き） -->
+        <div class="exercise" data-exercise-id="e-12-ex02" data-type="numeric">
+          <h3>演習 2: 再給電の追加費用</h3>
+          <div class="exercise-problem">
+            <p>
+              混雑解消のため、単価 <span class="var" data-var="cdown">8</span> 千円/MWh の電源を <span class="var" data-var="q">50</span> MW 下げ、
+              単価 <span class="var" data-var="cup">14</span> 千円/MWh の電源を同じ <span class="var" data-var="q2">50</span> MW 上げて1時間運転した。
+              この再給電の追加費用は何千円か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              追加費用:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 千円
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-12-ex02",
+          "type": "numeric",
+          "correct": 300,
+          "tolerance": 0,
+          "unit": "千円",
+          "explanation": "追加費用 =（上げ側の単価 − 下げ側の単価）× 動かした量 = (14 − 8) × 50 = 300千円（30万円）/時。下げ側で浮いた燃料費（8×50）と、上げ側で余計にかかった燃料費（14×50）の差額です。混雑が毎日数時間続く場所では、この額が年間で大きく積み上がり、増強の費用対効果を測る材料になります。",
+          "variants": [
+            {
+              "vars": { "cdown": "9", "cup": "13", "q": "40", "q2": "40" },
+              "correct": 160,
+              "explanation": "追加費用 = (13 − 9) × 40 = 160千円/時。単価差が小さい（動かせる電源どうしの価格が近い）ほど、同じ量の再給電でも費用は小さくなります。"
+            },
+            {
+              "vars": { "cdown": "7", "cup": "15", "q": "80", "q2": "80" },
+              "correct": 640,
+              "explanation": "追加費用 = (15 − 7) × 80 = 640千円/時。単価差が大きく量も多いと費用は跳ね上がります。こうした場所は「混雑の値段（シャドープライス）が高い場所」であり、増強や系統用蓄電池の設置の便益が大きい候補地です。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（負担の整理） -->
+        <div class="exercise" data-exercise-id="e-12-ex03" data-type="multi-choice">
+          <h3>演習 3: 誰が負担するか</h3>
+          <div class="exercise-problem">
+            <p>混雑にかかわる費用の負担について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="e-12-ex03" value="1">
+              <span>ノンファーム型接続の電源が混雑で出力制御されても、現行ルールでは金銭補償はない（接続時の条件）</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-12-ex03" value="2">
+              <span>再給電にかかる費用は、最終的には託送料金などを通じて需要家全体で広く負担される（一般負担の考え方）</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-12-ex03" value="3">
+              <span>特定の発電所をつなぐためだけの工事費は、その事業者が個別に負担する（特定負担）</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-12-ex03" value="4">
+              <span>混雑処理の費用は、送電線を製造したメーカーが全額負担する</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-12-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（ノンファームの抑制は無補償——「増強を待たず接続できる代わりに混雑リスクは自分持ち」という接続時の取引）、2（運用費用は一般負担で広く社会へ）、3（個別の便益には特定負担）はいずれも正しい。4のような製造メーカー負担のルールはありません。なお費用負担・補償の在り方は、同時市場の検討とも絡んで議論が続いている論点です。"
+        }
+        </script>
+
+        <!-- 演習4: choice（費用の見え方） -->
+        <div class="exercise" data-exercise-id="e-12-ex04" data-type="choice">
+          <h3>演習 4: 混雑費用の「見え方」</h3>
+          <div class="exercise-problem">
+            <p>混雑処理費用の市場での「見え方」について、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-12-ex04" value="1">
+              <span>日本のゾーン制では地内混雑の費用は市場価格に現れず運用費用として託送料金に溶け込むが、米国のノーダル制ではLMPの価格差として市場にそのまま現れる</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-12-ex04" value="2">
+              <span>どの国の制度でも、混雑費用は市場価格に一切現れないことになっている</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-12-ex04" value="3">
+              <span>日本では地内混雑の費用が毎コマのスポット価格に母線単位で反映されている</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-12-ex04",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "ゾーン制（日本・欧州）では地内混雑は価格に映らず、再給電の運用費用として事後に集計され託送料金に溶けます——確かに存在するのに値札が見えにくい。ノーダル制（米国）ではLMPの価格差として誰にでも見えます（D-07）。3は誤りで、日本のスポット価格はエリア単位（ゾーン）であり母線単位ではありません。同時市場の検討では、この「見える化」がどこまで進むかも論点の1つです。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/grid/public/riyoukaikaku.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「電力ネットワーク利用の改革」（再給電方式・ノンファーム型接続など系統利用ルールの公開情報）</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/about/special/tokushu/saiene/keitouseiyaku.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「再エネの大量導入に向けて〜『系統制約』問題と対策」（系統制約と費用負担の考え方の解説）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="11-intraday-market.html" class="unit-nav-prev">&larr; 時間前市場──スポットの後、ゲートクローズの前</a>
+      <a href="13-capacity-market.html" class="unit-nav-next">kWの市場──容量市場と長期脱炭素電源オークション &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

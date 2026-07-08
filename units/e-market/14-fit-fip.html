@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-14: FIT/FIPと再エネの市場統合 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-14">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>FIT/FIP</span>
+    </nav>
+
+    <article>
+      <h1>E-14: FIT/FIPと再エネの市場統合</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の5本目、E領域の締めくくりです。E-04の優先給電ルールにも、E-06の出力制御にも、
+        「FIT電源」という言葉が制度の前提として顔を出していました。
+        再エネの普及を支えてきた<strong>FIT</strong>（固定価格買取）と、その次の姿である<strong>FIP</strong>（市場価格＋プレミアム）——
+        この2つの違いは「補助のしかた」だけでなく、<strong>再エネが市場や系統の一員として振る舞うかどうか</strong>を分けます。
+        E-10・E-11で学んだBGの世界と再エネがつながる、市場統合の話です。計算は足し算1回。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="07-wholesale-market-and-indirect-auction.html">E-07</a>：スポット市場の価格はコマごとに変わる（安い時間・高い時間がある）</li>
+          <li><a href="10-imbalance-pricing.html">E-10</a>・<a href="11-intraday-market.html">E-11</a>：BGは計画を守る責任（インバランス）を負い、予測と市場で管理する</li>
+          <li><a href="06-renewable-curtailment.html">E-06: 再エネ出力制御のしくみ</a>：再エネの抑制には需給と混雑の2つの理由がある</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：買取価格・基準価格の実際の水準や、対象区分の細目には踏み込みません。
+          FITとFIPの<strong>仕組みの違いと、行動への効き方</strong>がわかれば合格です。
+          プレミアムの算定は考え方だけを単純化して扱います（末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. FIT：普及を最優先にした「市場を見ない」設計</a></li>
+          <li><a href="#section-2">2. FIP：市場価格にプレミアムを上乗せする</a></li>
+          <li><a href="#section-3">3. 何が変わるか：価格を「見る」再エネへ</a></li>
+          <li><a href="#section-4">4. バランシング：BGの世界への仲間入り</a></li>
+          <li><a href="#section-5">5. 出力制御・混雑との関係とまとめ</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. FIT：普及を最優先にした「市場を見ない」設計</h2>
+        <p>
+          <span class="term">FIT<span class="term-tooltip">Feed-in Tariff（固定価格買取制度）。再エネで発電した電気を、あらかじめ決められた固定価格で一定期間買い取ることを国が約束する制度。2012年開始。収入が市場価格と無関係に保証されるため投資リスクが小さく普及を強力に後押ししたが、発電事業者が市場価格や需給を見て行動する動機は生まれない。</span></span>
+          （Feed-in Tariff＝固定価格買取制度、2012年開始）は、シンプルで強力な仕組みです——
+          再エネで発電した電気は、<strong>いつ発電しても、決められた固定価格で、一定期間買い取ってもらえる</strong>。
+          収入が完全に読めるので投資リスクが小さく、太陽光を中心に導入が一気に進みました。
+        </p>
+        <p>
+          ただし、この設計には裏面があります。収入が市場価格と無関係なので、FIT電源には
+          <strong>市場価格を見る理由がありません</strong>。電気が余って市場価格がほぼゼロの昼でも、
+          高く売れる夕方でも、同じ単価——「いつ・どこで発電すると系統の役に立つか」という信号が、
+          発電事業者に届かない構造です。さらに、計画とのずれ（インバランス）の責任も
+          実質的に免除される特例があり、<strong>BGの世界（E-01・E-10）の外側</strong>にいる存在でした。
+          普及最優先の時代には合理的な設計でしたが、再エネが主力級になると、この「市場の外」が課題になります。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. FIP：市場価格にプレミアムを上乗せする</h2>
+        <p>
+          そこで2022年度に始まったのが
+          <span class="term">FIP<span class="term-tooltip">Feed-in Premium。再エネの電気を自ら市場等で売り、その収入に「プレミアム」（基準価格−参照価格で算定される補助額）を上乗せする制度。2022年度開始。収入が市場価格と連動するため、高い時間に売る・蓄電池を併設するなど市場を見た行動の動機が生まれる。インバランスの責任も負い、再エネを市場・系統の一員として統合していく設計。</span></span>
+          （Feed-in Premium）です。発想の転換はこうです——
+          <strong>電気は自分で市場に売る（収入は市場価格）。その上に、補助として「プレミアム」を上乗せする。</strong>
+        </p>
+        <p>
+          プレミアムの考え方を単純化して書くと：
+        </p>
+        <div class="math-block"
+             data-tex="\text{プレミアム} = \text{基準価格} - \text{参照価格}, \qquad \text{収入} = \text{市場価格} + \text{プレミアム}"
+             data-fallback="プレミアム ＝ 基準価格 − 参照価格 ／ 収入 ＝ 市場価格 ＋ プレミアム"></div>
+        <p>
+          <strong>基準価格</strong>は「この電源が事業として成り立つ水準」としてあらかじめ決められた価格、
+          <strong>参照価格</strong>は市場価格の平均から機械的に算定される「市場でふつうに売れば得られるはずの水準」です。
+          たとえば基準価格 16円/kWh・参照価格 12円/kWh ならプレミアムは 4円/kWh。
+          あるコマの市場価格が 10円なら、そのコマの収入は 10 ＋ 4 ＝ <strong>14円/kWh</strong>です。
+        </p>
+        <p>
+          ポイントは、プレミアムが<strong>コマごとの市場価格には連動しない</strong>（平均ベースで決まる）こと。
+          だから<strong>コマごとの収入は市場価格と一緒に上下します</strong>——ここがFITとの決定的な違いです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 何が変わるか：価格を「見る」再エネへ</h2>
+        <p>
+          収入が市場価格と連動すると、発電事業者の行動が変わります。
+        </p>
+        <ul>
+          <li><strong>高い時間に売りたくなる</strong>：同じ1kWhでも、夕方の高いコマに売れば収入が増える。→ <strong>蓄電池を併設</strong>して昼の発電を夕方にずらす動機が生まれます（D-08の時間の価値が、事業者の損益に直結する）。</li>
+          <li><strong>安すぎる時間は止めたくなる</strong>：市場価格がプレミアムでも埋まらないほど安い（電気が余っている）時間は、発電しても損。→ <strong>自ら止める・貯める</strong>ほうが合理的になります。系統側から見れば、供給過剰時（E-06の需給バランス制約）に<strong>価格シグナルで自発的に</strong>出力が下がる——指令で止めるより滑らかな世界です。</li>
+        </ul>
+        <p>
+          つまりFIPは、補助を続けながら、再エネに<strong>市場の時計と温度計</strong>を持たせる制度です。
+          これを<strong>再エネの市場統合</strong>と呼びます。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 205" role="img"
+               aria-label="FITとFIPの対比図。FITはいつ発電しても固定価格で収入が市場と無関係、市場を見る動機なし。FIPは収入が市場価格プラスプレミアムで市場と連動し、高い時間に売る・安い時間は止める・蓄電池を併設するなど市場を見た行動の動機が生まれる"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="15" y="20" width="210" height="170" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="120" y="42" font-size="11" text-anchor="middle" fill="#4a5568" font-weight="bold">FIT（固定価格買取）</text>
+            <text x="120" y="70" font-size="9.5" text-anchor="middle" fill="#1a1a2e">収入 ＝ 固定価格</text>
+            <text x="120" y="86" font-size="9" text-anchor="middle" fill="#4a5568">いつ発電しても同じ単価</text>
+            <line x1="45" y1="115" x2="195" y2="115" stroke="#4a5568" stroke-width="2"></line>
+            <text x="120" y="135" font-size="8.5" text-anchor="middle" fill="#4a5568">（収入のグラフは水平線）</text>
+            <text x="120" y="165" font-size="9.5" text-anchor="middle" fill="#dc2626">市場価格を見る理由がない</text>
+            <rect x="235" y="20" width="210" height="170" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="340" y="42" font-size="11" text-anchor="middle" fill="#15803d" font-weight="bold">FIP（市場価格＋プレミアム）</text>
+            <text x="340" y="70" font-size="9.5" text-anchor="middle" fill="#1a1a2e">収入 ＝ 市場価格 ＋ プレミアム</text>
+            <text x="340" y="86" font-size="9" text-anchor="middle" fill="#4a5568">コマごとに収入が変わる</text>
+            <path d="M265,125 C290,105 305,130 330,110 C355,92 380,120 415,95" fill="none" stroke="#16a34a" stroke-width="2"></path>
+            <text x="340" y="145" font-size="8.5" text-anchor="middle" fill="#4a5568">（収入のグラフは市場と一緒に上下）</text>
+            <text x="340" y="165" font-size="9.5" text-anchor="middle" fill="#15803d">高い時間に売る・貯める動機が生まれる</text>
+          </svg>
+          <figcaption>図1: FITとFIP。「水平線の収入」から「市場と連動する収入」へ</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. バランシング：BGの世界への仲間入り</h2>
+        <p>
+          FIPにはもう1つ大事な変化があります——<strong>インバランスの責任を負う</strong>ことです。
+          FIP電源は自ら（またはBGの一員として）発電計画を出し、外せばインバランス料金（E-10）を払います。
+          つまりE-01から学んできた<strong>計画値同時同量の世界に、再エネが正式に仲間入り</strong>するのです。
+        </p>
+        <p>
+          天候で出力が揺れる再エネにとって、これは軽くない責任です。予測（F-07）を磨き、
+          時間前市場（E-11）で計画を直し、それでも残るずれのリスクを管理する——
+          この専門業務を発電事業者に代わって引き受けるのが<strong>アグリゲーター</strong>（多数の再エネやDERを束ねて
+          計画・取引を代行する事業者）で、FIPとともに存在感を増しています（B-06のDERの「束ねれば戦力」と同じ発想です）。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 出力制御・混雑との関係とまとめ</h2>
+        <p>
+          最後に、本サイトの主題との接続です。E-06で学んだ再エネの出力制御を、制度の目で見直すと——
+        </p>
+        <ul>
+          <li><strong>FITの世界</strong>：再エネは市場価格を見ないので、供給過剰でも自分からは止まりません。だから優先給電ルール（E-04）という<strong>指令の順序</strong>で止める必要がありました。</li>
+          <li><strong>FIPの世界</strong>：価格が下がれば<strong>自発的に</strong>止まる・貯める電源が増え、「指令で止める」場面を価格シグナルが先回りして減らしていきます。</li>
+        </ul>
+        <p>
+          混雑（場所）の問題は、FIPになっても残ります——市場価格はエリア単位（ゾーン制、D-07）なので、
+          <strong>どの送電線が混むかまでは価格に映らない</strong>からです。混雑時の抑制はノンファームの条件（E-05・E-12）の世界のまま。
+          それでも、蓄電池の併設が進めば混雑時間帯の潮流の山も削れる——制度と物理は、ここでもつながっています。
+        </p>
+        <p>
+          これでE領域は14ユニット。市場の全体像——kWh・ΔkW・kW、前日・当日・実需給・事後精算、
+          そして再エネがその輪に入っていく道筋（FIT→FIP）——が出そろいました。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（FITとFIPの違い） -->
+        <div class="exercise" data-exercise-id="e-14-ex01" data-type="choice">
+          <h3>演習 1: FITとFIPの決定的な違い</h3>
+          <div class="exercise-problem">
+            <p>FITとFIPの違いとして、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-14-ex01" value="1">
+              <span>FITは固定価格で収入が市場と無関係だが、FIPは市場価格にプレミアムを上乗せするため、コマごとの収入が市場価格と連動する</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-14-ex01" value="2">
+              <span>FITは火力発電向けの制度で、FIPは再エネ向けの制度である</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-14-ex01" value="3">
+              <span>FITは送電線の建設費を補助し、FIPは変電所の建設費を補助する</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-14-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "どちらも再エネの支援制度ですが、お金の入り方が違います。FIT＝固定価格（収入は水平線、市場を見る理由がない）、FIP＝市場価格＋プレミアム（収入は市場と一緒に上下、高い時間に売る・安い時間は止める動機が生まれる）。この違いが、再エネが市場の一員として振る舞うかどうかを分けます。2・3はいずれも制度の対象・内容の誤りです。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（FIP収入・バリアント付き） -->
+        <div class="exercise" data-exercise-id="e-14-ex02" data-type="numeric">
+          <h3>演習 2: FIPの収入を計算する</h3>
+          <div class="exercise-problem">
+            <p>
+              あるFIP電源の基準価格は <span class="var" data-var="base">16</span> 円/kWh、参照価格は <span class="var" data-var="ref">12</span> 円/kWh である
+              （プレミアム ＝ 基準価格 − 参照価格）。あるコマの市場価格が <span class="var" data-var="mkt">10</span> 円/kWh のとき、
+              このコマに売った電気 1 kWh あたりの収入は何円か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              収入:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 円/kWh
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-14-ex02",
+          "type": "numeric",
+          "correct": 14,
+          "tolerance": 0,
+          "unit": "円/kWh",
+          "explanation": "プレミアム ＝ 16 − 12 ＝ 4円/kWh。収入 ＝ 市場価格 ＋ プレミアム ＝ 10 ＋ 4 ＝ 14円/kWh。プレミアムは市場平均ベース（参照価格）で決まりコマごとには変わらないため、コマごとの収入は市場価格と一緒に上下します——高いコマに売るほど得、という市場統合の入口です。",
+          "variants": [
+            {
+              "vars": { "base": "18", "ref": "13", "mkt": "11" },
+              "correct": 16,
+              "explanation": "プレミアム ＝ 18 − 13 ＝ 5円/kWh。収入 ＝ 11 ＋ 5 ＝ 16円/kWh。同じ電源でも、市場価格が高いコマに売れば収入は増えます——蓄電池で夕方にずらす動機がここから生まれます。"
+            },
+            {
+              "vars": { "base": "15", "ref": "12", "mkt": "14" },
+              "correct": 17,
+              "explanation": "プレミアム ＝ 15 − 12 ＝ 3円/kWh。収入 ＝ 14 ＋ 3 ＝ 17円/kWh。市場価格が参照価格を上回るコマでは、収入が基準価格を超えることもあります——収入の上下があるからこそ「いつ売るか」の工夫が価値を持ちます。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（FIPがもたらす行動変化） -->
+        <div class="exercise" data-exercise-id="e-14-ex03" data-type="multi-choice">
+          <h3>演習 3: FIPで何が変わるか</h3>
+          <div class="exercise-problem">
+            <p>FIP制度がもたらす変化について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="e-14-ex03" value="1">
+              <span>収入が市場価格と連動するため、蓄電池を併設して高い時間に売るなど、市場を見た行動の動機が生まれる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-14-ex03" value="2">
+              <span>FIP電源はインバランスの責任を負い、計画値同時同量の世界に仲間入りする</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-14-ex03" value="3">
+              <span>予測・計画・取引を代行するアグリゲーターの役割が重要になる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-14-ex03" value="4">
+              <span>FIPになると送電線の混雑が物理的に発生しなくなる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-14-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（市場連動の収入→時間シフトの動機）、2（インバランス責任＝E-10の世界への仲間入り）、3（ずれリスクの管理を代行するアグリゲーターの台頭）はいずれも正しい。4は誤りで、市場価格はエリア単位（ゾーン制）なので、どの送電線が混むかまでは価格に映りません——混雑時の抑制はノンファームの条件の世界のまま残ります。"
+        }
+        </script>
+
+        <!-- 演習4: choice（出力制御との関係） -->
+        <div class="exercise" data-exercise-id="e-14-ex04" data-type="choice">
+          <h3>演習 4: 供給過剰時のふるまい</h3>
+          <div class="exercise-problem">
+            <p>電気が余って市場価格が大きく下がった昼のコマにおける、FIT電源とFIP電源のふるまいの違いとして、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-14-ex04" value="1">
+              <span>FIT電源は収入が固定なので自分からは止まらず指令（優先給電ルール）で止める必要があるが、FIP電源は発電しても損なら自発的に止める・貯める動機を持つ</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-14-ex04" value="2">
+              <span>FIT電源もFIP電源も、市場価格が下がると法律で自動的に停止させられる</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-14-ex04" value="3">
+              <span>FIP電源は市場価格が下がった時間ほど収入が増えるので、むしろ発電を増やす</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-14-ex04",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "FITは収入が市場と無関係なので、余っている時間でも発電を続けるのが合理的——だからE-04の優先給電ルールという「指令の順序」が必要でした。FIPは収入が市場連動なので、安すぎる時間は止める・蓄電池に貯めるのが合理的になり、価格シグナルが指令を先回りします。2のような自動停止の法律はなく、3は逆です（価格が下がれば収入も下がる）。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/about/special/johoteikyo/fip.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「再エネを日本の主力エネルギーに！『FIP制度』が2022年4月スタート」（エネこれ）</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/category/saving_and_new/saiene/kaitori/FIP_index.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「再エネ特措法改正関連情報｜FIT・FIP制度」</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="13-capacity-market.html" class="unit-nav-prev">&larr; kWの市場──容量市場と長期脱炭素電源オークション</a>
+      <a href="../f-dispatch-system/index.html" class="unit-nav-next">次の領域へ: F 中央給電指令所システム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

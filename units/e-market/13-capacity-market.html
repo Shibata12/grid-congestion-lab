@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>E-13: kWの市場──容量市場と長期脱炭素電源オークション - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="e" data-unit="e-13">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">E: 電力市場</a> &gt;
+      <span>容量市場</span>
+    </nav>
+
+    <article>
+      <h1>E-13: kWの市場──容量市場と長期脱炭素電源オークション</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の4本目です。これまでに2つの市場を学びました——<strong>kWh</strong>（電気の量）を取引するスポット・時間前市場（E-07・E-11）と、
+        <strong>ΔkW</strong>（調整する力）を取引する需給調整市場（E-03）。実はもう1つ、第3の価値の市場があります。
+        「<strong>いざというとき発電できる能力そのもの＝kW</strong>」を取引する<strong>容量市場</strong>です。
+        なぜ「能力」にお金を払う必要があるのか——再エネ時代の電源の稼ぎ方の変化から、その理由を理解します。
+        混雑管理との接点は薄い市場ですが、制度の全体像を完成させる最後のピースです。数式はゼロ。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="07-wholesale-market-and-indirect-auction.html">E-07</a>：スポット市場はkWh（電気の量）を取引し、限界費用の安い順に約定する</li>
+          <li><a href="03-balancing-market.html">E-03</a>：需給調整市場はΔkW（調整する力）を取引する</li>
+          <li><a href="../a-grid-fundamentals/06-generator-basics.html">A-06: 発電機のきほん</a>：再エネの限界費用はほぼゼロで、市場で最初に約定していく</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：オークションの入札細目・需要曲線の設計・経過措置には踏み込みません。
+          「なぜkWの市場が必要か」と「2つのオークションの役割の違い」がわかれば合格です。
+          制度の詳細はOCCTOの公開解説サイトを参照してください（末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 3つの価値：kWh・ΔkW・kW</a></li>
+          <li><a href="#section-2">2. なぜ「能力」にお金を払うのか</a></li>
+          <li><a href="#section-3">3. 容量市場：4年後の供給力を今買う</a></li>
+          <li><a href="#section-4">4. 長期脱炭素電源オークション：新設投資を長期に支える</a></li>
+          <li><a href="#section-5">5. 混雑との距離感とまとめ</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 3つの価値：kWh・ΔkW・kW</h2>
+        <p>
+          電気の価値は、実は1種類ではありません。E領域で学んだ市場を並べると、取引しているものが違います。
+        </p>
+        <ul>
+          <li><strong>kWh（電力量）</strong>：実際に発電した電気の量。スポット市場・時間前市場（E-07・E-11）。</li>
+          <li><strong>ΔkW（調整力）</strong>：需給のずれに合わせて出力を上げ下げできる力。需給調整市場（E-03）。</li>
+          <li><strong>kW（供給力）</strong>：<strong>必要なときに発電できる能力そのもの</strong>。今日発電するかどうかにかかわらず、「そこに発電所が存在して、いざというとき動けること」の価値。これを取引するのが<span class="term">容量市場<span class="term-tooltip">将来の供給力（kW価値）をあらかじめ確保する市場。日本ではOCCTOが買い手となり、実需給の4年前にメインオークションで全国の必要供給力を調達する。落札した電源は実需給年度に供給力を提供する義務を負い、対価（容量収入）を得る。発電所の固定費回収を支え、供給力の維持・確保を狙う。</span></span>です。</li>
+        </ul>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="電気の3つの価値を並べた図。kWhは実際に発電した量でスポット・時間前市場、ΔkWは調整する力で需給調整市場、kWはいざというとき発電できる能力で容量市場が取引する"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="35" width="130" height="105" rx="8" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="85" y="60" font-size="12" text-anchor="middle" fill="#1d4ed8" font-weight="bold">kWh</text>
+            <text x="85" y="80" font-size="9.5" text-anchor="middle" fill="#1a1a2e">発電した「量」</text>
+            <text x="85" y="103" font-size="9" text-anchor="middle" fill="#4a5568">スポット・時間前市場</text>
+            <text x="85" y="118" font-size="8.5" text-anchor="middle" fill="#4a5568">（E-07・E-11）</text>
+            <rect x="165" y="35" width="130" height="105" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="230" y="60" font-size="12" text-anchor="middle" fill="#15803d" font-weight="bold">ΔkW</text>
+            <text x="230" y="80" font-size="9.5" text-anchor="middle" fill="#1a1a2e">調整する「力」</text>
+            <text x="230" y="103" font-size="9" text-anchor="middle" fill="#4a5568">需給調整市場</text>
+            <text x="230" y="118" font-size="8.5" text-anchor="middle" fill="#4a5568">（E-03）</text>
+            <rect x="310" y="35" width="130" height="105" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="375" y="60" font-size="12" text-anchor="middle" fill="#b45309" font-weight="bold">kW</text>
+            <text x="375" y="80" font-size="9.5" text-anchor="middle" fill="#1a1a2e">発電できる「能力」</text>
+            <text x="375" y="103" font-size="9" text-anchor="middle" fill="#4a5568">容量市場</text>
+            <text x="375" y="118" font-size="8.5" text-anchor="middle" fill="#4a5568">（本ユニット）</text>
+            <text x="230" y="170" font-size="10" text-anchor="middle" fill="#1a1a2e">F-06の同時市場は、このうち kWh と ΔkW を一緒に約定する検討だった</text>
+          </svg>
+          <figcaption>図1: 電気の3つの価値。最後のピースが「kW＝能力」の市場</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. なぜ「能力」にお金を払うのか</h2>
+        <p>
+          「発電したらkWhで稼げるのだから、能力にまでお金を払う必要はないのでは？」——もっともな疑問です。
+          答えの鍵は、A-06とE-07で学んだ<strong>メリットオーダー</strong>にあります。
+        </p>
+        <p>
+          限界費用ほぼゼロの再エネが増えると、市場価格の安い時間が増え、火力の<strong>稼働する時間そのものが減っていきます</strong>。
+          しかし発電所の維持には、動いても動かなくても<strong>固定費</strong>（人件費・修繕費・設備の維持）がかかります。
+          kWh収入が減り続ければ、「めったに動かないが、太陽光が沈んだ夕方や需給ひっ迫時（F-10）には欠かせない電源」から順に、
+          <strong>維持できず退出していく</strong>おそれがあります。必要な供給力が、市場の外へ静かに消えていく——
+          この「kWh市場だけでは固定費が回収しきれない」問題への備えが、kWに値段を付ける理由です。
+        </p>
+        <p>
+          つまり容量市場は、「今日の電気」ではなく<strong>「将来も供給力が足りていること」への保険料</strong>を、
+          社会全体で前もって払う仕組みなのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 容量市場：4年後の供給力を今買う</h2>
+        <p>
+          日本の容量市場の骨子はこうです（詳細はOCCTOの公開解説サイトへ）。
+        </p>
+        <ul>
+          <li><strong>買い手はOCCTO</strong>：全国で将来必要になる供給力を見積もり、一括して調達します。</li>
+          <li><strong>メインオークション</strong>：<strong>実需給の4年前</strong>に開催。発電事業者が「うちの電源のkWをいくらで提供できる」と応札し、必要量が安い順に落札されます。4年前なのは、電源の新設・維持の投資判断に間に合わせるためです。</li>
+          <li><strong>落札した電源の義務と対価</strong>：実需給年度に供給力を提供できる状態を保つ義務を負い、対価（容量収入）を受け取ります。ひっ迫時に発電できなければペナルティがあります。</li>
+        </ul>
+        <p>
+          発電事業者の立場では、kWh収入（E-07）・ΔkW収入（E-03）に加えて<strong>kW収入</strong>という3本目の柱ができ、
+          稼働が減っても電源を維持する見通しが立てやすくなります。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 長期脱炭素電源オークション：新設投資を長期に支える</h2>
+        <p>
+          容量市場の対価は年度単位です。しかし<strong>新しく発電所を建てる</strong>投資は、数十年単位の回収を見込む大勝負——
+          1年ごとの容量収入だけでは、投資に踏み切れません。
+          そこで、<strong>脱炭素型の電源の新設・改修</strong>（蓄電池・揚水・水素/アンモニア対応・原子力など）を対象に、
+          <strong>長期間（原則20年）の容量収入を約束する</strong>のが
+          <span class="term">長期脱炭素電源オークション<span class="term-tooltip">脱炭素型電源の新設・改修投資を対象に、原則20年間の容量収入を約束する入札制度。容量市場の一部として2023年度から開始。年度単位の容量市場では支えきれない大型投資の回収予見性を高め、脱炭素と供給力確保の両立を狙う。系統用蓄電池や揚水も対象。</span></span>です（容量市場の一部として2023年度に始まりました）。
+        </p>
+        <p>
+          注目ポイントは、対象に<strong>系統用蓄電池や揚水</strong>（D-08）が含まれることです。
+          「貯める設備」の建設が長期の容量収入で支えられる——D-08で学んだ蓄電池の価値（時間と場所）に、
+          投資回収の制度がつながっています。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 混雑との距離感とまとめ</h2>
+        <p>
+          正直に言うと、容量市場は<strong>本サイトの主題（混雑）との接点が薄い市場</strong>です。
+          調達されるのは全国大の「量」としての供給力で、<strong>どの送電線が混むか（場所）</strong>は主題ではありません
+          （F-05以来の「量と場所」の対比で言えば、完全に「量」側の制度です）。
+          それでも学ぶ価値があるのは、これでE領域の市場の全体像——
+          <strong>kWh（今日の電気）・ΔkW（ずれへの備え）・kW（将来への備え）</strong>——が閉じるからです。
+        </p>
+        <p>
+          そして脱炭素オークションの対象に蓄電池が入ったように、「量の制度」と「場所の課題（混雑）」は
+          少しずつ近づいています。将来、供給力の調達に<strong>場所の価値</strong>が織り込まれていくのか——
+          D-07のLMPやF-06の同時市場と並ぶ、制度ウォッチの楽しみどころです。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（なぜ必要か） -->
+        <div class="exercise" data-exercise-id="e-13-ex01" data-type="choice">
+          <h3>演習 1: なぜ容量市場が必要なのか</h3>
+          <div class="exercise-problem">
+            <p>容量市場が必要とされる背景として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-13-ex01" value="1">
+              <span>限界費用ほぼゼロの再エネの拡大で火力などの稼働時間が減り、kWh収入だけでは固定費を回収できず、必要な供給力が維持されないおそれがあるから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-13-ex01" value="2">
+              <span>スポット市場の約定処理が遅いため、代わりの高速な市場が必要だから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-13-ex01" value="3">
+              <span>送電線の混雑を直接解消するために、容量市場で潮流を制御するから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-13-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "再エネが増えるほど市場価格の安い時間が増え、火力の稼働時間＝kWh収入が減ります。しかし発電所の固定費は稼働に関係なくかかるため、「めったに動かないが夕方やひっ迫時に欠かせない電源」から退出しかねません。容量市場は、この供給力を「kW価値」への対価で維持する仕組みです。2は無関係（約定速度の問題ではない）、3も誤りで、容量市場は全国大の「量」の制度であり、混雑（場所）を直接扱う市場ではありません。"
+        }
+        </script>
+
+        <!-- 演習2: fill-in（3つの価値） -->
+        <div class="exercise" data-exercise-id="e-13-ex02" data-type="fill-in">
+          <h3>演習 2: 3つの価値を言い分ける</h3>
+          <div class="exercise-problem">
+            <p>電気の3つの価値の単位を埋めよ（半角英字で。Δは「Δ」を付けること）。</p>
+          </div>
+          <div class="exercise-input">
+            <p>
+              スポット市場・時間前市場が取引するのは発電した量＝
+              <input type="text" class="fill-in-input" data-answer-key="1" placeholder="___">
+              の価値、需給調整市場が取引するのは調整する力＝
+              <input type="text" class="fill-in-input" data-answer-key="2" placeholder="___">
+              の価値、容量市場が取引するのは発電できる能力＝
+              <input type="text" class="fill-in-input" data-answer-key="3" placeholder="___">
+              の価値である。
+            </p>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-13-ex02",
+          "type": "fill-in",
+          "correct": {
+            "1": ["kWh", "ｋＷｈ"],
+            "2": ["ΔkW", "デルタkW", "Δｋw", "ΔＫＷ", "delta kW", "deltakW"],
+            "3": ["kW", "ｋＷ"]
+          },
+          "explanation": "kWh（量）＝スポット・時間前市場、ΔkW（調整する力）＝需給調整市場、kW（能力）＝容量市場。同じ「ワット」の仲間でも、取引しているものはまったく違います。F-06の同時市場はこのうちkWhとΔkWを一緒に約定する検討でした——kWは対象外である点も整理しておきましょう。"
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（容量市場のしくみ） -->
+        <div class="exercise" data-exercise-id="e-13-ex03" data-type="multi-choice">
+          <h3>演習 3: 容量市場のしくみ</h3>
+          <div class="exercise-problem">
+            <p>日本の容量市場について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="e-13-ex03" value="1">
+              <span>買い手はOCCTOで、全国で必要な供給力を一括して調達する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-13-ex03" value="2">
+              <span>メインオークションは実需給の4年前に開催され、電源の投資判断に間に合わせる設計になっている</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-13-ex03" value="3">
+              <span>落札した電源は実需給年度に供給力を提供する義務を負い、対価（容量収入）を得る</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="e-13-ex03" value="4">
+              <span>容量市場で落札されると、その電源は毎日必ずフル出力で発電しなければならない</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-13-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（OCCTOが全国分を一括調達）、2（4年前＝投資リードタイムへの配慮）、3（供給力提供の義務と容量収入。ひっ迫時に応えられなければペナルティ）はいずれも正しい。4は誤りで、容量市場が買うのは「能力（kW）」であって毎日の発電（kWh）ではありません——いつ・どれだけ発電するかは、引き続きスポット市場や需給の状況で決まります。"
+        }
+        </script>
+
+        <!-- 演習4: choice（長期脱炭素電源オークション） -->
+        <div class="exercise" data-exercise-id="e-13-ex04" data-type="choice">
+          <h3>演習 4: 長期脱炭素電源オークション</h3>
+          <div class="exercise-problem">
+            <p>長期脱炭素電源オークションが「長期」（原則20年）の容量収入を約束する理由として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="e-13-ex04" value="1">
+              <span>発電所の新設は数十年単位で投資を回収する大型投資であり、年度単位の容量収入だけでは投資に踏み切れないから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-13-ex04" value="2">
+              <span>20年分の電気（kWh）を前払いでまとめ買いするほうが安いから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="e-13-ex04" value="3">
+              <span>送電線の建設に20年かかるので、それに合わせているから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "e-13-ex04",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "新設投資の回収は数十年単位。1年ごとの容量収入では将来の収入が読めず、大型の脱炭素投資（蓄電池・揚水・水素/アンモニア・原子力など）に踏み切れません。原則20年の容量収入を約束することで回収の予見性を高めるのが狙いです。2は誤り（買っているのはkWhではなくkW＝能力）、3も誤りです（送電線の工期とは無関係。なお系統増強の話はB-03・マスタープラン）。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/capacity-market/"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「かいせつ容量市場スペシャルサイト」（容量市場・長期脱炭素電源オークションの公式解説）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="12-congestion-cost-allocation.html" class="unit-nav-prev">&larr; 混雑処理の費用は誰が負担するか</a>
+      <a href="14-fit-fip.html" class="unit-nav-next">FIT/FIPと再エネの市場統合 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

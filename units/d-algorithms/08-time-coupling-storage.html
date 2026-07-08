@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>D-08: コマをまたぐ制約──ランプ・揚水・蓄電池 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="d" data-unit="d-08">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">D: 混雑計算のアルゴリズム</a> &gt;
+      <span>コマをまたぐ制約</span>
+    </nav>
+
+    <article>
+      <h1>D-08: コマをまたぐ制約──ランプ・揚水・蓄電池</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の3本目です。<a href="03-scuc-sced-overview.html">D-03: SCUC/SCEDの概要</a> の定式化は、実は
+        <strong>1つの時間断面（コマ）</strong>の話でした。実際の計画は1日48コマ——では、48回別々に解けばよいのでしょうか？
+        答えは<strong>ノー</strong>。<a href="../a-grid-fundamentals/06-generator-basics.html">A-06: 発電機のきほん</a> で学んだ
+        <strong>ランプ</strong>と、揚水・蓄電池の<strong>貯める性質</strong>が、コマとコマを鎖のようにつなぐからです。
+        本ユニットでは、この<strong>時間結合制約</strong>と蓄電池のモデル化（SOC）を理解し、
+        「SCUCが複数コマを一括で解く理由」まで到達します。新しい式は2本、どちらも足し算・引き算です。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../a-grid-fundamentals/06-generator-basics.html">A-06</a>：ランプ＝出力を変えられる速さ。30分コマの間に動ける量に上限がある</li>
+          <li><a href="03-scuc-sced-overview.html">D-03</a>：SCUC/SCED＝コスト最小化を需給・潮流・出力上下限の制約下で解く（1断面）</li>
+          <li><a href="06-lp-mip-and-solvers.html">D-06: 最適化を「解く」</a>：SCUC＝MIPは重い。変数・制約が増えるほど重くなる</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：蓄電池の充放電効率・劣化・充放電の同時禁止制約などの細部は割愛し、
+          効率100%の単純化したモデルで「考え方」を扱います。系統用蓄電池の制度（市場参入区分など）にも踏み込みません。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. D-03の定式化は「1コマ分」だった</a></li>
+          <li><a href="#section-2">2. ランプ制約：コマが鎖になる</a></li>
+          <li><a href="#section-3">3. 貯める設備のモデル：SOCの遷移</a></li>
+          <li><a href="#section-4">4. だからSCUCは複数コマ一括で解く</a></li>
+          <li><a href="#section-5">5. 系統用蓄電池：時間の対策、場所の価値</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. D-03の定式化は「1コマ分」だった</h2>
+        <p>
+          D-03の問題——min Σ c<sub>k</sub>P<sub>k</sub>、制約は需給・潮流・出力上下限——をよく見ると、
+          変数はどれも「<strong>あるコマの</strong>出力」で、制約も同じコマの中で閉じています。
+          もしこれで全部なら、48コマをそれぞれ独立に解けば済むはずです（並列にすら解けます）。
+        </p>
+        <p>
+          しかし現実の発電機と蓄電設備には、<strong>コマの外とつながる性質</strong>が2つあります——
+          「急には変われない」（ランプ）と「貯めたものは持ち越す」（SOC）。
+          この2つが<span class="term">時間結合制約<span class="term-tooltip">複数の時間断面（コマ）の変数にまたがる制約。ランプ制約（隣り合うコマの出力差の上限）とSOCの遷移（貯めた量の持ち越し）が代表。これがあるため、各コマを独立には最適化できず、SCUCは複数コマを一括で解く。コマ間制約ともいう。</span></span>（コマ間制約）で、
+          コマたちを独立に解くことを不可能にします。順に見ましょう。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. ランプ制約：コマが鎖になる</h2>
+        <p>
+          A-06のランプを式にすると、こうなります——隣り合うコマの出力の差は、30分で動ける量を超えられない。
+        </p>
+        <div class="math-block"
+             data-tex="|P(\text{次のコマ}) - P(\text{今のコマ})| \le \text{30分で動ける量}"
+             data-fallback="|P(次のコマ) − P(今のコマ)| ≤ 30分で動ける量（ランプ × 30分）"></div>
+        <p>
+          たとえば30分で 60 MW 動ける発電機が、あるコマで 120 MW を出しているなら、
+          次のコマの出力は <strong>60〜180 MW の範囲</strong>にしか置けません。
+          この制約は「今のコマ」と「次のコマ」の<strong>両方の変数</strong>を含みます——これが時間結合です。
+        </p>
+        <p>
+          時間結合があると、<strong>先読みが最適を変えます</strong>。
+          典型は夕方です。太陽光が沈むと、残りの電源が急いで出力を上げる必要がありますが、
+          ランプの遅い電源は「その時になってから」では間に合いません。
+          <strong>まだ安い昼のうちから少しずつ出力を上げておく</strong>（助走する）ほうが、全体では安くつく——
+          この「いまは損でも後で得」は、コマを独立に解いていたら絶対に出てこない答えです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="横軸にコマの列、縦軸に出力をとった図。夕方の需要立ち上がりに向けて、ランプの遅い発電機は昼のコマから階段状に助走を始める必要があり、隣り合うコマの出力差がランプの上限以内という鎖でつながれていることを示す"
+               xmlns="http://www.w3.org/2000/svg">
+            <line x1="45" y1="165" x2="440" y2="165" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="45" y1="30" x2="45" y2="165" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="245" y="188" font-size="10" text-anchor="middle" fill="#4a5568">コマ（30分ごと）→</text>
+            <text x="37" y="98" font-size="10" text-anchor="middle" fill="#4a5568" transform="rotate(-90 37 98)">出力</text>
+            <!-- 需要（夕方立ち上がり） -->
+            <path d="M60,140 L180,138 C260,132 330,70 425,48" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5 4"></path>
+            <text x="392" y="40" font-size="9" text-anchor="end" fill="#94a3b8">必要な出力（夕方に急上昇）</text>
+            <!-- 階段状の助走 -->
+            <path d="M60,150 L120,150 L120,135 L180,135 L180,118 L240,118 L240,100 L300,100 L300,80 L360,80 L360,60 L425,60"
+                  fill="none" stroke="#dc2626" stroke-width="2.2"></path>
+            <text x="150" y="128" font-size="9" fill="#dc2626">昼から「助走」を始める</text>
+            <text x="255" y="170" font-size="8.5" fill="#4a5568">1段の高さ ≤ 30分で動ける量（ランプ）</text>
+            <text x="245" y="196" font-size="0" fill="#4a5568"> </text>
+          </svg>
+          <figcaption>図1: ランプの鎖。夕方の立ち上がりに間に合わせるには、昼のコマから助走が要る</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 貯める設備のモデル：SOCの遷移</h2>
+        <p>
+          揚水（A-06）や蓄電池は、もっと露骨にコマをつなぎます。<strong>いま貯めた量は、次のコマに持ち越される</strong>からです。
+          貯まっている量を<span class="term">SOC<span class="term-tooltip">State of Charge（蓄電残量）。蓄電池の残量や揚水の上池の水量に相当する「いま貯まっている量」。充電で増え、放電で減り、コマからコマへ持ち越される。0以上・容量以下という制約とともに、時間結合制約の代表になる。</span></span>
+          （State of Charge＝蓄電残量。揚水なら上池の水量）と呼び、コマごとの遷移を式にします。
+        </p>
+        <div class="math-block"
+             data-tex="\text{SOC}(\text{次のコマ}) = \text{SOC}(\text{今のコマ}) + \text{充電した量} - \text{放電した量}"
+             data-fallback="SOC(次のコマ) ＝ SOC(今のコマ) ＋ 充電した量 − 放電した量（0 ≤ SOC ≤ 容量）"></div>
+        <p>
+          そして SOC は <strong>0以上・容量以下</strong>でなければなりません（空っぽ以下にも、満タン以上にもならない）。
+          数値例です。容量 400 MWh の蓄電池が SOC 100 MWh から始まり、
+          太陽光の余る昼の2コマで 75 MWh ずつ充電し、夕方の2コマで 100 MWh ずつ放電すると——
+          SOC は 100 → 175 → 250 → 150 → <strong>50 MWh</strong> と推移します。
+          どのコマでも 0〜400 の範囲に収まっているので、この計画は成立します。
+        </p>
+        <p>
+          ここで気づいてほしいのは、「<strong>夕方に放電するために、昼に充電しておく</strong>」という行動そのものが、
+          <strong>昼のコマと夕方のコマを同時に見ないと計画できない</strong>ことです。
+          昼のコマだけを最適化したら、充電はただのコスト（電気を買うだけ）で、やる理由がありません。
+          蓄電設備の価値は、複数コマの一括最適化の中でしか正しく評価できないのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. だからSCUCは複数コマ一括で解く</h2>
+        <p>
+          まとめると——ランプとSOCが存在する以上、最適化は<strong>48コマ（またはそれ以上）をひとつの問題として一括で</strong>解く必要があります。
+          そのコストは計算量です。変数も制約も<strong>コマ数分の倍数</strong>に膨らみ、
+          起動停止の0/1変数（D-06のMIP）も全コマ分に増えます。
+          D-06で「SCUCは重い」と学びましたが、その重さの正体の半分は、この<strong>時間方向の広がり</strong>にあります。
+        </p>
+        <p>
+          これで、F-04で学んだタイミング設計の絵が完成します——
+          <strong>SCUCは「複数コマ一括のMIP」だから重く、早めに・数回</strong>。
+          <strong>SCEDは「起動が決まった後の、断面ごとの軽いLP」だから、直前に・多数回</strong>。
+          時間結合の重い部分（起動停止・貯水計画）を先に固め、細かい出力配分は直前に合わせ込む——
+          という分業だったのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 系統用蓄電池：時間の対策、場所の価値</h2>
+        <p>
+          最後に、蓄電池を<strong>混雑管理の道具</strong>として見ます。
+          送電線の容量に系統への接続がひっかかる時代、<span class="term">系統用蓄電池<span class="term-tooltip">需要家に併設せず、系統に直接接続して充放電する大型の蓄電池。余る時間に充電し足りない時間に放電する時間方向の調整に加え、混雑する送電線の下流側に置いて混雑時間帯に放電すれば線路潮流を減らせる（効き方はPTDFで計算できる）。近年導入が拡大している。</span></span>
+          ——系統に直接つなぐ大型蓄電池——の導入が広がっています。その価値は2方向あります。
+        </p>
+        <ul>
+          <li>
+            <strong>時間の価値</strong>：再エネが余る時間（抑制されるくらい安い時間）に充電し、足りない時間に放電する。
+            E-06で学んだ「もったいない抑制」の受け皿になれます。
+          </li>
+          <li>
+            <strong>場所の価値</strong>：置き場所を選べば<strong>混雑にも効きます</strong>。
+            混雑する送電線の<strong>下流（需要側）</strong>に置いた蓄電池が混雑時間帯に放電すれば、
+            その分だけ線路を通ってくる潮流が減る——効き方はD-01のPTDFでそのまま計算できます。
+            そしてD-07で学んだとおり、混雑には値段（シャドープライス）が付きます。
+            <strong>混雑の値段が高い場所・時間</strong>にいる蓄電池ほど、系統への貢献も大きいのです。
+          </li>
+        </ul>
+        <p>
+          時間結合のモデル（SOC）と場所の感度（PTDF）と混雑の値段（シャドープライス）——
+          D領域で積み上げた道具がぜんぶつながって、「蓄電池をどこに置き、いつ充放電するべきか」という
+          いま最前線の問いを考える枠組みになります。これがD領域発展編の到達点です。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（なぜコマ独立で解けないか） -->
+        <div class="exercise" data-exercise-id="d-08-ex01" data-type="choice">
+          <h3>演習 1: なぜ1コマずつ解けないのか</h3>
+          <div class="exercise-problem">
+            <p>48コマの計画を、コマごとに独立に最適化できない理由として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="d-08-ex01" value="1">
+              <span>ランプ制約（隣り合うコマの出力差の上限）とSOCの遷移（貯めた量の持ち越し）が、複数のコマの変数にまたがる制約になっているから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="d-08-ex01" value="2">
+              <span>コマごとに需要が違うので、同じ答えにならないから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="d-08-ex01" value="3">
+              <span>ソルバーは1日に1回しか実行できないから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-08-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "コマを独立に解けないのは、コマとコマをまたぐ制約（時間結合制約）があるからです。ランプは「今のコマ」と「次のコマ」の出力差を縛り、SOCは貯めた量を次のコマへ持ち越します。2は的外れで、需要が違うだけなら独立に解けます（答えが違うだけ）。3も誤りで、ソルバーの実行回数の制限はありません——問題の構造の話です。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（ランプの範囲・バリアント付き） -->
+        <div class="exercise" data-exercise-id="d-08-ex02" data-type="numeric">
+          <h3>演習 2: 次のコマに置ける出力の下限</h3>
+          <div class="exercise-problem">
+            <p>
+              ある発電機は30分で <span class="var" data-var="ramp">60</span> MW まで出力を動かせる。
+              今のコマの出力が <span class="var" data-var="p">120</span> MW のとき、次のコマの出力として設定できる<strong>最小値</strong>は何 MW か
+              （出力の下限その他の制約は考えない）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              次のコマの最小値:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-08-ex02",
+          "type": "numeric",
+          "correct": 60,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "ランプ制約は |P(次) − P(今)| ≤ 60 なので、次のコマは 120 − 60 = 60 MW から 120 + 60 = 180 MW の範囲にしか置けません。最小値は60 MW。この制約が「今のコマ」と「次のコマ」の両方の変数を含む——コマたちを鎖でつなぐ時間結合制約の最も単純な形です。",
+          "variants": [
+            {
+              "vars": { "ramp": "90", "p": "150" },
+              "correct": 60,
+              "explanation": "次のコマは 150 − 90 = 60 MW から 150 + 90 = 240 MW の範囲。最小値は60 MWです。ランプが大きい発電機ほど次のコマの選択肢（範囲）が広く、計画の自由度が高くなります。"
+            },
+            {
+              "vars": { "ramp": "50", "p": "200" },
+              "correct": 150,
+              "explanation": "次のコマは 200 − 50 = 150 MW から 200 + 50 = 250 MW の範囲。最小値は150 MWです。今のコマで高い出力を出していると、次のコマで急に下げることもできない——上げだけでなく下げにもランプが効くことに注意してください。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: numeric（SOC遷移・バリアント付き） -->
+        <div class="exercise" data-exercise-id="d-08-ex03" data-type="numeric">
+          <h3>演習 3: SOCの推移を追う</h3>
+          <div class="exercise-problem">
+            <p>
+              容量 400 MWh の蓄電池が、SOC <span class="var" data-var="soc0">100</span> MWh から始まる。
+              昼の2コマで <span class="var" data-var="chg">75</span> MWh ずつ充電し、夕方の2コマで <span class="var" data-var="dis">100</span> MWh ずつ放電した。
+              最終的なSOCは何 MWh か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              最終SOC:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MWh
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-08-ex03",
+          "type": "numeric",
+          "correct": 50,
+          "tolerance": 0,
+          "unit": "MWh",
+          "explanation": "SOCの遷移式を順に適用します: 100 → +75 → 175 → +75 → 250 → −100 → 150 → −100 → 50 MWh。途中どのコマでも 0〜400 MWh の範囲に収まっているので、この計画は実行可能です。「夕方に放電するために昼に充電する」——この計画は昼と夕方のコマを同時に見ないと立てられません。",
+          "variants": [
+            {
+              "vars": { "soc0": "80", "chg": "60", "dis": "90" },
+              "correct": 20,
+              "explanation": "80 → +60 → 140 → +60 → 200 → −90 → 110 → −90 → 20 MWh。最終SOCは20 MWhで、下限0を割っていないので実行可能です。もし放電をあと1コマ続けたら 20 − 90 = −70 となり下限0を割る——「あとどれだけ放電できるか」はSOCの推移を追わないと分かりません。"
+            },
+            {
+              "vars": { "soc0": "200", "chg": "50", "dis": "120" },
+              "correct": 60,
+              "explanation": "200 → +50 → 250 → +50 → 300 → −120 → 180 → −120 → 60 MWh。容量400の範囲に収まっており実行可能です。SOC遷移は単純な足し引きですが、全コマ分を積み上げて上下限と突き合わせる必要がある——これが時間結合の計算量の正体です。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習4: multi-choice（蓄電池と混雑） -->
+        <div class="exercise" data-exercise-id="d-08-ex04" data-type="multi-choice">
+          <h3>演習 4: 蓄電池の時間の価値・場所の価値</h3>
+          <div class="exercise-problem">
+            <p>蓄電池・揚水と系統運用について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="d-08-ex04" value="1">
+              <span>蓄電池・揚水は「余る時間に貯めて、足りない時間に出す」ことで時間方向の調整を担える</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-08-ex04" value="2">
+              <span>「後で放電するために今充電する」という計画は、複数のコマを同時に最適化しないと出てこない</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-08-ex04" value="3">
+              <span>混雑する送電線の下流側に置いた蓄電池が混雑時間帯に放電すると、線路の潮流を減らせる（効き方はPTDFで計算できる）</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="d-08-ex04" value="4">
+              <span>SOCには上限も下限もないので、蓄電池は無限に充電・放電し続けられる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "d-08-ex04",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（時間方向の調整＝再エネ抑制の受け皿にもなる）、2（充電は単コマでは只のコストで、複数コマ最適化でだけ価値が見える）、3（場所の価値。下流での放電はPTDF分だけ線路潮流を減らす＝D-01の応用）はいずれも正しい。4は誤りで、SOCは0以上・容量以下の範囲でしか動けません——この上下限とコマ間の遷移式が、蓄電池のモデル化の核心です。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="07-shadow-price-and-lmp.html" class="unit-nav-prev">&larr; 混雑の値段──シャドープライスとLMP</a>
+      <a href="../e-market/index.html" class="unit-nav-next">次の領域へ: E 電力市場 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

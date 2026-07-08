@@ -68,6 +68,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="f" id="term-ems">
+        <dt>EMS（エネルギー管理システム）</dt>
+        <dd>
+          <p>Energy Management System。SCADAが集めた計測値を状態推定で整えたうえで、オンラインの系統監視（混雑・N-1）・需給制御（LFC/EDC）・予測・最適化（SCUC/SCED）などの計算を行う、電力制御システムの「頭脳」層。中央給電指令所システムの計算機能群にあたる。SCADA（目と手）との2階建てが、世界の電力制御システムに共通する枠組み。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/08-scada-ems-data-flow.html">F-08</a>、<a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="f" id="term-edc">
         <dt>EDC（経済負荷配分制御）</dt>
         <dd>
@@ -88,12 +98,42 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="e,b" id="term-cost-allocation">
+        <dt>一般負担・特定負担</dt>
+        <dd>
+          <p>系統の費用を誰が負担するかの区分。一般負担は、系統全体の便益になる費用（基幹系統の増強や再給電などの運用費用）を託送料金などを通じて需要家全体で広く負担するもの。特定負担は、特定の事業者のためだけの費用（自分の発電所をつなぐ引込線の工事費など）を、その原因者・受益者が個別に負担するもの。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/12-congestion-cost-allocation.html">E-12</a>、<a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a" id="term-inverter-source">
+        <dt>インバータ電源</dt>
+        <dd>
+          <p>太陽光（直流）や蓄電池、多くの風力のように、パワーエレクトロニクスの変換器（インバータ）を介して系統に接続する電源。回転体が系統と直結していない点が、タービンで回る同期発電機との違い。回らない電源の比率が増えることは、同期（B-04）など系統の物理の土台が変わっていくことでもある。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/06-generator-basics.html">A-06</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-imbalance">
         <dt>インバランス</dt>
         <dd>
           <p>計画値と実績の差。本サイトでは「実績 − 計画」で定義する。BG単位で算定され、不足・余剰が生じた分は一般送配電事業者の調整力で埋められ、インバランス料金として精算される。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
+            関連ユニット: <a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>、<a href="../units/e-market/10-imbalance-pricing.html">E-10</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-imbalance-price">
+        <dt>インバランス料金</dt>
+        <dd>
+          <p>計画と実績の差（インバランス）をBGが精算する料金。単価は、その30分コマでズレを埋めるために実際に使われた調整力のkWh価格（限界的kWh価格）に基づいて決まり、需給ひっ迫時には需給ひっ迫時補正で引き上げられる。不足インバランスは支払い、余剰インバランスは受け取り。罰金ではなく「後始末の実費の付け替え」であり、計画値同時同量を支える計画遵守インセンティブとして働く。2022年度開始の現行制度（見直し継続中）。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/10-imbalance-pricing.html">E-10</a>、<a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
           </p>
         </dd>
       </div>
@@ -124,6 +164,16 @@
           <p>各母線の電圧の大きさと位相角を未知数とし、有効電力・無効電力の両方の収支を満たすように解く本来の潮流計算。式が非線形のため反復計算（ニュートン・ラフソン法など）で解き、収束しない場合もある。電圧分布・無効電力の流れ・送電損失まで得られる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/c-grid-model/04-dc-and-ac-power-flow.html">C-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="d" id="term-soc">
+        <dt>SOC（蓄電残量）</dt>
+        <dd>
+          <p>State of Charge。蓄電池の残量や揚水の上池の水量に相当する「いま貯まっている量」。充電で増え、放電で減り、コマからコマへ持ち越される——SOC(次) ＝ SOC(今) ＋ 充電 − 放電。0以上・容量以下という上下限とともに、コマをまたぐ時間結合制約の代表。「後で放電するために今充電する」計画は、SOCを通じた複数コマの一括最適化でだけ立てられる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/08-time-coupling-storage.html">D-08</a>
           </p>
         </dd>
       </div>
@@ -161,9 +211,9 @@
       <div class="glossary-entry" data-domain="b" id="term-n-1-curtailment">
         <dt>N-1電制</dt>
         <dd>
-          <p>設備故障（N-1）を検知したとき、瞬時に自動で電源の出力を制限する仕組み。これを条件とすることで、N-1基準のために事前に残していた容量の余裕まで平常時に活用できる。N-1の守り方を「事前の余裕」から「事後の瞬時制御」に変える取組で、コネクト&マネージの3本柱の1つ。</p>
+          <p>設備故障（N-1）を検知したとき、瞬時に自動で電源の出力を制限する仕組み（電制＝電源制限）。これを条件とすることで、N-1基準のために事前に残していた容量の余裕まで平常時に活用できる（平常時の上限＝残り回線の容量＋電制できる量）。N-1の守り方を「事前の余裕」から「事後の瞬時制御」に変える取組で、コネクト&マネージの3本柱の1つ。装置側の技術は転送遮断。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>、<a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+            関連ユニット: <a href="../units/b-congestion/05-n1-shedding-and-flow-rationalization.html">B-05</a>、<a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>、<a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
           </p>
         </dd>
       </div>
@@ -231,9 +281,9 @@
       <div class="glossary-entry" data-domain="c" id="term-switchgear">
         <dt>開閉器（遮断器・断路器）</dt>
         <dd>
-          <p>系統の接続構成を変更するための装置。遮断器・断路器など。入／切によって送電線などが系統に入る・出るが切り替わり、トポロジー（系統モデルの構造）が変わる。</p>
+          <p>系統の接続構成を変更するための装置。遮断器（電流が流れたまま切れる）・断路器（無負荷で操作する）など。入／切によって送電線などが系統に入る・出るが切り替わり、トポロジー（系統モデルの構造）が変わる。開閉器の入切状態から母線モデルを作るのがトポロジー処理。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>
+            関連ユニット: <a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>、<a href="../units/c-grid-model/07-topology-processing.html">C-07</a>
           </p>
         </dd>
       </div>
@@ -254,6 +304,16 @@
           <p>送電線などの設備に、その送電容量を超える潮流が流れる状態。系統混雑が顕在化した状態であり、設備の損傷や連鎖故障を避けるため解消が必要。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,f" id="term-inertia">
+        <dt>慣性</dt>
+        <dd>
+          <p>系統につながる同期発電機の回転体が持つ運動エネルギーに由来する、周波数変化への抵抗力。需給の差は回転エネルギーの出し入れ（貯金箱）が自動的に受け止めるため、慣性が大きいほど同じ需給差でも周波数の変化がゆっくりになり、GF（ガバナフリー）などの制御が動くまでの時間を稼げる——需給制御のリレーの「第0走者」。インバータ電源への置き換えが進むと系統の慣性は減り、対策（同期調相機・疑似慣性・グリッドフォーミングインバータ）が検討されている。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/07-frequency-and-inertia.html">A-07</a>、<a href="../units/f-dispatch-system/05-frequency-control-and-congestion.html">F-05</a>
           </p>
         </dd>
       </div>
@@ -294,6 +354,36 @@
           <p>各エリアの上位2電圧（最上位電圧とその1階級下。最上位が250kV未満の区域はその最上位電圧）の送電線・母線。系統の骨格をなす。具体的な電圧はエリアで異なり（例: 500kV/275kV、275kV/154kV等）、系統混雑管理の主舞台になる。OCCTOが定義・公表している。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/c-grid-model/01-grid-model-structure.html">C-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,d" id="term-startup-time">
+        <dt>起動時間</dt>
+        <dd>
+          <p>発電機を停止状態から系統に並列し、出力を出せる状態にするまでにかかる時間。冷えた大型汽力（石炭など）は数時間〜半日オーダー、ガスタービンは数十分、水力・揚水は数分と、電源種別で大きく異なる。「使いたくなってから起動」では間に合わないため、SCUC（起動停止計画）が先の時間断面まで見て早めに実行される理由になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/06-generator-basics.html">A-06</a>、<a href="../units/f-dispatch-system/04-computation-timing.html">F-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-reverse-flow">
+        <dt>逆潮流</dt>
+        <dd>
+          <p>需要側（配電系統の末端側）から系統側（変電所側）へ向かう、従来と逆向きの電力の流れ。屋根の太陽光の発電が地域の需要を上回ると生じる。抵抗が支配的（R≫X）な配電線では、逆潮流が電圧を押し上げ（ΔV≒R×I）、電圧が上限に達するとパワーコンディショナの電圧上昇抑制で出力が絞られる。配電系統の混雑・電圧問題の主因。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/06-local-and-distribution-congestion.html">B-06</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,b" id="term-ampacity">
+        <dt>許容電流（連続許容・短時間許容）</dt>
+        <dd>
+          <p>電線の温度が安全の限度（たるみ・強度低下）を超えない範囲で流せる電流の上限。発熱（I²R＋日射）と放熱（気温・風）のつり合いで決まる。連続して流せる上限が連続許容電流、電線が温まりきるまでの時間を利用して短時間だけ許されるのが短時間許容電流で、N-1事故直後の転流の跳ね上がりを短時間許容で受けて運用で下げる、という使い方と対になる。MWへの換算は P=√3×V×I×cosφ。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/08-thermal-capacity.html">A-08</a>、<a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
           </p>
         </dd>
       </div>
@@ -358,12 +448,32 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="d" id="term-grid-battery">
+        <dt>系統用蓄電池</dt>
+        <dd>
+          <p>需要家に併設せず、系統に直接接続して充放電する大型の蓄電池。余る時間に充電し足りない時間に放電する「時間の価値」に加え、混雑する送電線の下流側に置いて混雑時間帯に放電すれば線路潮流を減らせる「場所の価値」を持つ（効き方はPTDFで計算できる）。再エネ抑制の受け皿・混雑対策として導入が拡大している。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/08-time-coupling-storage.html">D-08</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-gate-close">
         <dt>ゲートクローズ</dt>
         <dd>
           <p>計画値を変更・更新できる最終時刻。現行ルールでは実需給の1時間前。これ以降、発電計画値などは変更できず、系統運用の基礎データとして確定する。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f,e" id="term-occto-system">
+        <dt>広域機関システム</dt>
+        <dd>
+          <p>電力広域的運営推進機関（OCCTO）が運用する、全国共通の計画受付・配信システム。BG（発電・小売）の発電計画・需要計画などをオンラインで受け付け、「発電＝販売」「需要＝調達」の整合をチェックし、関係する一般送配電事業者（中給側）へ配信する。計画はゲートクローズまで更新でき、時間前市場での修正もこの経路で系統側に伝わる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/09-occto-system-and-plan-flow.html">F-09</a>、<a href="../units/e-market/01-bg-and-generation-plan.html">E-01</a>
           </p>
         </dd>
       </div>
@@ -388,6 +498,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="e,d" id="term-congestion-cost">
+        <dt>混雑処理費用</dt>
+        <dd>
+          <p>混雑を運用（再給電・出力制御）で処理するためにかかる追加費用。再給電では「（上げ側の単価 − 下げ側の単価）× 動かした量」——安い電源を高い電源で置き換えるメリットオーダーの崩れがその正体で、シャドープライスと同じ形をしている。日本のゾーン制では市場価格に現れず託送料金に溶け込む。混雑が続く場所ほど累積し、系統増強や蓄電池設置の費用対効果を測る材料になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/12-congestion-cost-allocation.html">E-12</a>、<a href="../units/d-algorithms/07-shadow-price-and-lmp.html">D-07</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="f" id="term-renewable-forecast">
         <dt>再エネ出力予測</dt>
         <dd>
@@ -408,6 +528,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a,d" id="term-minimum-output">
+        <dt>最低出力</dt>
+        <dd>
+          <p>発電機が運転を安定に保てる出力の下限。火力では燃焼の安定などから定格の3〜5割程度になることが多い。「起動したら最低ここまでは出てしまう」（ゼロと最低出力の間では運転できない）という性質で、SCUC/SCEDの出力下限制約、供給過剰時の下げ代の限界（優先給電ルールの火力抑制の限度）として効く。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/06-generator-basics.html">A-06</a>、<a href="../units/d-algorithms/03-scuc-sced-overview.html">D-03</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="d,f" id="term-optimization">
         <dt>最適化（数理最適化）</dt>
         <dd>
@@ -424,6 +554,16 @@
           <p>保守・点検などで設備を計画的に停止する計画。停止中の送電線などは「ない」ものとして系統モデルに反映する（Yバスからその線路のアドミタンスを除く）。設備停止で潮流分布が変わり混雑が起きやすくなることもあるため、混雑管理の前提になる。OCCTOが調整・記載要領を公開している。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-zaraba">
+        <dt>ザラバ方式</dt>
+        <dd>
+          <p>売り注文と買い注文を板（注文の一覧）に並べ、条件が合致した組み合わせから随時・個別に約定させていく取引方式。約定価格は取引ごとに決まり、単一価格にはならない。株式市場の通常取引と同じ方式で、JEPXの時間前市場で使われる。全注文を集めて1回で約定するスポット市場（シングルプライスオークション）との対比で押さえる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/11-intraday-market.html">E-11</a>
           </p>
         </dd>
       </div>
@@ -518,12 +658,32 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="d" id="term-time-coupling">
+        <dt>時間結合制約（コマ間制約）</dt>
+        <dd>
+          <p>複数の時間断面（コマ）の変数にまたがる制約。ランプ制約（隣り合うコマの出力差 ≤ 30分で動ける量）と、蓄電池・揚水のSOCの遷移（貯めた量の持ち越し）が代表。これがあるため各コマを独立には最適化できず、SCUCは48コマなどを一括で解く——変数・制約がコマ数倍に膨らみ、SCUC（MIP）が重く「早めに・数回」実行される理由の半分はこの時間方向の広がりにある。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/d-algorithms/08-time-coupling-storage.html">D-08</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e,f" id="term-time-section">
         <dt>時間断面（コマ）</dt>
         <dd>
           <p>演算や計画が対象とする時間の区切り。系統運用では30分を1コマとし、1日48コマ。各演算は「どのコマ（時間断面）を対象に計算するか」を持つ。実需給1時間前のゲートクローズで、その断面の計画が確定する。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/f-dispatch-system/04-computation-timing.html">F-04</a>、<a href="../units/e-market/02-simultaneous-balancing.html">E-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-intraday-market">
+        <dt>時間前市場（当日市場）</dt>
+        <dd>
+          <p>スポット市場の約定後（前日夕方）からゲートクローズ直前まで開いている卸電力市場。JEPXが開設し、30分コマ単位の電気をザラバ方式で随時取引できる。予測外れや電源トラブルで計画を直したいときの調達・売却手段で、インバランス料金（事後精算）との天秤がBGのリスク管理になる。エリアをまたぐ約定は連系線の空容量の範囲で処理される（間接オークション）。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/11-intraday-market.html">E-11</a>、<a href="../units/e-market/10-imbalance-pricing.html">E-10</a>
           </p>
         </dd>
       </div>
@@ -588,6 +748,26 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="f" id="term-scarcity-alert">
+        <dt>需給ひっ迫警報・注意報</dt>
+        <dd>
+          <p>需給ひっ迫の度合いを社会に知らせる公開の仕組み（2022年度整備）。広域予備率が5%を下回る見込みで注意報、3%を下回る見込みで警報が発出される。E-10の需給ひっ迫時補正（インバランス料金の引き上げ）と同じ広域予備率の物差しで連動しており、運用の警報と市場の価格シグナルが一枚の絵になっている。日々の見通しは「でんき予報」として公表される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/10-supply-demand-emergency.html">F-10</a>、<a href="../units/e-market/10-imbalance-pricing.html">E-10</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-scarcity-adjustment">
+        <dt>需給ひっ迫時補正</dt>
+        <dd>
+          <p>需給がひっ迫したコマのインバランス料金単価を引き上げる仕組み。広域予備率が下がるほど単価が高くなるカーブが設定され、広域予備率3%相当では本則600円/kWh（経過措置として200円/kWhが適用されてきた。水準は見直しが続いている）。ひっ迫時に計画の順守・供給の上積み・需要の抑制を促す価格シグナルとして働く。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/10-imbalance-pricing.html">E-10</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="f" id="term-demand-forecast">
         <dt>需要予測</dt>
         <dd>
@@ -614,6 +794,16 @@
           <p>実系統の計測値（誤差や欠測を含む）から、物理法則と最もつじつまの合う系統の状態——各母線の電圧の大きさと位相角——を推定する計算。冗長な（必要最小限より多い）計測を使うことで、多数決の働きにより異常な計測（バッドデータ）を検出でき、推定した状態からは計測していない場所の潮流も計算できる。潮流計算（計画値→潮流）と向きが逆の、実系統把握の土台。次期中給システムの機能の1つ。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/c-grid-model/06-measurement-and-state-estimation.html">C-06</a>、<a href="../units/f-dispatch-system/02-next-gen-dispatch-system.html">F-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f" id="term-scada">
+        <dt>SCADA（監視制御・データ収集）</dt>
+        <dd>
+          <p>Supervisory Control And Data Acquisition。テレメータの計測値（潮流・電圧・開閉器の入切など）を秒オーダーで収集し、系統図画面での監視・警報を行い、開閉器の遠隔操作や発電機への出力指令を現場へ送り出す、電力制御システムの入出力層。系統の「目と手」。この上にEMS（頭脳）が載る2階建てが、電力制御システムの共通の枠組み。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/08-scada-ems-data-flow.html">F-08</a>、<a href="../units/c-grid-model/06-measurement-and-state-estimation.html">C-06</a>
           </p>
         </dd>
       </div>
@@ -671,9 +861,9 @@
       <div class="glossary-entry" data-domain="b,e" id="term-flow-assumption-rationalization">
         <dt>想定潮流の合理化</dt>
         <dd>
-          <p>空き容量の計算で、「接続済みの全電源が最大出力で同時に発電する」という保守的な想定をやめ、電源の実際の稼働傾向などを反映した実態に近い想定で潮流を見積もり直すこと。設備を増やさずに空き容量を広げられる。コネクト&マネージの3本柱の1つ。</p>
+          <p>空き容量の計算で、「接続済みの全電源が最大出力で同時に発電する」という保守的な想定をやめ、電源の実際の稼働傾向などを反映した実態に近い想定で潮流を見積もり直すこと。空き容量の増分は想定潮流の削減量に等しく、設備を増やさず・追加リスクほぼなしで枠を掘り出せる。コネクト&マネージの3本柱の1つ。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>、<a href="../units/e-market/05-non-firm-connection.html">E-05</a>
+            関連ユニット: <a href="../units/b-congestion/05-n1-shedding-and-flow-rationalization.html">B-05</a>、<a href="../units/b-congestion/03-congestion-countermeasures-map.html">B-03</a>、<a href="../units/e-market/05-non-firm-connection.html">E-05</a>
           </p>
         </dd>
       </div>
@@ -778,6 +968,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="e" id="term-long-term-decarbon-auction">
+        <dt>長期脱炭素電源オークション</dt>
+        <dd>
+          <p>脱炭素型電源（蓄電池・揚水・水素/アンモニア対応・原子力など）の新設・改修投資を対象に、原則20年間の容量収入を約束する入札制度。容量市場の一部として2023年度に開始。年度単位の容量市場では支えきれない大型投資の回収予見性を高め、脱炭素と供給力確保の両立を狙う。系統用蓄電池の建設もこの制度で支えられる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/13-capacity-market.html">E-13</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-balancing-reserve">
         <dt>調整力</dt>
         <dd>
@@ -828,6 +1028,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b" id="term-der">
+        <dt>DER（分散型エネルギーリソース）</dt>
+        <dd>
+          <p>Distributed Energy Resources。屋根の太陽光・蓄電池・EVと充電器・制御可能な負荷など、需要側に分散して接続されるリソースの総称。逆潮流・電圧上昇など配電系統の課題の源である一方、制御・集約（アグリゲーション）できれば調整力や混雑対策の戦力にもなる。この転換を支える基幹側（TSO）と配電側（DSO）の情報連携がTSO/DSO協調。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/06-local-and-distribution-congestion.html">B-06</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="c,d" id="term-dc-power-flow">
         <dt>DC潮流計算（直流法）</dt>
         <dd>
@@ -851,9 +1061,19 @@
       <div class="glossary-entry" data-domain="c,f" id="term-telemeter">
         <dt>テレメータ</dt>
         <dd>
-          <p>系統各所（変電所など）の電力（P・Q）・電圧・開閉器の状態などを計測し、通信で中央給電指令所へ常時伝送する仕組み（遠隔計測）。届く値は誤差や欠測を含むため、状態推定の入力として使われる。</p>
+          <p>系統各所（変電所など）の電力（P・Q）・電圧・開閉器の状態などを計測し、通信で中央給電指令所へ常時伝送する仕組み（遠隔計測）。届く値は誤差や欠測を含むため、状態推定の入力として使われる。中給側でこれを収集するのがSCADA。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/c-grid-model/06-measurement-and-state-estimation.html">C-06</a>
+            関連ユニット: <a href="../units/c-grid-model/06-measurement-and-state-estimation.html">C-06</a>、<a href="../units/f-dispatch-system/08-scada-ems-data-flow.html">F-08</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-transfer-trip">
+        <dt>転送遮断</dt>
+        <dd>
+          <p>設備故障の検知情報を通信で離れた場所へ転送し、あらかじめ決めておいた発電機を瞬時に自動遮断する保護リレーの仕組み。人の操作を介さず事故後ただちに動作する。N-1電制を実現する装置側の技術で、「事故時に電源を即座に減らせる」ことを条件に、平常時の潮流の枠を広げられる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/05-n1-shedding-and-flow-rationalization.html">B-05</a>
           </p>
         </dd>
       </div>
@@ -878,12 +1098,42 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="f,b" id="term-power-interchange">
+        <dt>電力融通（広域融通）</dt>
+        <dd>
+          <p>需給がひっ迫したエリアが、連系線を通じて余裕のあるエリアから電力を受け取ること。需給ひっ迫時の命綱で、B-02のマージン（万一の融通に備えて連系線に取り置く容量）はこのためにある。融通を増やすほど連系線の潮流が増えるため、運用容量（場所の制約）が融通量の上限になる——量の危機と場所の制約が絡み合う接点。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/10-supply-demand-emergency.html">F-10</a>、<a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c" id="term-topology-processing">
+        <dt>トポロジー処理</dt>
+        <dd>
+          <p>開閉器の入切状態をもとに、「閉じている開閉器で電気的につながっているノードのかたまり」を1つの母線にまとめ、ノードブレーカモデルからバスブランチモデル（Yバス用の母線・線路モデル）を生成する処理。状態推定や潮流計算の前段で毎回実行される、オンライン計算の最初の一歩。開閉器1つの変化が母線の数・Yバスの形・潮流計算の答えを変える。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/07-topology-processing.html">C-07</a>、<a href="../units/c-grid-model/02-system-data-and-inputs.html">C-02</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="b" id="term-synchronous-stability">
         <dt>同期安定性</dt>
         <dd>
           <p>交流系統の発電機が同期（同じ周波数での歩調）を保って運転を続けられる限界。送電量が大きい状態で事故などのショックが加わると、発電機が歩調を乱して運転を続けられなくなる（脱調）おそれがある。運用容量を決める4つの限度の1つ。P-δカーブの山（δ=90°）の手前に余裕を残す、が直感。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/b-congestion/04-stability-basics.html">B-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,b" id="term-synchronous-generator">
+        <dt>同期発電機</dt>
+        <dd>
+          <p>タービンなどで回転子を回し、系統と同じ周波数に同期して回転しながら交流を発電する発電機。火力・水力・原子力はこの方式。B領域で学んだ「同期」（歩調を合わせて回る）・脱調・同期安定性の主体は、この回転体。インバータ電源（回転体が系統と直結しない）との対比で使われる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/06-generator-basics.html">A-06</a>、<a href="../units/b-congestion/04-stability-basics.html">B-04</a>
           </p>
         </dd>
       </div>
@@ -898,12 +1148,22 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a,b" id="term-dlr">
+        <dt>動的レーティング（DLR）</dt>
+        <dd>
+          <p>Dynamic Line Rating。固定値や季節別の値の代わりに、実際の気象条件（気温・風速・日射など）からその時々の許容電流を動的に算定する手法。放熱の良い条件では同じ電線からより多くの容量を引き出せる。風の強い日は風力発電が多く、電線もよく冷えるという相性の良さもある。想定潮流の合理化（計算の想定を現実へ）と対になる「物理の想定を現実へ」の容量掘り出し。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/08-thermal-capacity.html">A-08</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="b" id="term-thermal-capacity">
         <dt>熱容量</dt>
         <dd>
-          <p>導体が発熱で傷まない範囲で送電線に流せる限界（熱的制約）。送電線そのものの物理的な上限で、運用容量を決める4つの限度の1つ。熱容量に余裕があっても、安定性や電圧の限度が先に効くことがある。</p>
+          <p>導体が発熱で傷まない範囲で送電線に流せる限界（熱的制約）。送電線そのものの物理的な上限で、運用容量を決める4つの限度の1つ。正体は発熱と放熱のつり合いで決まる電線の温度の限度（→許容電流）。熱容量に余裕があっても、安定性や電圧の限度が先に効くことがある。</p>
           <p class="glossary-related">
-            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
+            関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/a-grid-fundamentals/08-thermal-capacity.html">A-08</a>、<a href="../units/b-congestion/01-congestion-and-n1.html">B-01</a>
           </p>
         </dd>
       </div>
@@ -914,6 +1174,16 @@
           <p>Locational Marginal Price（地点別限界価格）。その母線（ノード）で需要が1MW増えたときの、系統全体の追加コスト。混雑がなければ全母線で同じ値（最安の限界電源の単価）になり、混雑があると「どの電源で賄えるか」が場所ごとに違うため母線ごとに異なる値になる。米国PJMなどのノーダル制市場では、このLMPで取引が精算され、地内混雑も価格に反映される。日本のエリアプライス（ゾーン制）のエリア間値差は、これをゾーン単位に粗くした親戚にあたる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/d-algorithms/07-shadow-price-and-lmp.html">D-07</a>、<a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c" id="term-node-breaker-bus-branch">
+        <dt>ノードブレーカモデル／バスブランチモデル</dt>
+        <dd>
+          <p>系統モデルの2つの詳細度。ノードブレーカモデルは変電所内部を接続点（ノード）と開閉器（ブレーカ）のレベルまで細かく表した詳細モデルで、監視・設備管理はこの詳細度で行う。バスブランチモデルは母線（バス）と線路・変圧器（ブランチ）で表した計算用モデルで、Yバス・潮流計算・状態推定はこの上で動く。前者から後者を作る変換がトポロジー処理。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/07-topology-processing.html">C-07</a>、<a href="../units/c-grid-model/01-grid-model-structure.html">C-01</a>
           </p>
         </dd>
       </div>
@@ -1008,6 +1278,26 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="e" id="term-fit">
+        <dt>FIT（固定価格買取制度）</dt>
+        <dd>
+          <p>Feed-in Tariff。再エネで発電した電気を、あらかじめ決められた固定価格で一定期間買い取ることを国が約束する制度（2012年開始）。収入が市場価格と無関係に保証されるため投資リスクが小さく普及を強力に後押ししたが、発電事業者が市場価格や需給を見て行動する動機は生まれず、インバランス責任も実質免除されるなど「市場の外」の存在だった。次の段階がFIP。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/14-fit-fip.html">E-14</a>、<a href="../units/e-market/04-priority-dispatch.html">E-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-fip">
+        <dt>FIP（フィードインプレミアム）</dt>
+        <dd>
+          <p>Feed-in Premium。再エネの電気を自ら市場等で売り、その収入にプレミアム（＝基準価格 − 参照価格）を上乗せする制度（2022年度開始）。コマごとの収入が市場価格と連動するため、高い時間に売る・蓄電池を併設する・安すぎる時間は止めるなど市場を見た行動の動機が生まれる。インバランスの責任も負い、再エネを市場・系統の一員として統合していく設計。アグリゲーターの役割が重要になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/14-fit-fip.html">E-14</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="a,c" id="term-transformer">
         <dt>変圧器</dt>
         <dd>
@@ -1028,12 +1318,32 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b" id="term-protective-relay">
+        <dt>保護リレー（保護継電器）</dt>
+        <dd>
+          <p>系統の故障（短絡・地絡など）を電気量の変化から検知し、瞬時に遮断器を動作させて故障箇所を切り離す装置。人の判断を待たず自動で働き、設備の損傷拡大と系統への波及を防ぐ。故障情報を遠方に転送して発電機を遮断する転送遮断（N-1電制）も、保護リレーの応用。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/05-n1-shedding-and-flow-rationalization.html">B-05</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="a,c,d" id="term-bus">
         <dt>母線（バス）</dt>
         <dd>
           <p>発電機・送電線・変圧器などが集まって接続する点。回路でいう節点（ノード）に相当する。物理的には変電所内の導体（ブスバー）で、電圧階級ごとに複数ある。系統モデルでは1つの母線＝1つの節点として扱い、アドミタンス行列の行・列に並べる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/c-grid-model/01-grid-model-structure.html">C-01</a>、<a href="../units/a-grid-fundamentals/02-power-flow-basics.html">A-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="c,b" id="term-bus-splitting">
+        <dt>母線分割</dt>
+        <dd>
+          <p>母線連絡の開閉器を開き、1つだった母線を電気的に2つに分ける運用操作。線路と電源・負荷の組み合わせが変わるため潮流の経路が変わり、流れが集中する変電所では混雑を緩和できる場合がある。ただし組み合わせ次第で逆に悪化することもあるため、潮流計算による事前確認とセットで使う。再給電とは別の「運用でしのぐ」層の道具（系統切替）。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/c-grid-model/07-topology-processing.html">C-07</a>
           </p>
         </dd>
       </div>
@@ -1118,12 +1428,42 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="a,e" id="term-pumped-storage">
+        <dt>揚水発電</dt>
+        <dd>
+          <p>上下2つの池を持ち、電気が余るときにポンプで水を汲み上げ（充電に相当）、足りないときに水を落として発電する（放電に相当）水力発電。起動・出力変化が速く、系統にとって巨大な蓄電池のように働く。供給過剰時の受け皿（優先給電ルールの揚水運転）や、需給ひっ迫時の切り札として使われる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/06-generator-basics.html">A-06</a>、<a href="../units/e-market/04-priority-dispatch.html">E-04</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="e" id="term-capacity-market">
+        <dt>容量市場</dt>
+        <dd>
+          <p>将来の供給力（kW価値＝いざというとき発電できる能力）をあらかじめ確保する市場。OCCTOが買い手となり、実需給の4年前にメインオークションで全国の必要供給力を調達する。落札した電源は実需給年度に供給力を提供する義務を負い、対価（容量収入）を得る。再エネ拡大でkWh収入だけでは固定費を回収しにくくなる中、供給力の維持・確保を支える。kWh（スポット）・ΔkW（需給調整市場）と並ぶ第3の価値の市場。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/e-market/13-capacity-market.html">E-13</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="f" id="term-reserve-capacity">
         <dt>予備力（予備率）</dt>
         <dd>
           <p>需要予測に対して上乗せして確保しておく供給力。需要に対する比率を予備率（%）といい、予備率 =（供給力 − 需要予測）÷ 需要予測 × 100。需要予測の誤差や発電所の急な停止（電源脱落）に備える「量の備え」で、実需給の中でずれを埋める調整力（速さの備え）と役割を分担する。予備率が低下すると需給ひっ迫への警戒が始まる。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/f-dispatch-system/07-demand-and-renewable-forecast.html">F-07</a>、<a href="../units/e-market/03-balancing-market.html">E-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a,d" id="term-ramp-rate">
+        <dt>ランプ（出力変化速度）</dt>
+        <dd>
+          <p>発電機が出力を変えられる速さ。1分あたり何MW（定格の数%/分程度が目安）で表す。30分コマの間に動ける量の上限を決めるため、隣り合うコマの出力差の制約——コマとコマの計画をつなぐ時間結合制約——の出所になる。ランプが小さい電源ほど、急な計画変更についていけない。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/06-generator-basics.html">A-06</a>、<a href="../units/d-algorithms/08-time-coupling-storage.html">D-08</a>
           </p>
         </dd>
       </div>
@@ -1164,6 +1504,36 @@
           <p>エリア（一般送配電事業者の供給区域）どうしを結ぶ送電線。運用容量・マージン・空容量が公表され、エリアをまたぐ取引はこの容量の範囲で行われる。連系線で起きる混雑（連系線混雑）は、地内混雑とは異なり市場の仕組み（間接オークション・市場分断）を通じて処理される。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>、<a href="../units/e-market/07-wholesale-market-and-indirect-auction.html">E-07</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="f,e" id="term-tie-line-plan">
+        <dt>連系線利用計画</dt>
+        <dd>
+          <p>エリアをまたぐ取引が、どの連系線をどれだけ使うかを表す計画。広域機関が連系線ごとに集計し、運用容量・マージン・空容量と突き合わせて管理する。各エリアの中給から見ると「連系線潮流の予定」であり、地内の発電計画とあわせて需給・潮流計算の入力になる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/f-dispatch-system/09-occto-system-and-plan-flow.html">F-09</a>、<a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b,c" id="term-local-grid">
+        <dt>ローカル系統</dt>
+        <dd>
+          <p>基幹系統（上位2電圧）の下位にあたる送電・変電の系統。地域の変電所へ電力を配る。基幹系統と同じく容量の制約があり、再エネの接続申込みが集中して空き容量の不足が問題になっている。ノンファーム型接続の適用が基幹からローカル系統へ拡大されるなど、コネクト&マネージの発想が階層を降りてきている。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/06-local-and-distribution-congestion.html">B-06</a>、<a href="../units/c-grid-model/03-upper-lower-and-aggregated-bus.html">C-03</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="a" id="term-rocof">
+        <dt>RoCoF（周波数変化率）</dt>
+        <dd>
+          <p>Rate of Change of Frequency。周波数が1秒あたり何Hz変化するかを表す量（Hz/秒）。同じ需給差なら、系統の慣性が小さいほどRoCoFは大きく（周波数の変化が速く）なる——慣性が半分ならRoCoFは約2倍。インバータ電源の増加による慣性低下の議論で使われる指標。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/a-grid-fundamentals/07-frequency-and-inertia.html">A-07</a>
           </p>
         </dd>
       </div>

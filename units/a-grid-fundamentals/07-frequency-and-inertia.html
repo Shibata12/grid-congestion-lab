@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A-07: 周波数と慣性──なぜ50Hzに保てるのか - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="a" data-unit="a-07">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">A: 系統の基礎</a> &gt;
+      <span>周波数と慣性</span>
+    </nav>
+
+    <article>
+      <h1>A-07: 周波数と慣性──なぜ50Hzに保てるのか</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の2本目です。本サイトでは「需給がずれると周波数が乱れる」と何度も使ってきました
+        （E-02の計画値同時同量、F-05の需給制御、B-04の周波数維持）。でも、<strong>なぜ</strong>需給のずれが
+        周波数に出るのでしょうか？　答えは<strong>回っているもの</strong>にあります。
+        本ユニットでは、周波数と需給をつなぐ物理——<strong>慣性</strong>——を直感レベルで理解し、
+        再エネ時代に慣性が減っていくという、いまの系統の大きな課題まで見通します。
+        新しい式はゼロ、割り算が1回出てくるだけです。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="06-generator-basics.html">A-06: 発電機のきほん</a>：同期発電機は回転子が系統と同期して回る。インバータ電源は回転体が系統と直結しない</li>
+          <li><a href="../f-dispatch-system/05-frequency-control-and-congestion.html">F-05: 需給制御（GF・LFC・EDC）と混雑管理</a>：需給制御は3層のリレー。最初の秒オーダーはGF（ガバナフリー）</li>
+          <li><a href="../b-congestion/04-stability-basics.html">B-04: 安定度入門</a>：連系線の分断で需給が急変すると周波数が乱れる（周波数維持の限度）</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：発電機の運動方程式（動揺方程式）や慣性定数Hの定義式には踏み込みません。
+          「回転エネルギーの貯金箱」というたとえと、単純化した割り算1回で「慣性は時間を稼ぐ」を体感できれば合格です
+          （一般的な電力工学の内容のため、参考資料はありません）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 周波数は系統の共通の時計、そしてメーター</a></li>
+          <li><a href="#section-2">2. 回転エネルギーの貯金箱</a></li>
+          <li><a href="#section-3">3. 慣性：減速を「ゆっくり」にする重り</a></li>
+          <li><a href="#section-4">4. 慣性は第0走者──F-05のリレーの前に</a></li>
+          <li><a href="#section-5">5. 慣性が減っていく：再エネ時代の課題</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 周波数は系統の共通の時計、そしてメーター</h2>
+        <p>
+          交流の系統では、すべての同期発電機が同じ周波数（東日本50Hz・西日本60Hz）で歩調を合わせて回っています（A-06・B-04の「同期」）。
+          周波数は系統全体に<strong>1つ</strong>——どこで測っても同じ値です。だからF-05では、
+          「需給の合計のずれは周波数を見れば分かる」と学びました。
+        </p>
+        <p>
+          でも、考えてみると不思議です。<strong>なぜ電気の使いすぎが「回転の速さ」に現れるのでしょうか？</strong>
+          電線のどこにも「需給メーター」は付いていないのに、周波数は正確に需給を映します。
+          そのからくりが、次の節の「貯金箱」です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 回転エネルギーの貯金箱</h2>
+        <p>
+          同期発電機の回転子は、何百トンもの鉄の塊が高速で回るものです。回っている物体は
+          <strong>運動エネルギー</strong>を持っています——系統全体で見れば、巨大な<strong>エネルギーの貯金箱</strong>が回り続けているのです。
+        </p>
+        <p>
+          ここで、どこかの需要が急に増えたとします。発電機のタービンへの燃料・蒸気は急には増えません（A-06のランプ）。
+          では足りない電力はどこから出てくるのか——<strong>回転子の運動エネルギーから、自動的に引き出されます</strong>。
+          エネルギーを吐き出した回転子は、その分だけ<strong>減速</strong>します。全発電機が同期して回っているので、
+          系統全体の周波数がそろって下がる——これが「需給のずれが周波数に出る」からくりです。
+        </p>
+        <ul>
+          <li><strong>需要 ＞ 供給</strong>：貯金箱から引き出し → 回転が遅くなる → <strong>周波数低下</strong></li>
+          <li><strong>需要 ＜ 供給</strong>：貯金箱に積み増し → 回転が速くなる → <strong>周波数上昇</strong></li>
+        </ul>
+        <p>
+          誰かが制御しているのではなく、<strong>物理法則（エネルギー保存）が勝手にやってくれる</strong>——
+          周波数が正直な需給メーターである理由はこれです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 195" role="img"
+               aria-label="系統全体の同期発電機の回転体を貯金箱にたとえた図。需要が供給を上回ると回転エネルギーが引き出されて回転が遅くなり周波数が低下し、供給が上回ると積み増されて周波数が上昇することを示す"
+               xmlns="http://www.w3.org/2000/svg">
+            <circle cx="230" cy="90" r="48" fill="#eef2ff" stroke="#6366f1" stroke-width="2"></circle>
+            <text x="230" y="80" font-size="10" text-anchor="middle" fill="#4338ca" font-weight="bold">回転エネルギー</text>
+            <text x="230" y="96" font-size="9" text-anchor="middle" fill="#4a5568">の貯金箱</text>
+            <text x="230" y="112" font-size="8.5" text-anchor="middle" fill="#4a5568">（全同期発電機の回転体）</text>
+            <line x1="120" y1="90" x2="179" y2="90" stroke="#16a34a" stroke-width="2" ></line>
+            <text x="110" y="80" font-size="9.5" text-anchor="end" fill="#15803d">供給（発電）</text>
+            <line x1="281" y1="90" x2="340" y2="90" stroke="#dc2626" stroke-width="2"></line>
+            <text x="350" y="80" font-size="9.5" fill="#dc2626">需要（消費）</text>
+            <text x="230" y="168" font-size="10" text-anchor="middle" fill="#1a1a2e">需要＞供給 → 引き出し → 減速 → 周波数低下 ↓</text>
+            <text x="230" y="186" font-size="10" text-anchor="middle" fill="#1a1a2e">需要＜供給 → 積み増し → 加速 → 周波数上昇 ↑</text>
+            <text x="230" y="24" font-size="10" text-anchor="middle" fill="#4a5568">出入りの差は、貯金箱が自動的に受け止める（エネルギー保存）</text>
+          </svg>
+          <figcaption>図1: 回転エネルギーの貯金箱。需給の差は回転体が自動的に受け止め、周波数に現れる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 慣性：減速を「ゆっくり」にする重り</h2>
+        <p>
+          同じ引き出し（需給差）でも、貯金箱が<strong>大きい</strong>ほど減り方の影響は小さい——
+          つまり回転体が重く・多いほど、<strong>周波数の下がり方はゆっくり</strong>になります。
+          この「変化への抵抗力」が<span class="term">慣性<span class="term-tooltip">系統につながる同期発電機の回転体が持つ運動エネルギーに由来する、周波数変化への抵抗力。慣性が大きいほど、同じ需給差でも周波数の変化がゆっくりになり、GFなどの制御が動くまでの時間を稼げる。インバータ電源への置き換えが進むと系統の慣性は減る。</span></span>です。
+        </p>
+        <p>
+          数字で体感しましょう（周波数一定とみなした<strong>目安の計算</strong>です）。
+          系統の回転エネルギーの「使える貯金」が 5,000 MW·s 分あるとします。電源脱落で 500 MW の不足が生じたとき、
+          貯金だけで穴埋めできる時間は 5,000 ÷ 500 = <strong>10秒</strong>。
+          この10秒の間に、F-05のGF（ガバナフリー）が立ち上がって불足を埋め始めれば、周波数の低下は底を打ちます。
+          <strong>慣性の仕事は「解決」ではなく「時間稼ぎ」</strong>——でもその数秒がなければ、制御は間に合いません。
+        </p>
+        <p>
+          周波数がどれだけ速く下がるかを表す量には
+          <span class="term">RoCoF<span class="term-tooltip">Rate of Change of Frequency（周波数変化率）。周波数が1秒あたり何Hz変化するかを表す量。同じ需給差なら、系統の慣性が小さいほどRoCoFは大きく（変化が速く）なる。慣性低下の議論で使われる指標。</span></span>
+          （ロコフ＝周波数変化率、Hz/秒）という名前が付いています。
+          関係は単純で、<strong>同じ需給差なら、慣性が半分になるとRoCoFは約2倍</strong>——変化が2倍速くなります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="電源脱落直後の周波数低下カーブを、慣性が大きい系統と小さい系統で比較した図。慣性が大きいと下がり方がゆっくりでGFが間に合い浅い底で回復するが、慣性が小さいとRoCoFが大きく急降下し底が深くなる"
+               xmlns="http://www.w3.org/2000/svg">
+            <line x1="50" y1="40" x2="50" y2="170" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="50" y1="60" x2="440" y2="60" stroke="#cbd5e1" stroke-width="1" stroke-dasharray="5 4"></line>
+            <text x="58" y="52" font-size="9" fill="#4a5568">50 Hz（基準）</text>
+            <text x="245" y="192" font-size="10" text-anchor="middle" fill="#4a5568">時間（秒）→　★＝電源脱落</text>
+            <text x="110" y="70" font-size="11" fill="#dc2626">★</text>
+            <!-- 慣性大 -->
+            <path d="M50,60 L110,60 C170,72 200,92 240,96 C280,98 330,82 430,74" fill="none" stroke="#16a34a" stroke-width="2.2"></path>
+            <text x="300" y="112" font-size="9.5" fill="#15803d">慣性が大きい：ゆっくり下がり、浅い底で回復（GFが間に合う）</text>
+            <!-- 慣性小 -->
+            <path d="M50,60 L110,60 C140,95 155,130 185,142 C215,152 280,120 430,100" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-dasharray="7 4"></path>
+            <text x="215" y="168" font-size="9.5" fill="#dc2626">慣性が小さい：RoCoF大、急降下して底が深い</text>
+          </svg>
+          <figcaption>図2: 同じ電源脱落でも、慣性の大小で周波数の下がり方がまるで違う（模式図）</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 慣性は第0走者──F-05のリレーの前に</h2>
+        <p>
+          F-05で学んだ需給制御のリレー——GF（秒）→ LFC（分）→ EDC（数分〜）——を思い出してください。
+          実はこのリレーには、バトンを最初に持っている<strong>第0走者</strong>がいました。それが慣性です。
+        </p>
+        <ul>
+          <li><strong>第0走者：慣性（瞬時・物理）</strong>——制御ではなく物理法則。電源脱落の瞬間から自動で効き、時間を稼ぐ。</li>
+          <li><strong>第1走者：GF（秒・自律）</strong>——周波数低下を検知した発電機が自律的に出力を上げ始める。</li>
+          <li><strong>第2・3走者：LFC・EDC</strong>——中給からの指令で残りを埋め、経済的な配分に戻す。</li>
+        </ul>
+        <p>
+          B-04の「周波数維持の限度」も、この絵で読み直せます。連系線の分断で大きな需給ギャップが生じたとき、
+          周波数がどこまで下がるかは<strong>ギャップの大きさ × 慣性 × GFの速さ</strong>の勝負——
+          だから「分断しても耐えられる融通量」に上限（＝周波数維持の限度）が引かれるのでした。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 慣性が減っていく：再エネ時代の課題</h2>
+        <p>
+          ここでA-06の分類が効いてきます。太陽光・蓄電池・多くの風力は<strong>インバータ電源</strong>——
+          回転体が系統と直結していません。つまり、<strong>貯金箱にほとんど寄与しない</strong>のです。
+          再エネが同期発電機（火力など）を置き換えるほど、系統全体の慣性は減り、
+          同じ電源脱落でもRoCoFが大きく（周波数の変化が速く）なっていきます。これは世界中の系統が直面している課題です。
+        </p>
+        <p>
+          対策も動いています。回転体をそのまま系統につなぐ<strong>同期調相機</strong>、
+          インバータの制御で慣性のような振る舞いを作る<strong>疑似慣性</strong>、
+          さらに進んで、インバータ自身が同期発電機のように振る舞う<strong>グリッドフォーミングインバータ</strong>——
+          いずれも名前レベルの紹介にとどめますが、「回る電源が減った分の物理を、技術でどう補うか」という
+          方向性は掴んでおいてください。
+          周波数を支える物理の土台が変わっていく——これが、混雑と並ぶもう1つの「再エネ時代の系統の宿題」です。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（周波数低下のからくり） -->
+        <div class="exercise" data-exercise-id="a-07-ex01" data-type="choice">
+          <h3>演習 1: なぜ周波数が下がるのか</h3>
+          <div class="exercise-problem">
+            <p>需要が供給を上回った瞬間に系統の周波数が下がる理由として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-07-ex01" value="1">
+              <span>足りない電力が同期発電機の回転体の運動エネルギーから自動的に引き出され、回転が遅くなるから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-07-ex01" value="2">
+              <span>中央給電指令所が、需要の増加を検知して周波数を下げる指令を送るから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-07-ex01" value="3">
+              <span>送電線の抵抗が大きくなり、電気の流れる速さが遅くなるから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-07-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "需給の差は、誰かの指令を待たずに、物理法則（エネルギー保存）によって回転体の運動エネルギーが自動的に受け止めます。エネルギーを吐き出した回転子は減速し、全発電機が同期しているため系統全体の周波数がそろって下がる——周波数が正直な需給メーターである理由です。2は誤りで、周波数低下は指令より先に物理として起きます（指令で埋めるのはLFC・EDCの仕事）。3のような「電気の速さ」の話ではありません。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（慣性の持ち時間・バリアント付き） -->
+        <div class="exercise" data-exercise-id="a-07-ex02" data-type="numeric">
+          <h3>演習 2: 慣性が稼げる時間</h3>
+          <div class="exercise-problem">
+            <p>
+              系統の回転エネルギーの使える貯金が <span class="var" data-var="e">5,000</span> MW·s 分あるとする。
+              電源脱落で <span class="var" data-var="d">500</span> MW の供給不足が生じたとき、
+              回転エネルギーだけで不足を埋められる時間はおよそ何秒か（周波数一定とみなした目安の計算でよい）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              持ち時間:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 秒
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-07-ex02",
+          "type": "numeric",
+          "correct": 10,
+          "tolerance": 0,
+          "unit": "秒",
+          "explanation": "5,000 MW·s ÷ 500 MW = 10秒。この10秒の間にGF（ガバナフリー）が立ち上がって不足を埋め始めれば、周波数低下は底を打ちます。慣性の仕事は問題の解決ではなく「制御が間に合うまでの時間稼ぎ」——それでも、この数秒がなければリレーは始まりません。",
+          "variants": [
+            {
+              "vars": { "e": "6,000", "d": "300" },
+              "correct": 20,
+              "explanation": "6,000 ÷ 300 = 20秒。不足が小さければ持ち時間は長くなり、制御には余裕が生まれます。同じ系統でも「何MWの脱落まで耐えられるか」が慣性と不足量の比で決まる感覚がつかめます。"
+            },
+            {
+              "vars": { "e": "4,000", "d": "800" },
+              "correct": 5,
+              "explanation": "4,000 ÷ 800 = 5秒。大きな電源の脱落では持ち時間が短くなり、GFの立ち上がりがぎりぎりになります。慣性が減っていく系統で大電源の脱落が起きるケースが、周波数維持のいちばん厳しい場面です。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（慣性の性質） -->
+        <div class="exercise" data-exercise-id="a-07-ex03" data-type="multi-choice">
+          <h3>演習 3: 慣性の性質</h3>
+          <div class="exercise-problem">
+            <p>系統の慣性について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="a-07-ex03" value="1">
+              <span>慣性は、系統につながる同期発電機の回転体が持つ運動エネルギーに由来する</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-07-ex03" value="2">
+              <span>慣性が小さい系統では、同じ需給差でも周波数の変化が速くなる（RoCoFが大きくなる）</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-07-ex03" value="3">
+              <span>慣性は周波数低下を最終的に止める仕組みではなく、GFなどの制御が動くまでの時間を稼ぐ「第0走者」である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-07-ex03" value="4">
+              <span>インバータ電源が増えるほど、系統の慣性は自動的に増えていく</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-07-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（回転体の運動エネルギー＝貯金箱）、2（慣性半分ならRoCoFは約2倍）、3（慣性は時間稼ぎ。止めるのはGF以降の制御）はいずれも正しい。4は逆です——インバータ電源は回転体が系統と直結しないため貯金箱に寄与せず、同期発電機を置き換えるほど系統の慣性は減っていきます。これが疑似慣性・グリッドフォーミングなどの技術が開発されている理由です。"
+        }
+        </script>
+
+        <!-- 演習4: choice（慣性低下への対策） -->
+        <div class="exercise" data-exercise-id="a-07-ex04" data-type="choice">
+          <h3>演習 4: 慣性低下への対策</h3>
+          <div class="exercise-problem">
+            <p>再エネの増加で系統の慣性が減っていく問題への対策として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-07-ex04" value="1">
+              <span>同期調相機（回転体の追加）や、インバータに同期発電機のような振る舞いをさせる技術（疑似慣性・グリッドフォーミングインバータ）で、減った分の物理を補う</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-07-ex04" value="2">
+              <span>基準の周波数を50Hzから100Hzに引き上げて、変化の余裕を2倍にする</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-07-ex04" value="3">
+              <span>テレメータの計測点を増やして、周波数の低下をより細かく観測する</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-07-ex04",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "対策の方向は「回る電源が減った分の物理を、設備や制御技術で補う」ことです——回転体そのものを足す同期調相機、インバータ制御で慣性的な応答を作る疑似慣性、インバータ自身が同期発電機のように振る舞うグリッドフォーミング。2のような基準周波数の変更は現実的ではなく（全機器が50/60Hz前提）、3の観測の強化は把握には役立ちますが、貯金箱そのものは増えません。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="06-generator-basics.html" class="unit-nav-prev">&larr; 発電機のきほん──種類・特性・SCUCに現れる制約</a>
+      <a href="08-thermal-capacity.html" class="unit-nav-next">送電容量の物理──熱容量はどう決まるか &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

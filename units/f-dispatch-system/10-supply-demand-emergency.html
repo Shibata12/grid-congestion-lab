@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F-10: 需給ひっ迫と緊急時の運用 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="f" data-unit="f-10">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">F: 中央給電指令所システム</a> &gt;
+      <span>需給ひっ迫と緊急時運用</span>
+    </nav>
+
+    <article>
+      <h1>F-10: 需給ひっ迫と緊急時の運用</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の4本目、F領域の締めくくりです。これまで学んだ中給の仕事は「平時」の絵でした——
+        予測し（F-07）、計画を受けて（F-09）、最適化し（F-04）、制御する（F-05）。
+        では、<strong>それでも電気が足りなくなりそうなとき</strong>、何が起きるのでしょうか。
+        本ユニットは「量」の緊急事態——<strong>需給ひっ迫</strong>——のときの、注意報・警報から計画停電までの
+        <strong>打ち手の階段</strong>を学びます。B-02で「万一の融通に備える」とだけ言っていた
+        <strong>マージン</strong>の出番が、ついにやってきます。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="07-demand-and-renewable-forecast.html">F-07</a>：予備率＝（供給力 − 需要予測）÷ 需要予測 × 100。量の備えの指標</li>
+          <li><a href="../b-congestion/02-operating-capacity-and-margin.html">B-02: 運用容量とマージン</a>：マージン＝万一の融通に備えて連系線に取り置く容量</li>
+          <li><a href="../e-market/10-imbalance-pricing.html">E-10</a>：需給ひっ迫時補正——広域予備率が低いコマはインバランス単価が跳ね上がる</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：緊急時の指令手順の細目や、個別事象の詳細な経過には踏み込みません。
+          公開されているルール（注意報・警報の基準）と、過去に実際に起きたことの公表情報の範囲で扱います
+          （末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 「量」の緊急事態とは</a></li>
+          <li><a href="#section-2">2. 注意報と警報：予備率の物差し</a></li>
+          <li><a href="#section-3">3. 打ち手の階段：軽い手から重い手へ</a></li>
+          <li><a href="#section-4">4. 実際に起きたこと（公表情報から）</a></li>
+          <li><a href="#section-5">5. 量と場所が絡み合う：混雑管理との接点</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 「量」の緊急事態とは</h2>
+        <p>
+          F-05以来の対比——<strong>量（需給）と場所（混雑）</strong>——で言うと、本ユニットは「量」の緊急事態です。
+          寒波で暖房需要が跳ね上がる、大きな発電所が地震や故障で止まる、燃料の在庫が細る——
+          原因はさまざまですが、共通するのは<strong>供給力の余裕（予備率）が削られていく</strong>ことです。
+        </p>
+        <p>
+          予備率が尽きて需要が供給を上回れば、A-07で学んだとおり周波数が下がり、
+          最悪の場合は大停電に至ります。だから緊急時の運用はすべて、
+          「<strong>予備率をどう守るか</strong>」の一点に向かって組み立てられています。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 注意報と警報：予備率の物差し</h2>
+        <p>
+          日本には、ひっ迫の度合いを社会に知らせる公開の物差しがあります（2022年度に整備）。
+          広域予備率の<strong>見込み</strong>に基づいて——
+        </p>
+        <ul>
+          <li><strong>広域予備率 5% を下回る見込み</strong> → <strong>需給ひっ迫注意報</strong></li>
+          <li><strong>広域予備率 3% を下回る見込み</strong> → <strong>需給ひっ迫警報</strong></li>
+        </ul>
+        <p>
+          この数字はE-10で見た物差しと同じです——需給ひっ迫時補正も広域予備率で発動し、
+          予備率3%相当で単価が上限に達するのでした。<strong>運用の警報と、市場の価格シグナルが、同じ物差しで連動している</strong>——
+          制度が一枚の絵になっている好例です。
+          日々の予備率の見通しは「でんき予報」として各エリアで公表され、誰でも見られます。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 打ち手の階段：軽い手から重い手へ</h2>
+        <p>
+          ひっ迫が見えてきたとき、運用側の打ち手はおおむね<strong>社会的コストの小さい順</strong>に積み上がっていきます
+          （実際には並行して進みますが、階段として整理します）。
+        </p>
+        <ul>
+          <li><strong>① 監視と警戒</strong>：予測（F-07）と予備率の監視。注意報・警報の発出で市場・社会に準備を促す。</li>
+          <li><strong>② 供給を積み増す</strong>：停止中の電源の追加起動（A-06の起動時間との勝負——だから早めの判断が命）、揚水の活用（夜のうちに汲み上げ、ピークで放水＝D-08）。</li>
+          <li><strong>③ 広域融通</strong>：連系線で<strong>余裕のあるエリアから受電</strong>する。ここで使われるのが、B-02でずっと「万一のため」と言っていた<strong>マージン</strong>です——平時の取引に使わせず取り置いた容量が、この日のためにありました。</li>
+          <li><strong>④ 需要を下げる</strong>：デマンドレスポンス（DR）の発動、そして社会への<strong>節電要請</strong>。</li>
+          <li><strong>⑤ 最終手段：計画停電</strong>：それでも足りなければ、無秩序な大停電を避けるために、地域と時間を区切って計画的に停電させる。①〜④はすべて、ここに至らないための階段です。</li>
+        </ul>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 225" role="img"
+               aria-label="需給ひっ迫時の打ち手の階段。予備率の監視と注意報・警報から始まり、追加起動と揚水による供給の積み増し、連系線マージンを使った広域融通、DRと節電要請による需要抑制、最終手段の計画停電へと、社会的コストの小さい順に段が上がっていく図"
+               xmlns="http://www.w3.org/2000/svg">
+            <g font-size="9.5">
+              <rect x="20" y="170" width="180" height="34" rx="6" fill="#f0fdf4" stroke="#16a34a"></rect>
+              <text x="110" y="185" text-anchor="middle" fill="#1a1a2e">① 監視・注意報／警報</text>
+              <text x="110" y="198" font-size="8" text-anchor="middle" fill="#4a5568">予備率5%／3%の見込みで発出</text>
+              <rect x="75" y="132" width="180" height="34" rx="6" fill="#ecfdf5" stroke="#10b981"></rect>
+              <text x="165" y="147" text-anchor="middle" fill="#1a1a2e">② 追加起動・揚水</text>
+              <text x="165" y="160" font-size="8" text-anchor="middle" fill="#4a5568">起動時間との勝負（A-06・D-08）</text>
+              <rect x="130" y="94" width="180" height="34" rx="6" fill="#eff6ff" stroke="#2563eb"></rect>
+              <text x="220" y="109" text-anchor="middle" fill="#1a1a2e">③ 広域融通（連系線）</text>
+              <text x="220" y="122" font-size="8" text-anchor="middle" fill="#4a5568">マージンの出番（B-02の回収）</text>
+              <rect x="185" y="56" width="180" height="34" rx="6" fill="#fffbeb" stroke="#d97706"></rect>
+              <text x="275" y="71" text-anchor="middle" fill="#1a1a2e">④ DR・節電要請</text>
+              <text x="275" y="84" font-size="8" text-anchor="middle" fill="#4a5568">需要側を下げる</text>
+              <rect x="240" y="18" width="180" height="34" rx="6" fill="#fef2f2" stroke="#ef4444"></rect>
+              <text x="330" y="33" text-anchor="middle" fill="#dc2626">⑤ 計画停電（最終手段）</text>
+              <text x="330" y="46" font-size="8" text-anchor="middle" fill="#4a5568">無秩序な大停電を避けるため</text>
+            </g>
+            <text x="230" y="219" font-size="9.5" text-anchor="middle" fill="#4a5568">下の段から順に——①〜④はすべて⑤に至らないための階段</text>
+          </svg>
+          <figcaption>図1: 打ち手の階段。社会的コストの小さい手から積み上げる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 実際に起きたこと（公表情報から）</h2>
+        <p>
+          この階段は机上の話ではありません。公表されている検証資料によれば——
+          <strong>2021年1月</strong>には、寒波による需要増とLNG（燃料）在庫の減少が重なり、
+          全国的に需給が厳しくなって、連系線をまたぐ広域融通が繰り返し実施されました。
+          <strong>2022年3月</strong>には、地震による複数発電所の停止と季節外れの寒さ・悪天候（太陽光の不発）が重なり、
+          初めての<strong>需給ひっ迫警報</strong>が発出され、節電要請と揚水の総動員で計画停電は回避されました。
+        </p>
+        <p>
+          この2つの事象は、本ユニットの階段——予備率の監視、追加供給、広域融通、節電要請——が
+          実際に順に使われた記録であり、同時に「予測（F-07）・燃料・連系線・需要側」のどこが細くても
+          ひっ迫は起きうる、という教訓を残しました（詳細は検証報告の公表資料に譲ります）。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 量と場所が絡み合う：混雑管理との接点</h2>
+        <p>
+          最後に、本サイトの主題との接点です。需給ひっ迫は「量」の危機ですが、
+          その命綱である<strong>広域融通は連系線という「場所」を通ります</strong>。
+        </p>
+        <ul>
+          <li>融通を増やすほど連系線の潮流は上がり、<strong>運用容量（B-02）が融通量の上限</strong>になります。マージンはまさにこの日のための取り置きでした。</li>
+          <li>逆に言えば、連系線の増強（B-03のマスタープラン）は、混雑対策であると同時に<strong>ひっ迫への保険</strong>でもあります。</li>
+        </ul>
+        <p>
+          量の危機では場所の余裕が命綱になり、場所の計画（増強）は量の安心を買う——
+          F-05で「別の物差し」として分けた量と場所は、緊急時にこそ深く絡み合うのです。
+          これでF領域は、平時の演算チェーン（F-01〜F-09）から非常時の階段（F-10）まで、
+          中給の仕事の全景がそろいました。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: numeric（予備率と警報水準・バリアント付き） -->
+        <div class="exercise" data-exercise-id="f-10-ex01" data-type="numeric">
+          <h3>演習 1: 予備率を求めて水準を読む</h3>
+          <div class="exercise-problem">
+            <p>
+              あるエリアの明日のピーク時間帯は、需要 <span class="var" data-var="d">1,200</span> 万kW に対して
+              供給力 <span class="var" data-var="s">1,236</span> 万kW の見込みである。予備率は何 % か（小数第1位まで）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              予備率:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> %
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-10-ex01",
+          "type": "numeric",
+          "correct": 3,
+          "tolerance": 0.1,
+          "unit": "%",
+          "explanation": "予備率 =（1,236 − 1,200）÷ 1,200 × 100 = 3.0%。広域予備率3%を下回る見込みは需給ひっ迫「警報」の水準——きわめて厳しい状況で、打ち手の階段が総動員される局面です。E-10の需給ひっ迫時補正も、この水準でインバランス単価が上限に達します。",
+          "variants": [
+            {
+              "vars": { "d": "1,000", "s": "1,048" },
+              "correct": 4.8,
+              "explanation": "予備率 =（1,048 − 1,000）÷ 1,000 × 100 = 4.8%。5%を下回る見込みなので需給ひっ迫「注意報」の水準です。この段階から追加起動の判断や節電の呼びかけの準備が始まります。"
+            },
+            {
+              "vars": { "d": "900", "s": "954" },
+              "correct": 6,
+              "explanation": "予備率 =（954 − 900）÷ 900 × 100 = 6.0%。注意報の基準（5%）は上回っていますが、天候や電源トラブル次第ですぐ削られる水準であり、監視は続きます。予備率は「あとどれだけ削られたら危ないか」の残量メーターです。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習2: choice（注意報と警報） -->
+        <div class="exercise" data-exercise-id="f-10-ex02" data-type="choice">
+          <h3>演習 2: 注意報と警報の基準</h3>
+          <div class="exercise-problem">
+            <p>需給ひっ迫注意報・警報の発出基準として、正しいものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="f-10-ex02" value="1">
+              <span>広域予備率が5%を下回る見込みで注意報、3%を下回る見込みで警報</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-10-ex02" value="2">
+              <span>広域予備率が50%を下回る見込みで注意報、30%を下回る見込みで警報</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-10-ex02" value="3">
+              <span>スポット市場の価格が前日より高くなったら注意報、2倍になったら警報</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-10-ex02",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "広域予備率の見込みが5%未満で注意報、3%未満で警報です（2022年度に整備された公開ルール）。物差しは市場価格ではなく予備率——ただしE-10の需給ひっ迫時補正も同じ広域予備率で発動するため、運用の警報と市場の価格シグナルは同じ物差しで連動しています。"
+        }
+        </script>
+
+        <!-- 演習3: ordering（打ち手の階段） -->
+        <div class="exercise" data-exercise-id="f-10-ex03" data-type="ordering">
+          <h3>演習 3: 打ち手の階段</h3>
+          <div class="exercise-problem">
+            <p>需給ひっ迫時の打ち手を、社会的コストの小さい順（階段の下から順）に並べ替えよ。</p>
+          </div>
+          <div class="exercise-input">
+            <ul class="ordering-list" role="listbox">
+              <li class="ordering-item" draggable="true" data-item-id="c">連系線のマージンを使って、余裕のあるエリアから広域融通を受ける</li>
+              <li class="ordering-item" draggable="true" data-item-id="e">地域と時間を区切った計画停電を実施する（最終手段）</li>
+              <li class="ordering-item" draggable="true" data-item-id="a">予備率を監視し、注意報・警報で市場と社会に準備を促す</li>
+              <li class="ordering-item" draggable="true" data-item-id="d">DRの発動や節電要請で需要を下げる</li>
+              <li class="ordering-item" draggable="true" data-item-id="b">停止中の電源の追加起動や揚水の活用で供給を積み増す</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-10-ex03",
+          "type": "ordering",
+          "correct": ["a", "b", "c", "d", "e"],
+          "explanation": "監視・警報(a)→供給の積み増し(b)→広域融通(c)→需要側の抑制(d)→計画停電(e)の順です。実際には並行して進みますが、社会的コストの小さい手から積み上げ、①〜④はすべて⑤（計画停電）に至らないための階段——という構造を押さえてください。追加起動は起動時間（A-06）との勝負なので、早めの判断が鍵になります。"
+        }
+        </script>
+
+        <!-- 演習4: multi-choice（量と場所の絡み合い） -->
+        <div class="exercise" data-exercise-id="f-10-ex04" data-type="multi-choice">
+          <h3>演習 4: ひっ迫と混雑の接点</h3>
+          <div class="exercise-problem">
+            <p>需給ひっ迫と混雑管理の関係について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="f-10-ex04" value="1">
+              <span>需給ひっ迫は「量」の危機であり、連系線マージンを使った広域融通が命綱になる（B-02のマージンの出番）</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-10-ex04" value="2">
+              <span>融通を増やすほど連系線の潮流が増えるため、運用容量（場所の制約）が融通量の上限になる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-10-ex04" value="3">
+              <span>需給ひっ迫時補正（E-10）は、ひっ迫時に計画順守・供給増・需要抑制を促す価格面の仕組みとして、運用の警報と同じ予備率の物差しで連動している</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-10-ex04" value="4">
+              <span>需給ひっ迫は周波数には現れず、送電線の過負荷としてだけ現れる</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-10-ex04",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（マージン＝万一の融通のための取り置きが、この日のためにあった）、2（量の命綱は場所の制約に縛られる——緊急時にこそ量と場所が絡み合う）、3（警報と価格が同じ広域予備率で連動）はいずれも正しい。4は誤りで、需給の不足は周波数の低下として系統全体に現れます（A-07・F-05）。送電線の過負荷は場所（混雑）の話です。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/iinkai/chouseiryoku/index.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「調整力及び需給バランス評価等に関する委員会」（需給ひっ迫事象の検証・需給バランス評価の公開資料）</a>
+          </li>
+          <li>
+            <a href="https://www.occto.or.jp/keitoukeikaku/index.html"
+               target="_blank" rel="noopener noreferrer">OCCTO「供給計画・需給バランス評価等」（全国・エリアの需給見通しの公表）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="09-occto-system-and-plan-flow.html" class="unit-nav-prev">&larr; 計画のバケツリレー──広域機関システムと系統間連携</a>
+      <a href="../../index.html" class="unit-nav-next">トップへ戻る &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

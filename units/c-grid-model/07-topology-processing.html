@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>C-07: 開閉器と母線のモデル──トポロジー処理 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="c" data-unit="c-07">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">C: 系統モデル</a> &gt;
+      <span>トポロジー処理</span>
+    </nav>
+
+    <article>
+      <h1>C-07: 開閉器と母線のモデル──トポロジー処理</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        C領域の本編は <a href="06-measurement-and-state-estimation.html">C-06: 計測と状態推定</a> で完結しました。ここからは<strong>発展編</strong>です。
+        <a href="01-grid-model-structure.html">C-01: 母線・送電線・系統モデルの構造</a> 以来、「母線」は当たり前に<strong>そこにある節点</strong>でした。
+        しかし実は、母線は<strong>開閉器の入切パターンから作られる</strong>——スイッチひとつで母線の数が変わり、Yバスの形が変わり、
+        潮流計算の答えが変わります。この「開閉器の状態から母線モデルを組み立てる」処理——<strong>トポロジー処理</strong>——は、
+        系統のシステムを作るエンジニアが最初にぶつかる概念です。数式はゼロ、絵で理解します。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="01-grid-model-structure.html">C-01</a>：系統モデルは母線（節点）と線路（枝）でできていて、Yバスに組み上がる</li>
+          <li><a href="02-system-data-and-inputs.html">C-02: 系統データと混雑計算のインプット</a>：系統構成が変わるとトポロジー（Yバスの形）が変わる。開閉器という装置がある</li>
+          <li><a href="06-measurement-and-state-estimation.html">C-06</a>：テレメータは開閉器の入切も中給へ常時送っている</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：変電所の詳しい機器構成（母線方式の種類・遮断器の仕様）や、
+          実システムのトポロジー処理アルゴリズムの実装には踏み込みません。
+          「開閉器の状態 → 母線モデル」という<strong>考え方の一本線</strong>がわかれば合格です（一般的な系統工学の内容のため、参考資料はありません）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. C-01の母線は「できあがった後」の姿だった</a></li>
+          <li><a href="#section-2">2. 変電所の中：母線は分けたりつないだりできる</a></li>
+          <li><a href="#section-3">3. トポロジー処理：つながりのかたまりが母線になる</a></li>
+          <li><a href="#section-4">4. つなぎ方が潮流を決める：母線分割と混雑</a></li>
+          <li><a href="#section-5">5. まとめ：系統モデルは毎回組み立て直される</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. C-01の母線は「できあがった後」の姿だった</h2>
+        <p>
+          C-01では、系統を「母線と線路」に抽象化してYバスを組み立てました。そこでは母線は<strong>所与</strong>——
+          最初から数も形も決まった節点でした。
+          しかしC-02で「系統構成が変わればトポロジーが変わる」と学び、C-06で「開閉器の入切がテレメータで送られてくる」ことを知りました。
+          つまりどこかに、「<strong>開閉器の入切</strong>」を「<strong>母線と線路のモデル</strong>」に変換する仕事があるはずです。
+          その変換こそ本ユニットの主役、トポロジー処理です。まず、変電所の中を少しだけのぞきます。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 変電所の中：母線は分けたりつないだりできる</h2>
+        <p>
+          変電所の母線（ブスバー）は、1本の固定された銅の棒ではありません。代表的な構成では、
+          母線は<strong>2組</strong>（慣例で「甲母線・乙母線」などと呼びます）あり、間に<strong>母線連絡用の開閉器</strong>があります。
+          各送電線も、開閉器を介して母線につながります。
+        </p>
+        <ul>
+          <li><strong>遮断器</strong>：電流が流れている最中でも切れる開閉器。故障時の切り離しや、運用中の切替に使います。</li>
+          <li><strong>断路器</strong>：無負荷で操作する開閉器。点検時の確実な切り離しなどに使います。</li>
+        </ul>
+        <p>
+          この開閉器たちの入切パターンによって、「どの線路がどの母線につながるか」「甲と乙がつながっているか」が変わります。
+          <strong>母線連絡の開閉器が閉じていれば、甲と乙は電気的にひとつづき</strong>——モデル上は1つの母線です。
+          <strong>開いていれば、甲と乙は別々</strong>——モデル上は2つの母線になります。
+          同じ変電所が、スイッチ1つで「1母線」にも「2母線」にもなるのです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 230" role="img"
+               aria-label="左は母線連絡の開閉器が閉じた状態で、甲母線と乙母線が電気的にひとつづきになりモデル上は1つの母線として扱われる。右は開閉器が開いた状態で、甲と乙が別々になりモデル上は2つの母線として扱われる対比図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 閉パネル -->
+            <rect x="15" y="20" width="210" height="185" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="120" y="42" font-size="10.5" text-anchor="middle" fill="#15803d" font-weight="bold">母線連絡：閉</text>
+            <line x1="40" y1="80" x2="105" y2="80" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="135" y1="80" x2="200" y2="80" stroke="#1a1a2e" stroke-width="4"></line>
+            <rect x="112" y="74" width="16" height="12" fill="#16a34a" stroke="#15803d"></rect>
+            <text x="70" y="68" font-size="9" text-anchor="middle" fill="#4a5568">甲母線</text>
+            <text x="168" y="68" font-size="9" text-anchor="middle" fill="#4a5568">乙母線</text>
+            <line x1="55" y1="80" x2="55" y2="115" stroke="#2563eb" stroke-width="1.5"></line>
+            <line x1="90" y1="80" x2="90" y2="115" stroke="#2563eb" stroke-width="1.5"></line>
+            <line x1="150" y1="80" x2="150" y2="115" stroke="#2563eb" stroke-width="1.5"></line>
+            <line x1="185" y1="80" x2="185" y2="115" stroke="#2563eb" stroke-width="1.5"></line>
+            <text x="120" y="132" font-size="9" text-anchor="middle" fill="#4a5568">線路（各母線に接続）</text>
+            <text x="120" y="165" font-size="10" text-anchor="middle" fill="#15803d" font-weight="bold">モデル：1つの母線</text>
+            <text x="120" y="183" font-size="9" text-anchor="middle" fill="#4a5568">電気的にひとつづき</text>
+            <!-- 開パネル -->
+            <rect x="235" y="20" width="210" height="185" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="340" y="42" font-size="10.5" text-anchor="middle" fill="#b45309" font-weight="bold">母線連絡：開</text>
+            <line x1="260" y1="80" x2="325" y2="80" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="355" y1="80" x2="420" y2="80" stroke="#1a1a2e" stroke-width="4"></line>
+            <rect x="332" y="74" width="16" height="12" fill="#fff" stroke="#b45309"></rect>
+            <text x="290" y="68" font-size="9" text-anchor="middle" fill="#4a5568">甲母線</text>
+            <text x="388" y="68" font-size="9" text-anchor="middle" fill="#4a5568">乙母線</text>
+            <line x1="275" y1="80" x2="275" y2="115" stroke="#2563eb" stroke-width="1.5"></line>
+            <line x1="310" y1="80" x2="310" y2="115" stroke="#2563eb" stroke-width="1.5"></line>
+            <line x1="370" y1="80" x2="370" y2="115" stroke="#2563eb" stroke-width="1.5"></line>
+            <line x1="405" y1="80" x2="405" y2="115" stroke="#2563eb" stroke-width="1.5"></line>
+            <text x="340" y="132" font-size="9" text-anchor="middle" fill="#4a5568">線路（半分ずつに分かれる）</text>
+            <text x="340" y="165" font-size="10" text-anchor="middle" fill="#b45309" font-weight="bold">モデル：2つの母線</text>
+            <text x="340" y="183" font-size="9" text-anchor="middle" fill="#4a5568">甲と乙は別の節点（母線分割）</text>
+          </svg>
+          <figcaption>図1: 同じ変電所がスイッチ1つで「1母線」にも「2母線」にもなる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. トポロジー処理：つながりのかたまりが母線になる</h2>
+        <p>
+          ここでモデルの言葉を2つ導入します。
+          変電所の中を開閉器レベルまで細かく表したモデルを<span class="term">ノードブレーカモデル<span class="term-tooltip">変電所内部を、接続点（ノード）と開閉器（ブレーカ）のレベルまで細かく表した詳細モデル。開閉器の入切状態を持ち、トポロジー処理の入力になる。設備管理・監視はこの詳細度で行われる。</span></span>
+          （ノード＝接続点、ブレーカ＝開閉器）、
+          C-01以来使ってきた「母線と線路」のモデルを<span class="term">バスブランチモデル<span class="term-tooltip">系統を母線（バス）と線路・変圧器（ブランチ）で表した計算用モデル。C-01のYバス・潮流計算・状態推定はこのモデルの上で動く。ノードブレーカモデルからトポロジー処理によって生成される。</span></span>
+          （バス＝母線、ブランチ＝線路・変圧器）といいます。
+          そして両者をつなぐ変換が<span class="term">トポロジー処理<span class="term-tooltip">開閉器の入切状態をもとに、「閉じた開閉器で電気的につながっているノードのかたまり」を1つの母線にまとめ、ノードブレーカモデルからバスブランチモデル（Yバス用の母線・線路モデル）を生成する処理。状態推定や潮流計算の前段で実行される。</span></span>です。手順は考え方としては3ステップです。
+        </p>
+        <ul>
+          <li><strong>① かたまりを見つける</strong>：<strong>閉じている</strong>開閉器でつながっているノードたちを、ひとかたまりにまとめる（開いている開閉器は「切れ目」）。</li>
+          <li><strong>② かたまり＝母線</strong>：各かたまりを、バスブランチモデルの<strong>1つの母線</strong>にする。図1の左は全ノードが1かたまり（1母線）、右は2かたまり（2母線）。</li>
+          <li><strong>③ 枝をつなぐ</strong>：各線路・変圧器が、どの母線とどの母線を結ぶかを決める。これでC-01のYバスが組める。</li>
+        </ul>
+        <p>
+          入力は「開閉器の入切」という<strong>1ビットの列</strong>、出力は「母線と線路のモデル」——
+          地味に見えて、これが<strong>すべてのオンライン計算の最初の一歩</strong>です。
+          C-06の状態推定も、開閉器状態のテレメータからトポロジー処理でその瞬間の母線モデルを作ってから走ります。
+          C-02の計画の世界でも同じで、系統構成計画・作業停止計画は「予定された開閉器の状態」からその断面のモデルを作っています。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. つなぎ方が潮流を決める：母線分割と混雑</h2>
+        <p>
+          トポロジーは、モデルの都合だけの話ではありません。<strong>つなぎ方そのものが潮流を変える</strong>からです。
+          母線連絡を開いて1母線を2母線に分ける操作を<span class="term">母線分割<span class="term-tooltip">母線連絡の開閉器を開き、1つだった母線を電気的に2つに分ける運用操作。線路と電源・負荷の組み合わせが変わるため潮流の経路が変わり、混雑の緩和に使える場合がある（逆に悪化する組み合わせもあるため、計算での事前確認が必要）。</span></span>といいます。
+          分割すると、線路と電源・負荷の「組み合わせ」が変わり、潮流の通り道が変わります。
+          流れが集中している変電所では、分割によって流れを2手に分け、<strong>混雑を緩和できる場合があります</strong>——
+          B-03の「運用でしのぐ」層の、再給電とは別のもう1つの道具（系統切替）です。
+        </p>
+        <p>
+          ただし、<strong>いつでも効くわけではありません</strong>。数値例で確かめます。
+          ある変電所に北から 150 MW、南から 30 MW が流入し、下流へは線路L1・L2（各容量 100 MW）で流出しているとします。
+          1母線なら流入合計 180 MW が2本に分かれて流れ、たとえば 90/90 MW なら両方とも容量内です。
+          ところが母線を分割して「北からの流入＋L1」「南からの流入＋L2」という組にすると——
+          L1には北の 150 MW が<strong>まるごと</strong>流れ、容量 100 MW を 50 MW 超過してしまいます。
+        </p>
+        <p>
+          つまり母線分割は、<strong>組み合わせ次第で薬にも毒にもなる</strong>操作です。
+          だからこそ、トポロジー処理で正確にモデル化し、<strong>潮流計算で事前に確かめてから</strong>実行する——
+          モデルと計算が運用の安全を支えている、というC領域の主題がここでも顔を出します。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 215" role="img"
+               aria-label="左は1母線の状態で、北からの150MWと南からの30MWの合計180MWが下流の線路L1とL2に90MWずつ分かれて流れ、どちらも容量100MW以内に収まる。右は母線分割後で、北の150MWがL1だけに流れて容量100MWを50MW超過し、南の30MWはL2に流れる。分割は組み合わせ次第で混雑を悪化させることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 1母線 -->
+            <rect x="15" y="20" width="210" height="170" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="120" y="40" font-size="10" text-anchor="middle" fill="#15803d" font-weight="bold">1母線のまま</text>
+            <text x="70" y="62" font-size="9" text-anchor="middle" fill="#4a5568">北から150</text>
+            <text x="172" y="62" font-size="9" text-anchor="middle" fill="#4a5568">南から30</text>
+            <line x1="70" y1="68" x2="70" y2="95" stroke="#2563eb" stroke-width="1.8"></line>
+            <line x1="172" y1="68" x2="172" y2="95" stroke="#2563eb" stroke-width="1.8"></line>
+            <line x1="45" y1="95" x2="195" y2="95" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="85" y1="95" x2="85" y2="130" stroke="#2563eb" stroke-width="1.8"></line>
+            <line x1="155" y1="95" x2="155" y2="130" stroke="#2563eb" stroke-width="1.8"></line>
+            <text x="85" y="145" font-size="9" text-anchor="middle" fill="#1a1a2e">L1: 90</text>
+            <text x="155" y="145" font-size="9" text-anchor="middle" fill="#1a1a2e">L2: 90</text>
+            <text x="120" y="172" font-size="9.5" text-anchor="middle" fill="#15803d">両方とも容量100以内 ○</text>
+            <!-- 分割 -->
+            <rect x="235" y="20" width="210" height="170" rx="8" fill="#fef2f2" stroke="#ef4444"></rect>
+            <text x="340" y="40" font-size="10" text-anchor="middle" fill="#dc2626" font-weight="bold">母線分割（この組み方だと…）</text>
+            <text x="290" y="62" font-size="9" text-anchor="middle" fill="#4a5568">北から150</text>
+            <text x="392" y="62" font-size="9" text-anchor="middle" fill="#4a5568">南から30</text>
+            <line x1="290" y1="68" x2="290" y2="95" stroke="#2563eb" stroke-width="1.8"></line>
+            <line x1="392" y1="68" x2="392" y2="95" stroke="#2563eb" stroke-width="1.8"></line>
+            <line x1="265" y1="95" x2="330" y2="95" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="355" y1="95" x2="420" y2="95" stroke="#1a1a2e" stroke-width="4"></line>
+            <line x1="297" y1="95" x2="297" y2="130" stroke="#dc2626" stroke-width="2.2"></line>
+            <line x1="388" y1="95" x2="388" y2="130" stroke="#2563eb" stroke-width="1.8"></line>
+            <text x="297" y="145" font-size="9" text-anchor="middle" fill="#dc2626">L1: 150（容量100）</text>
+            <text x="388" y="145" font-size="9" text-anchor="middle" fill="#1a1a2e">L2: 30</text>
+            <text x="340" y="172" font-size="9.5" text-anchor="middle" fill="#dc2626">L1が50超過 ×──計算で事前確認が必要</text>
+          </svg>
+          <figcaption>図2: 母線分割は組み合わせ次第。分けた結果の潮流は、潮流計算で確かめてから（数字は例示値）</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. まとめ：系統モデルは毎回組み立て直される</h2>
+        <p>
+          本ユニットの一本線をまとめます——
+          <strong>開閉器の入切（1ビットの列） → トポロジー処理 → 母線モデル（バスブランチ） → Yバス → 潮流計算・状態推定・混雑計算</strong>。
+        </p>
+        <p>
+          システムを作る側の視点では、これは大事な設計思想を意味します。
+          系統モデル（Yバス）は<strong>一度作って終わりの静的なマスタデータではなく、
+          開閉器の状態から毎回組み立て直される動的な存在</strong>だということです。
+          スイッチ1つの変化が母線の数を変え、Yバスの形を変え、潮流計算の答えを変え、混雑判定を変える——
+          C領域で学んだ「モデルの世界」と、現実の系統の間には、この小さくて重要な変換が絶えず走っています。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（トポロジー処理とは） -->
+        <div class="exercise" data-exercise-id="c-07-ex01" data-type="choice">
+          <h3>演習 1: トポロジー処理とは</h3>
+          <div class="exercise-problem">
+            <p>トポロジー処理の説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="c-07-ex01" value="1">
+              <span>閉じている開閉器で電気的につながったノードのかたまりを1つの母線にまとめ、ノードブレーカモデルからバスブランチモデル（Yバス用の母線・線路モデル）を作る処理</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-07-ex01" value="2">
+              <span>誤差を含む計測値から、物理法則と最もつじつまの合う系統の状態を推定する処理</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="c-07-ex01" value="3">
+              <span>送電線をどの順番で建設するかを決める、長期の設備計画の処理</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-07-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "トポロジー処理は「開閉器の入切 → 母線モデル」の変換です。閉じた開閉器でつながるノードをかたまりにまとめ（開いた開閉器が切れ目）、各かたまりを1母線として、バスブランチモデルを組み立てます。2は状態推定（C-06）の説明で、トポロジー処理はその前段です。3は設備形成の話で、オンラインのモデル生成とは別物です。"
+        }
+        </script>
+
+        <!-- 演習2: diagram-label（開閉器状態と母線の数） -->
+        <div class="exercise" data-exercise-id="c-07-ex02" data-type="diagram-label">
+          <h3>演習 2: 開閉器の状態とモデル</h3>
+          <div class="exercise-problem">
+            <p>
+              甲母線と乙母線の間に母線連絡の開閉器がある変電所について、開閉器の状態ごとに
+              バスブランチモデルでの扱いを配置せよ。ラベルをドラッグするか、ラベルを選んでから空欄をクリックして配置できます。
+              使わないラベルが2つあります。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <div class="diagram-exercise">
+              <svg class="diagram-base" viewBox="0 0 100 26" role="img"
+                   aria-label="左に母線連絡が閉のときの扱いを問う空欄、右に開のときの扱いを問う空欄を持つ図"
+                   xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="45" height="9" rx="2" fill="#f0fdf4" stroke="#16a34a" stroke-width="0.5"></rect>
+                <text x="24.5" y="8" font-size="3.2" text-anchor="middle" fill="#15803d">母線連絡：閉じている</text>
+                <rect x="53" y="2" width="45" height="9" rx="2" fill="#fffbeb" stroke="#d97706" stroke-width="0.5"></rect>
+                <text x="75.5" y="8" font-size="3.2" text-anchor="middle" fill="#b45309">母線連絡：開いている</text>
+                <text x="24.5" y="17" font-size="2.8" text-anchor="middle" fill="#4a5568">↓ モデルでの扱いは？</text>
+                <text x="75.5" y="17" font-size="2.8" text-anchor="middle" fill="#4a5568">↓ モデルでの扱いは？</text>
+              </svg>
+              <div class="label-targets">
+                <div class="drop-zone" data-slot="1" style="left:25%; top:78%;"></div>
+                <div class="drop-zone" data-slot="2" style="left:75%; top:78%;"></div>
+              </div>
+              <div class="label-choices">
+                <span class="draggable-label" data-label-id="a">1つの母線として扱う</span>
+                <span class="draggable-label" data-label-id="b">2つの母線として扱う</span>
+                <span class="draggable-label" data-label-id="c">母線ではなくなる</span>
+                <span class="draggable-label" data-label-id="d">3つの母線として扱う</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-07-ex02",
+          "type": "diagram-label",
+          "correct": {"1": "a", "2": "b"},
+          "explanation": "母線連絡が閉じていれば甲と乙は電気的にひとつづき＝1つの母線（slot1: a）、開いていれば別々＝2つの母線（slot2: b）です。トポロジー処理は「閉じた開閉器でつながっているかたまり」を数えているだけなので、かたまりが1つなら1母線、2つなら2母線になります。「母線ではなくなる」「3つ」になることはありません。"
+        }
+        </script>
+
+        <!-- 演習3: numeric（分割後の潮流・バリアント付き） -->
+        <div class="exercise" data-exercise-id="c-07-ex03" data-type="numeric">
+          <h3>演習 3: 分割後の潮流を確かめる</h3>
+          <div class="exercise-problem">
+            <p>
+              ある変電所を母線分割し、「北からの流入」と「下流線路L1（容量 100 MW）」だけが同じ母線につながる構成にした。
+              北からの流入が <span class="var" data-var="inflow">150</span> MW のとき、L1の潮流は何 MW になるか。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              L1の潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-07-ex03",
+          "type": "numeric",
+          "correct": 150,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "分割後の母線には「北からの流入」と「L1」しかつながっていないので、入った150 MWはそのまま全部L1へ流れます（キルヒホッフの電流則）。容量100 MWに対して50 MWの超過——この分割は混雑を悪化させる組み方でした。母線分割は潮流の経路を変える強力な道具ですが、結果は組み合わせ次第なので、潮流計算で事前に確かめてから実行します。",
+          "variants": [
+            {
+              "vars": { "inflow": "130" },
+              "correct": 130,
+              "explanation": "分割後の母線には「北からの流入」と「L1」しかないので、130 MWがそのままL1へ流れます。容量100 MWを30 MW超過——この組み方は不可です。分割の可否は、分割後の各母線に集まる流入と流出のバランスで決まります。"
+            },
+            {
+              "vars": { "inflow": "80" },
+              "correct": 80,
+              "explanation": "分割後の母線には「北からの流入」と「L1」しかないので、80 MWがそのままL1へ流れます。今回は容量100 MW以内に収まっており、この分割は成立します——同じ操作でも、流入の大きさ（断面）によって薬にも毒にもなることが分かります。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習4: multi-choice（トポロジーと混雑・システム） -->
+        <div class="exercise" data-exercise-id="c-07-ex04" data-type="multi-choice">
+          <h3>演習 4: トポロジーと系統モデル</h3>
+          <div class="exercise-problem">
+            <p>トポロジーと系統モデルについて、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="c-07-ex04" value="1">
+              <span>開閉器の入切が変わると、母線の数やYバスの形が変わり、潮流計算の答えも変わる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-07-ex04" value="2">
+              <span>母線分割などの系統切替は、潮流の経路を変えて混雑を緩和できる場合がある運用の道具である</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-07-ex04" value="3">
+              <span>状態推定（C-06）の前段でも、開閉器状態の計測からトポロジー処理が実行されている</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="c-07-ex04" value="4">
+              <span>系統モデル（Yバス）は、一度作ればずっと変わらない静的なマスタデータである</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "c-07-ex04",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（スイッチ1つでモデルと計算結果が変わる）、2（母線分割＝運用でしのぐ層の道具。ただし組み合わせ次第で悪化もするため事前計算が必要）、3（状態推定はその瞬間の母線モデルの上で走るため、前段でトポロジー処理が毎回実行される）はいずれも正しい。4は誤りで、系統モデルは開閉器の状態から毎回組み立て直される動的な存在です——これが本ユニットの結論でした。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="06-measurement-and-state-estimation.html" class="unit-nav-prev">&larr; 計測と状態推定</a>
+      <a href="../d-algorithms/index.html" class="unit-nav-next">次の領域へ: D 混雑計算のアルゴリズム &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

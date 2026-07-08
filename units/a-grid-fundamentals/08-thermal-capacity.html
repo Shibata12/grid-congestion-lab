@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A-08: 送電容量の物理──熱容量はどう決まるか - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="a" data-unit="a-08">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">A: 系統の基礎</a> &gt;
+      <span>熱容量の物理</span>
+    </nav>
+
+    <article>
+      <h1>A-08: 送電容量の物理──熱容量はどう決まるか</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の3本目、A領域の締めくくりです。本サイトの主役だった「送電線の容量」——
+        B-01では熱容量を「導体が発熱で傷まない範囲の限界」と一言で片づけていました。
+        本ユニットはその<strong>種明かし</strong>です。発熱と放熱のバランスという物理から、
+        許容電流 → MW換算（A-05の回収）、短時間なら多く流せる理由（N-1運用との接続）、
+        そして気象から容量を掘り出す<strong>動的レーティング</strong>まで。
+        「容量」は固定の数字ではなく、<strong>自然が決める動的な数字</strong>だと分かります。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="01-kirchhoff.html">A-01: オームの法則とキルヒホッフの法則</a>：電流が抵抗を流れると発熱する（ジュール熱）</li>
+          <li><a href="05-three-phase-and-per-unit.html">A-05: 三相交流と単位法</a>：三相の電力は P ＝ √3 × 線間電圧 × 電流 × 力率</li>
+          <li><a href="../b-congestion/01-congestion-and-n1.html">B-01: 混雑の判定とN-1基準</a>：熱容量＝導体の熱的な限界。N-1事故の直後は転流で潮流が跳ね上がる</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：電線の熱時定数の式や、たるみの力学計算には踏み込みません。
+          「発熱と放熱のつり合い」の絵と、√3のかけ算1本ができれば合格です
+          （一般的な電力工学の内容のため、参考資料はありません）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 「容量」の正体を最後に明かす</a></li>
+          <li><a href="#section-2">2. 発熱と放熱のつり合い：許容電流</a></li>
+          <li><a href="#section-3">3. 電流からMWへ：√3のかけ算（A-05の回収）</a></li>
+          <li><a href="#section-4">4. 短時間なら多く流せる：N-1運用との接続</a></li>
+          <li><a href="#section-5">5. 気象で変わる容量：季節別と動的レーティング</a></li>
+          <li><a href="#exercises">演習</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 「容量」の正体を最後に明かす</h2>
+        <p>
+          B-01以来、私たちは「容量100MW」のような数字を<strong>所与</strong>として使ってきました。
+          潮流と比べて混雑を判定し（B-01）、運用容量の1要素として扱い（B-02）、
+          SCUC/SCEDの制約に書き（D-03）、N-1電制で活用しました（B-05）。
+          最後に残った問いはこれです——<strong>その数字は、そもそもどこから来たのか？</strong>
+        </p>
+        <p>
+          答えは<strong>温度</strong>です。電線に流してよい電流の上限は、
+          「電線の温度が、安全を保てる限度を超えない」ことから決まります。
+          温度が上がりすぎると何が起きるか——金属は熱で伸びるので、電線が<strong>たるんで</strong>地面や樹木に近づきすぎる
+          （感電・地絡の危険）、さらに高温が続けば導体の<strong>強度が落ちる</strong>。
+          この温度の限度を電流の限度に翻訳したものが、熱容量の正体です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 発熱と放熱のつり合い：許容電流</h2>
+        <p>
+          電線の温度は、<strong>入ってくる熱</strong>と<strong>出ていく熱</strong>のつり合いで決まります。
+        </p>
+        <ul>
+          <li><strong>発熱（入る）</strong>：電流が抵抗を流れると発生するジュール熱。A-01のオームの法則ファミリーで、大きさは<strong>電流の2乗×抵抗（I²R）</strong>——電流が2倍になると発熱は4倍です。ほかに日射でも温まります。</li>
+          <li><strong>放熱（出る）</strong>：まわりの空気への放熱。<strong>気温が低いほど、風が強いほど</strong>よく冷えます。</li>
+        </ul>
+        <p>
+          「発熱＝放熱」でつり合ったときの温度が電線の温度です。つまり、
+          <strong>温度の限度を超えない最大の電流</strong>が決まります——これが
+          <span class="term">許容電流<span class="term-tooltip">電線の温度が安全の限度（たるみ・強度）を超えない範囲で流せる電流の上限。連続して流せる連続許容電流と、電線が温まりきるまでの時間を利用して短時間だけ許される短時間許容電流がある。気温・風速などの放熱条件で変わる。</span></span>（連続許容電流）です。
+          容量とは「電線が耐えられる温度」を「電流」に、さらに「MW」に翻訳した数字だったのです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="電線の温度が、電流の2乗と抵抗によるジュール熱や日射の発熱と、気温・風による放熱のつり合いで決まり、たるみや強度低下を起こさない温度の限度から許容電流が決まることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="a8-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <circle cx="230" cy="95" r="34" fill="#fef2f2" stroke="#ef4444" stroke-width="2"></circle>
+            <text x="230" y="90" font-size="9.5" text-anchor="middle" fill="#dc2626" font-weight="bold">電線の温度</text>
+            <text x="230" y="106" font-size="8.5" text-anchor="middle" fill="#4a5568">発熱＝放熱で決まる</text>
+            <line x1="100" y1="95" x2="193" y2="95" stroke="#dc2626" stroke-width="2" marker-end="url(#a8-ah)"></line>
+            <text x="95" y="80" font-size="9.5" text-anchor="end" fill="#dc2626">発熱：I²R（＋日射）</text>
+            <text x="95" y="112" font-size="8.5" text-anchor="end" fill="#4a5568">電流2倍→発熱4倍</text>
+            <line x1="267" y1="95" x2="360" y2="95" stroke="#2563eb" stroke-width="2" marker-end="url(#a8-ah)"></line>
+            <text x="368" y="80" font-size="9.5" fill="#2563eb">放熱：気温・風</text>
+            <text x="368" y="112" font-size="8.5" fill="#4a5568">寒い・風が強い→よく冷える</text>
+            <text x="230" y="165" font-size="10" text-anchor="middle" fill="#1a1a2e">温度の限度（たるみ・強度）を超えない最大の電流 ＝ 許容電流</text>
+            <text x="230" y="185" font-size="9" text-anchor="middle" fill="#4a5568">「容量」は温度の限度を電流→MWに翻訳した数字</text>
+          </svg>
+          <figcaption>図1: 電線の温度は発熱と放熱のつり合い。温度の限度が許容電流を決める</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 電流からMWへ：√3のかけ算（A-05の回収）</h2>
+        <p>
+          設備データに書かれているのは許容電流（アンペア）ですが、混雑管理で使うのはMWです。
+          翻訳にはA-05の式を使います——三相の電力は P ＝ √3 × 線間電圧 × 電流 × 力率。
+        </p>
+        <div class="math-block"
+             data-tex="P = \sqrt{3} \times V \times I \times \cos\varphi"
+             data-fallback="P ＝ √3 × 線間電圧V × 電流I × 力率cosφ"></div>
+        <p>
+          たとえば 154 kV の送電線で許容電流が 700 A、力率を 1.0 とすると、
+          P ＝ 1.732 × 154 kV × 0.7 kA ≒ <strong>187 MW</strong>。
+          B-01からずっと使ってきた「容量◯◯MW」は、こうして生まれた数字です。
+          A-05で「実務データを読む道具」と言った√3が、最後に容量の正体とつながりました。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 短時間なら多く流せる：N-1運用との接続</h2>
+        <p>
+          もう1つ、実務で大事な性質があります。電線は<strong>温まるのに時間がかかる</strong>（何分もかかる）ということです。
+          つまり、連続許容電流を超える電流でも、<strong>短時間なら</strong>温度が限度に達する前に流せます——
+          これが<strong>短時間許容電流</strong>です。
+        </p>
+        <p>
+          これはN-1運用の絵と、ぴったり噛み合います。B-01・D-04で学んだとおり、
+          1回線故障の直後は転流で残り回線の潮流が跳ね上がります。この跳ね上がりを
+          <strong>短時間許容で受け止め</strong>、電線が温まりきる前に、再給電（D-02）や電制（B-05）で潮流を下げる——
+          「事故直後の数分〜数十分をどう凌ぐか」という運用の時間感覚は、電線の熱の時間感覚と対になっているのです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="N-1事故直後の時間軸。転流で潮流が連続許容を超えて跳ね上がるが、短時間許容の範囲内で受け止め、電線が温まりきる前に再給電や電制で連続許容以下まで下げる運用を示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <line x1="50" y1="165" x2="440" y2="165" stroke="#cbd5e1" stroke-width="1"></line>
+            <line x1="50" y1="30" x2="50" y2="165" stroke="#cbd5e1" stroke-width="1"></line>
+            <text x="245" y="188" font-size="10" text-anchor="middle" fill="#4a5568">時間（分）→　★＝1回線故障（転流）</text>
+            <text x="42" y="95" font-size="10" text-anchor="middle" fill="#4a5568" transform="rotate(-90 42 95)">潮流</text>
+            <!-- 許容線 -->
+            <line x1="50" y1="110" x2="440" y2="110" stroke="#16a34a" stroke-width="1.3" stroke-dasharray="6 4"></line>
+            <text x="56" y="103" font-size="9" fill="#15803d">連続許容（ずっと流せる上限）</text>
+            <line x1="50" y1="55" x2="440" y2="55" stroke="#d97706" stroke-width="1.3" stroke-dasharray="6 4"></line>
+            <text x="56" y="48" font-size="9" fill="#b45309">短時間許容（温まりきるまでの猶予つき上限）</text>
+            <!-- 潮流 -->
+            <path d="M50,135 L150,135 L150,70 L260,70 L260,125 L440,125" fill="none" stroke="#dc2626" stroke-width="2.2"></path>
+            <text x="150" y="145" font-size="11" fill="#dc2626">★</text>
+            <text x="205" y="88" font-size="8.5" text-anchor="middle" fill="#dc2626">転流で跳ね上がり</text>
+            <text x="205" y="99" font-size="8.5" text-anchor="middle" fill="#dc2626">（短時間許容の範囲内）</text>
+            <text x="330" y="142" font-size="8.5" text-anchor="middle" fill="#1a1a2e">温まりきる前に再給電・電制で下げる</text>
+          </svg>
+          <figcaption>図2: 事故直後の跳ね上がりは短時間許容で受け、熱の猶予時間内に運用で下げる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 気象で変わる容量：季節別と動的レーティング</h2>
+        <p>
+          §2の絵からもう1つの結論が出ます。放熱は気温・風で決まる——ならば、
+          <strong>同じ電線でも、寒くて風のある日はもっと流せる</strong>はずです。
+          実際、許容電流は夏と冬で別の値（季節別の容量）が使われてきました。冬は放熱が良いぶん、容量が大きいのです。
+        </p>
+        <p>
+          さらに進めて、<strong>実際の気象条件（気温・風速など）からその時々の許容電流を動的に計算し直す</strong>のが
+          <span class="term">動的レーティング<span class="term-tooltip">Dynamic Line Rating（DLR）。固定値や季節別の値ではなく、実際の気象条件（気温・風速・日射など）からその時々の許容電流を動的に算定する手法。放熱が良い条件では同じ電線からより多くの容量を引き出せる。設備を増やさず容量を掘り出す取組の物理版。</span></span>（DLR）です。
+          風の強い日は風力発電がよく発電し、同時に電線もよく冷える——再エネと相性の良い性質もあり、
+          活用の検討が進んでいます。B-05の想定潮流の合理化が「<strong>計算の想定</strong>を現実に近づけて枠を掘り出す」取組だったのに対し、
+          DLRは「<strong>物理の想定</strong>を現実に近づけて枠を掘り出す」取組——発想はそっくりです。
+        </p>
+        <p>
+          最後に補足を2つ。変圧器やケーブルの容量も、同じく<strong>温度</strong>（絶縁物が耐えられる温度）で決まります。
+          そして、熱容量が伸びても<strong>安定度の限度（B-04）は別物</strong>なので、運用容量がそのまま伸びるとは限りません——
+          min（4つの限度）というB-02の式を思い出してください。
+          これでA領域の発展編も完結です。「容量」は神様が決めた定数ではなく、<strong>温度と気象が決める、動的な物理量</strong>でした。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（熱容量の決まり方） -->
+        <div class="exercise" data-exercise-id="a-08-ex01" data-type="choice">
+          <h3>演習 1: 熱容量はどう決まるか</h3>
+          <div class="exercise-problem">
+            <p>送電線の熱容量（許容電流）の決まり方として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-08-ex01" value="1">
+              <span>ジュール熱（I²R）などの発熱と、気温・風による放熱のつり合いで決まる電線の温度が、たるみ・強度の限度を超えない範囲の電流の上限として決まる</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-08-ex01" value="2">
+              <span>送電線の建設費を回収できる電力量から逆算して決まる</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-08-ex01" value="3">
+              <span>電線の長さに比例して決まり、長い送電線ほど容量が大きい</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-08-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "熱容量の正体は温度です。発熱（電流の2乗×抵抗＋日射）と放熱（気温・風）のつり合いで電線の温度が決まり、たるみ（地上高不足）や強度低下を起こさない温度の限度から、流してよい電流の上限＝許容電流が決まります。2のような経済計算ではなく物理で決まり、3も誤りです（長さは容量の決め手ではありません）。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（電流→MW換算・バリアント付き） -->
+        <div class="exercise" data-exercise-id="a-08-ex02" data-type="numeric">
+          <h3>演習 2: 許容電流をMWに翻訳する</h3>
+          <div class="exercise-problem">
+            <p>
+              線間電圧 <span class="var" data-var="v">154</span> kV の送電線の許容電流が <span class="var" data-var="i">700</span> A である。
+              力率を 1.0 とすると、この送電線の熱容量はおよそ何 MW か（√3 ≒ 1.732、整数で答えよ）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              熱容量:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-08-ex02",
+          "type": "numeric",
+          "correct": 187,
+          "tolerance": 2,
+          "unit": "MW",
+          "explanation": "P ＝ √3 × V × I × cosφ ＝ 1.732 × 154 kV × 0.7 kA × 1.0 ≒ 186.7 → 約187 MW。kVとkA（A÷1,000）を掛けるとMWになる単位の並びに注意してください。B-01以来ずっと使ってきた「容量◯◯MW」は、許容電流をこの式で翻訳した数字です。",
+          "variants": [
+            {
+              "vars": { "v": "275", "i": "800" },
+              "correct": 381,
+              "explanation": "P ＝ 1.732 × 275 kV × 0.8 kA ≒ 381 MW。電圧階級が上がると、同じくらいの電流でも運べる電力が大きく増えます——上位系統（C-03）が大電力輸送を受け持つ理由が式からも読めます。"
+            },
+            {
+              "vars": { "v": "66", "i": "500" },
+              "correct": 57,
+              "explanation": "P ＝ 1.732 × 66 kV × 0.5 kA ≒ 57 MW。同じ数百Aでも、電圧が低いローカル系統では運べるMWはずっと小さくなります。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（短時間許容とN-1） -->
+        <div class="exercise" data-exercise-id="a-08-ex03" data-type="multi-choice">
+          <h3>演習 3: 短時間許容と運用</h3>
+          <div class="exercise-problem">
+            <p>許容電流と運用の関係について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="a-08-ex03" value="1">
+              <span>電線は温まるのに時間がかかるため、短時間であれば連続許容を超える電流を流せる（短時間許容）</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-08-ex03" value="2">
+              <span>N-1事故直後の転流による跳ね上がりを短時間許容で受け止め、電線が温まりきる前に再給電などで潮流を下げる運用がある</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-08-ex03" value="3">
+              <span>気温が低く放熱の良い冬は、同じ電線でも夏より多くの電流を流せる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="a-08-ex03" value="4">
+              <span>許容電流は電線ごとに1つの固定値で、季節や気象によって変わることはない</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-08-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（熱の時間遅れが短時間許容を生む）、2（事故直後の数分〜数十分を短時間許容で凌ぎ、その間に運用で下げる——B-01・D-04・D-02の運用と熱の時間感覚が対になっている）、3（放熱が良いほど許容電流は大きい＝季節別容量）はいずれも正しい。4は誤りで、許容電流は放熱条件（季節・気象）で変わります——これを積極的に使うのが動的レーティング（DLR）です。"
+        }
+        </script>
+
+        <!-- 演習4: choice（動的レーティング） -->
+        <div class="exercise" data-exercise-id="a-08-ex04" data-type="choice">
+          <h3>演習 4: 動的レーティング（DLR）</h3>
+          <div class="exercise-problem">
+            <p>動的レーティング（DLR）の説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="a-08-ex04" value="1">
+              <span>実際の気象条件（気温・風速など）からその時々の許容電流を動的に算定し、同じ電線からより多くの容量を引き出す手法</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-08-ex04" value="2">
+              <span>電線を定期的に張り替えて、抵抗を毎年小さくしていく保守の手法</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="a-08-ex04" value="3">
+              <span>潮流計算の結果に応じて、送電線の建設場所を動的に変更する計画手法</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-08-ex04",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "DLRは、固定値・季節別の値の代わりに、実際の気象から許容電流をその都度計算し直す手法です。風が強く涼しい条件ではよく冷えるので、同じ電線からより多くの容量を引き出せます。風の強い日は風力発電も多い——再エネと相性の良い性質もあります。発想はB-05の想定潮流の合理化（計算の想定を現実に近づける）の物理版です。2・3のような保守・建設の手法ではありません。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="07-frequency-and-inertia.html" class="unit-nav-prev">&larr; 周波数と慣性──なぜ50Hzに保てるのか</a>
+      <a href="../b-congestion/index.html" class="unit-nav-next">次の領域へ: B 系統混雑 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

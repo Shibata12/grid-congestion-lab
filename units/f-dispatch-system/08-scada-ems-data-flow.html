@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F-08: 中給を支えるシステム群──SCADA・EMSとデータの流れ - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="f" data-unit="f-08">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">F: 中央給電指令所システム</a> &gt;
+      <span>SCADA・EMSとデータの流れ</span>
+    </nav>
+
+    <article>
+      <h1>F-08: 中給を支えるシステム群──SCADA・EMSとデータの流れ</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="02-next-gen-dispatch-system.html">F-02: 次期中給システムの機能構成</a> では「<strong>何の機能があるか</strong>」を、
+        <a href="../c-grid-model/06-measurement-and-state-estimation.html">C-06: 計測と状態推定</a> では「<strong>計測がどう入ってくるか</strong>」を学びました。
+        本ユニットはその間を埋めます——それらの機能は、<strong>システムとしてどう組み上がっているのか</strong>。
+        世界共通の枠組みである <strong>SCADA</strong>（目と手）と <strong>EMS</strong>（頭脳）に分けて、
+        データの流れ・周期・止まらない工夫の3つの観点で眺めます。数式はゼロです。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../c-grid-model/06-measurement-and-state-estimation.html">C-06</a>：テレメータが誤差込みの計測値を中給へ常時送り、状態推定が「今」を整える</li>
+          <li><a href="02-next-gen-dispatch-system.html">F-02</a>：中給の機能一覧（状態推定・混雑計算・SCUC/SCED・予測・広域LFC）</li>
+          <li><a href="05-frequency-control-and-congestion.html">F-05: 需給制御（GF・LFC・EDC）と混雑管理</a>：制御には秒・分・数分〜の時間の層がある</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：特定の会社・特定のシステムの内部仕様（機器構成・データ項目・画面など）には一切踏み込みません。
+          <strong>世界共通の一般的な電力制御システムの枠組み</strong>（SCADA/EMS）と、公開資料にある範囲の話だけで構成しています
+          （末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 「機能の一覧」から「システムの絵」へ</a></li>
+          <li><a href="#section-2">2. SCADA──系統の目と手</a></li>
+          <li><a href="#section-3">3. EMS──状態推定を前処理にした頭脳</a></li>
+          <li><a href="#section-4">4. 周期の階層：全部が同じ速さで回っているのではない</a></li>
+          <li><a href="#section-5">5. 止まらない工夫：二重化とバックアップ</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 「機能の一覧」から「システムの絵」へ</h2>
+        <p>
+          F-02で見た機能一覧——状態推定・混雑計算・SCUC/SCED・予測・広域LFC——は、「中給システムが<strong>何をするか</strong>」の答えでした。
+          しかしシステムに関わるエンジニアには、もう1つの問いがあります。
+          「それらは<strong>どう組み上がって、どうデータが流れ、どんな速さで回り、なぜ止まらないのか</strong>」。
+        </p>
+        <p>
+          この問いに答える枠組みが、世界の電力制御システムに共通する2階建ての構図です。
+          下の階が<span class="term">SCADA<span class="term-tooltip">Supervisory Control And Data Acquisition（監視制御とデータ収集）。テレメータの計測値を秒オーダーで収集し、系統の状態を監視・警報し、開閉器や発電機への指令を送り出す、電力制御システムの入出力層。系統の「目と手」。</span></span>
+          （Supervisory Control And Data Acquisition＝監視制御とデータ収集）、
+          上の階が<span class="term">EMS<span class="term-tooltip">Energy Management System（エネルギー管理システム）。SCADAが集めた計測値を状態推定で整えたうえで、潮流計算・混雑監視・需給制御（LFC/EDC）・最適化（SCUC/SCED）などの計算を行う、電力制御システムの頭脳層。中央給電指令所システムの計算機能群にあたる。</span></span>
+          （Energy Management System）。
+          たとえるなら、SCADAが<strong>目と手</strong>、EMSが<strong>頭脳</strong>です。
+          中央給電指令所のシステムは、この2階建ての上に成り立っています。順に見ていきましょう。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. SCADA──系統の目と手</h2>
+        <p>
+          SCADAの仕事は名前のとおり3つです。
+        </p>
+        <ul>
+          <li>
+            <strong>データ収集（Data Acquisition）</strong>：C-06で学んだテレメータの計測値
+            （潮流P・Q、電圧、開閉器の入切など）を、系統の各所から<strong>秒オーダーの周期</strong>で絶えず集めます。
+          </li>
+          <li>
+            <strong>監視（Supervisory）</strong>：集めた値を系統図の画面に映し、運用者が見張れるようにします。
+            線路の過負荷や電圧の逸脱、開閉器の状態変化があれば<strong>警報</strong>で知らせます。
+          </li>
+          <li>
+            <strong>制御（Control）</strong>：逆向きの流れです。中給からの<strong>指令</strong>——開閉器の遠隔操作や、
+            発電機への出力指令（F-05のLFC/EDC指令もここを通ります）——を現場へ送り届けます。
+          </li>
+        </ul>
+        <p>
+          つまりSCADAは、系統という巨大な現場と計算機の世界をつなぐ<strong>入出力の層</strong>です。
+          「生の今」を取り込み続け、「決めたこと」を送り出し続ける——ここが止まると、中給は目隠しをされたのと同じになります。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 225" role="img"
+               aria-label="下段の現場（発電機・変電所）から計測値がSCADAに集まり、SCADAの上でEMSが状態推定を前処理として混雑計算・SCUC/SCED・LFC/EDCなどの計算を行い、指令が再びSCADAを通って現場へ戻る、2階建てとデータの循環を示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="f8-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+            </defs>
+            <!-- EMS層 -->
+            <rect x="70" y="15" width="320" height="72" rx="8" fill="#eef2ff" stroke="#6366f1" stroke-width="1.6"></rect>
+            <text x="230" y="35" font-size="11" text-anchor="middle" fill="#4338ca" font-weight="bold">EMS（頭脳）</text>
+            <text x="230" y="53" font-size="9.5" text-anchor="middle" fill="#1a1a2e">状態推定（前処理）→ 混雑計算・SCUC/SCED・LFC/EDC・予測</text>
+            <text x="230" y="70" font-size="9" text-anchor="middle" fill="#4a5568">整えられた「今」の上で考える</text>
+            <!-- SCADA層 -->
+            <rect x="70" y="105" width="320" height="52" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"></rect>
+            <text x="230" y="126" font-size="11" text-anchor="middle" fill="#b45309" font-weight="bold">SCADA（目と手）</text>
+            <text x="230" y="144" font-size="9.5" text-anchor="middle" fill="#1a1a2e">収集（秒オーダー）・監視・警報 ／ 指令の送出</text>
+            <!-- 現場 -->
+            <rect x="70" y="180" width="320" height="34" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="230" y="201" font-size="10" text-anchor="middle" fill="#1a1a2e">現場：発電機・変電所（テレメータ＝C-06 ／ 開閉器・出力制御）</text>
+            <!-- 上り -->
+            <line x1="150" y1="180" x2="150" y2="160" stroke="#8b5cf6" stroke-width="1.6" marker-end="url(#f8-ah)"></line>
+            <line x1="150" y1="105" x2="150" y2="90" stroke="#8b5cf6" stroke-width="1.6" marker-end="url(#f8-ah)"></line>
+            <text x="140" y="174" font-size="8.5" text-anchor="end" fill="#8b5cf6">計測値（上り）</text>
+            <!-- 下り -->
+            <line x1="310" y1="87" x2="310" y2="102" stroke="#dc2626" stroke-width="1.6" marker-end="url(#f8-ah)"></line>
+            <line x1="310" y1="157" x2="310" y2="177" stroke="#dc2626" stroke-width="1.6" marker-end="url(#f8-ah)"></line>
+            <text x="320" y="174" font-size="8.5" fill="#dc2626">指令（下り）</text>
+          </svg>
+          <figcaption>図1: 2階建ての構図。計測値が上り、SCADAとEMSを巡って、指令が下りてくる</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. EMS──状態推定を前処理にした頭脳</h2>
+        <p>
+          SCADAが集めるのは、C-06で学んだとおり<strong>誤差や欠測を含む「生の計測値」</strong>です。
+          その生データをそのまま計算に使うわけにはいきません。そこでEMSの入口には
+          <strong>状態推定</strong>（C-06）が置かれ、物理法則とつじつまの合う「今」に整えます。
+          そして、整えられた「今」の上で、F-02の機能たちが動きます。
+        </p>
+        <ul>
+          <li><strong>オンライン系統監視</strong>：今の潮流と容量を突き合わせ、混雑・過負荷を監視する（B-01の判定の実系統版）。想定故障（N-1）のチェックもここで回せます（D-04）。</li>
+          <li><strong>需給制御</strong>：LFC・EDCの指令量を計算する（F-05）。</li>
+          <li><strong>計画・最適化</strong>：予測（F-07）を入力に、混雑計算を前処理として、SCUC/SCED（D-03）が先のコマの計画を作る（F-04）。</li>
+        </ul>
+        <p>
+          データの流れを一本の線で言えばこうです——
+          <strong>テレメータ → SCADA（集める） → 状態推定（整える） → 各アプリ（考える） → 指令 → SCADA（手） → 現場</strong>。
+          状態推定が「オンライン計算の<strong>共通の前処理</strong>」の位置にあることが、C-06とF-02をつなぐ要です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 周期の階層：全部が同じ速さで回っているのではない</h2>
+        <p>
+          もう1つの観点は<strong>速さ</strong>です。図1の各ブロックは、同じテンポで動いているのではありません。
+          F-05（制御の層）とF-04（計画の時間軸）で学んだ時間感覚を、システムの「回る周期」として重ねると、きれいな階層になります。
+        </p>
+        <ul>
+          <li><strong>秒オーダー</strong>：テレメータ収集・SCADA監視、LFC指令（F-05）。<strong>完全に自動</strong>で回る層。</li>
+          <li><strong>分オーダー</strong>：状態推定、EDC（F-05）、オンラインの混雑・N-1監視。自動計算＋運用者の確認。</li>
+          <li><strong>30分コマ対象</strong>：SCEDは直前に多数回、SCUCは早めに数回（F-04）。計算が重く、先のコマを対象にする層。</li>
+          <li><strong>それより先</strong>：前日・週間・月間の計画業務（C-02の3計画の世界）。</li>
+        </ul>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 205" role="img"
+               aria-label="上から秒オーダー（テレメータ・SCADA・LFC、完全自動）、分オーダー（状態推定・EDC・オンライン監視）、30分コマ対象（SCED直前多数回・SCUC早め数回）、前日以前（計画業務）へと、下に行くほど周期が遅く計算が重くなる階層を示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <rect x="20" y="15" width="420" height="40" rx="8" fill="#fef2f2" stroke="#ef4444"></rect>
+            <text x="35" y="32" font-size="10" fill="#1a1a2e" font-weight="bold">秒オーダー</text>
+            <text x="35" y="48" font-size="9" fill="#4a5568">テレメータ収集・SCADA監視・LFC指令 ── 完全自動で回り続ける</text>
+            <rect x="20" y="63" width="420" height="40" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="35" y="80" font-size="10" fill="#1a1a2e" font-weight="bold">分オーダー</text>
+            <text x="35" y="96" font-size="9" fill="#4a5568">状態推定・EDC・オンラインの混雑／N-1監視 ── 自動計算＋運用者の確認</text>
+            <rect x="20" y="111" width="420" height="40" rx="8" fill="#eef2ff" stroke="#6366f1"></rect>
+            <text x="35" y="128" font-size="10" fill="#1a1a2e" font-weight="bold">30分コマ対象</text>
+            <text x="35" y="144" font-size="9" fill="#4a5568">SCED＝直前に多数回 ／ SCUC＝早めに数回（F-04） ── 計算が重い層</text>
+            <rect x="20" y="159" width="420" height="40" rx="8" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="35" y="176" font-size="10" fill="#1a1a2e" font-weight="bold">前日〜それより先</text>
+            <text x="35" y="192" font-size="9" fill="#4a5568">需給計画・系統構成計画・作業停止計画（C-02） ── 人の計画業務の世界</text>
+          </svg>
+          <figcaption>図2: 周期の階層。上ほど速く自動的に、下ほど重く計画的に回る</figcaption>
+        </figure>
+
+        <p>
+          この階層観はSEにとって実用的です。<strong>速い層ほど可用性と応答が命</strong>（秒の世界に人は介在できない）、
+          <strong>遅い層ほど計算の正しさと重さが課題</strong>（D-06で見たMIPの重さ）——
+          同じ「中給システム」でも、層によって求められる性質がまるで違うのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 止まらない工夫：二重化とバックアップ</h2>
+        <p>
+          最後の観点は<strong>信頼性</strong>です。電気は止められません。だから中給システムは、
+          性能や機能の前にまず「<strong>止まらないこと</strong>」自体が要件になります。一般的な考え方は2段構えです。
+        </p>
+        <ul>
+          <li>
+            <strong>二重化</strong>：サーバや通信路を2系統（いわゆるA系・B系）持ち、常に両方を動かしておいて、
+            片方が故障してももう片方が<strong>途切れずに引き継ぐ</strong>構成にします。
+            秒オーダーの層（§4）が相手なので、「再起動して復旧」では間に合わないのです。
+          </li>
+          <li>
+            <strong>バックアップ拠点</strong>：災害などで中給の建物・設備そのものが使えなくなる事態に備え、
+            別の場所からでも監視・指令を続けられる備えを持ちます（各社の公開情報でも、一般論として広く知られた考え方です）。
+          </li>
+        </ul>
+        <p>
+          この「止まらない」制約は、システムの<strong>更新</strong>も難しくします——動いている系統を監視・制御しながら、
+          新しいシステムへ載せ替えなければならないからです。
+          <a href="03-current-vs-next-dispatch.html">F-03: 現行と次期中給の比較</a> で見た<strong>段階的な移行（二段階構成）</strong>には、
+          最適化ロジックの事情だけでなく、この「動かしながら替える」というシステム運用上の事情も重なっています。
+        </p>
+        <p>
+          まとめ——中給の機能（F-02）は、<strong>SCADA（目と手）とEMS（頭脳）</strong>という器に載っていて、
+          <strong>データの流れ</strong>（テレメータ→SCADA→状態推定→アプリ→指令）、
+          <strong>周期の階層</strong>（秒〜分〜30分コマ〜前日）、<strong>止まらない工夫</strong>（二重化・バックアップ）の
+          3つの観点で読める——これが「機能の一覧」を「システムの絵」に変える見方です。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: ordering（データの流れ） -->
+        <div class="exercise" data-exercise-id="f-08-ex01" data-type="ordering">
+          <h3>演習 1: データの流れ</h3>
+          <div class="exercise-problem">
+            <p>計測から指令まで、中給システムの中のデータの流れを正しい順に並べ替えよ。</p>
+          </div>
+          <div class="exercise-input">
+            <ul class="ordering-list" role="listbox">
+              <li class="ordering-item" draggable="true" data-item-id="c">状態推定が、物理法則とつじつまの合う「今」に整える</li>
+              <li class="ordering-item" draggable="true" data-item-id="a">テレメータが系統各所の計測値を送ってくる</li>
+              <li class="ordering-item" draggable="true" data-item-id="e">指令がSCADAを通って発電機・開閉器へ送られる</li>
+              <li class="ordering-item" draggable="true" data-item-id="b">SCADAが計測値を秒オーダーで収集する</li>
+              <li class="ordering-item" draggable="true" data-item-id="d">混雑監視・需給制御・SCUC/SCEDなどのアプリが計算する</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-08-ex01",
+          "type": "ordering",
+          "correct": ["a", "b", "c", "d", "e"],
+          "explanation": "テレメータが計測値を送り(a)、SCADAが収集し(b)、状態推定が誤差込みの生データを整合する「今」に整え(c)、その上で各アプリが計算し(d)、決まった指令がSCADAを通って現場へ戻ります(e)。状態推定が「集める」と「考える」の間の共通前処理にあることがポイントです（C-06とF-02の接続点）。"
+        }
+        </script>
+
+        <!-- 演習2: choice（SCADAとEMSの関係） -->
+        <div class="exercise" data-exercise-id="f-08-ex02" data-type="choice">
+          <h3>演習 2: SCADAとEMSの役割分担</h3>
+          <div class="exercise-problem">
+            <p>SCADAとEMSの関係の説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="f-08-ex02" value="1">
+              <span>SCADAが収集・監視・制御の入出力（目と手）を受け持ち、EMSが状態推定を前処理として計算・最適化（頭脳）を受け持つ</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-08-ex02" value="2">
+              <span>EMSはSCADAの予備機であり、SCADAが故障したときだけ起動される</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="f-08-ex02" value="3">
+              <span>SCADAは前日までの計画業務を、EMSは当日の実需給業務を担当する、という時間による分担である</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-08-ex02",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "SCADA＝入出力の層（テレメータ収集・監視警報・指令送出）、EMS＝計算の層（状態推定→混雑監視・需給制御・SCUC/SCED）という機能の2階建てです。2は誤りで、予備機の関係ではなく常に両方が役割分担して動きます（止まらない工夫は各層の二重化で実現）。3も誤りで、時間による分担ではなく機能による分担です——どちらも実需給の「今」を扱っています。"
+        }
+        </script>
+
+        <!-- 演習3: diagram-label（2階建ての構成図） -->
+        <div class="exercise" data-exercise-id="f-08-ex03" data-type="diagram-label">
+          <h3>演習 3: システムの絵を完成させる</h3>
+          <div class="exercise-problem">
+            <p>
+              現場からの計測値が指令になって戻るまでの流れの空欄に、当てはまる要素を配置せよ。
+              ラベルをドラッグするか、ラベルを選んでから空欄をクリックして配置できます。使わないラベルが1つあります。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <div class="diagram-exercise">
+              <svg class="diagram-base" viewBox="0 0 100 24" role="img"
+                   aria-label="現場のテレメータから始まり、3つの空欄を経て指令が現場へ戻る横並びのフロー図"
+                   xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="f8-d-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+                  </marker>
+                </defs>
+                <rect x="1" y="7" width="17" height="10" rx="2" fill="#f5f7fa" stroke="#94a3b8" stroke-width="0.5"></rect>
+                <text x="9.5" y="13.5" font-size="3.2" text-anchor="middle" fill="#1a1a2e">テレメータ</text>
+                <rect x="82" y="7" width="17" height="10" rx="2" fill="#f0fdf4" stroke="#16a34a" stroke-width="0.5"></rect>
+                <text x="90.5" y="13.5" font-size="3.2" text-anchor="middle" fill="#16a34a">指令→現場</text>
+                <g stroke="#4a5568" stroke-width="0.5" marker-end="url(#f8-d-ah)" fill="none">
+                  <line x1="18" y1="12" x2="23" y2="12"></line>
+                  <line x1="37" y1="12" x2="43" y2="12"></line>
+                  <line x1="57" y1="12" x2="63" y2="12"></line>
+                  <line x1="77" y1="12" x2="82" y2="12"></line>
+                </g>
+              </svg>
+              <div class="label-targets">
+                <div class="drop-zone" data-slot="1" style="left:30%; top:50%;"></div>
+                <div class="drop-zone" data-slot="2" style="left:50%; top:50%;"></div>
+                <div class="drop-zone" data-slot="3" style="left:70%; top:50%;"></div>
+              </div>
+              <div class="label-choices">
+                <span class="draggable-label" data-label-id="a">SCADA（収集）</span>
+                <span class="draggable-label" data-label-id="b">状態推定</span>
+                <span class="draggable-label" data-label-id="c">混雑監視・SCUC/SCED</span>
+                <span class="draggable-label" data-label-id="d">間接オークション</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-08-ex03",
+          "type": "diagram-label",
+          "correct": {"1": "a", "2": "b", "3": "c"},
+          "explanation": "テレメータの計測値は、SCADAが収集し（slot1）、状態推定が整え（slot2）、混雑監視・SCUC/SCEDなどのアプリが計算して（slot3）、指令として現場へ戻ります。「間接オークション」は連系線の容量を市場の約定で配分する仕組み（E-07）で、JEPXの市場側の話——中給システム内のデータの流れには入りません。"
+        }
+        </script>
+
+        <!-- 演習4: multi-choice（周期と信頼性） -->
+        <div class="exercise" data-exercise-id="f-08-ex04" data-type="multi-choice">
+          <h3>演習 4: 周期と信頼性</h3>
+          <div class="exercise-problem">
+            <p>中給システムの周期と信頼性について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="f-08-ex04" value="1">
+              <span>テレメータの収集やSCADAの監視・LFC指令は、秒オーダーで完全に自動で回り続ける</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-08-ex04" value="2">
+              <span>状態推定は、オンラインの各計算に共通する前処理として繰り返し実行される</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-08-ex04" value="3">
+              <span>中給システムは、サーバや通信路の二重化などにより「止まらないこと」自体が要件になる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-08-ex04" value="4">
+              <span>すべての機能は30分に1回、同じタイミングで一斉に実行される</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-08-ex04",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（秒オーダーの自動の層）、2（状態推定＝共通前処理）、3（電気は止められない→二重化・バックアップで無停止が要件）はいずれも正しい。4は誤りで、周期は階層になっています——秒（テレメータ・LFC）、分（状態推定・EDC）、30分コマ対象（SCED直前多数回・SCUC早め数回）、前日以前（計画業務）と、層ごとにまるで違うテンポで回っています。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.meti.go.jp/shingikai/enecho/denryoku_gas/saisei_kano/smart_power_grid_wg/pdf/008_02_00.pdf"
+               target="_blank" rel="noopener noreferrer">一般社団法人 送配電網協議会「次期中給システム開発に関する検討状況」（経済産業省 次世代電力系統ワーキンググループ 第8回 資料2、2026年3月16日。中給システムの機能・システム構成の公開情報）</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/category/saving_and_new/saiene/grid/"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「なるほど！グリッド」（系統運用のしくみ全般の公開解説）</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="07-demand-and-renewable-forecast.html" class="unit-nav-prev">&larr; 需要予測・再エネ予測──計算チェーンの最上流</a>
+      <a href="09-occto-system-and-plan-flow.html" class="unit-nav-next">計画のバケツリレー──広域機関システムと系統間連携 &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>

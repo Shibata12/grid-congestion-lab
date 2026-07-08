@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B-06: 基幹の外の混雑──ローカル系統・配電とDER - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="b" data-unit="b-06">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">B: 系統混雑</a> &gt;
+      <span>ローカル系統・配電とDER</span>
+    </nav>
+
+    <article>
+      <h1>B-06: 基幹の外の混雑──ローカル系統・配電とDER</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の3本目、B領域の締めくくりです。本サイトの混雑はずっと<strong>基幹系統</strong>（上位2電圧、C-03）の話でした。
+        でも系統には続きがあります——基幹の下の<strong>ローカル系統</strong>、その先の<strong>配電系統</strong>。
+        太陽光が屋根の上まで広がった今、混雑と容量の問題は<strong>系統の末端でも</strong>起きています。
+        鍵になるのは<strong>逆潮流</strong>と、送電線とは逆の性質「<strong>R≫X</strong>」。
+        A-01のオームの法則が、最後のユニットでもう一度主役になります。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../c-grid-model/03-upper-lower-and-aggregated-bus.html">C-03: 上位系統・下位系統と集約母線</a>：系統は基幹（上位2電圧）を頂点とする階層構造</li>
+          <li><a href="../a-grid-fundamentals/03-impedance-reactance.html">A-03: インピーダンスとリアクタンス</a>：送電線ではX≫R（リアクタンスが支配的）だった</li>
+          <li><a href="../e-market/05-non-firm-connection.html">E-05: ノンファーム型接続</a>：空き容量がなくても、混雑時の抑制を条件に接続を認める仕組み</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：配電の電圧管理の詳細（タップ制御・SVR等の機器）や、
+          ローカル系統のノンファーム適用の細目には踏み込みません。
+          「基幹の外にも混雑と容量の問題があり、配電では電圧が主役になる」という構図がわかれば合格です
+          （末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 階層の下側にも「容量」がある</a></li>
+          <li><a href="#section-2">2. 逆潮流：電気が逆向きに流れる日</a></li>
+          <li><a href="#section-3">3. R≫X：配電では電圧が主役になる</a></li>
+          <li><a href="#section-4">4. ローカル系統へ広がるノンファーム</a></li>
+          <li><a href="#section-5">5. DERは課題であり戦力である</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 階層の下側にも「容量」がある</h2>
+        <p>
+          C-03の階層を思い出します——基幹系統（上位2電圧）の下に、地域へ電力を配る
+          <span class="term">ローカル系統<span class="term-tooltip">基幹系統（上位2電圧）の下位にあたる送電・変電の系統。地域の変電所へ電力を配る。基幹系統と同じく容量の制約があり、空き容量の不足やノンファーム型接続の適用拡大の舞台になっている。</span></span>があり、
+          さらにその先に、家庭や事業所へ届ける<strong>配電系統</strong>（6.6kVなど）があります。
+          本サイトの混雑管理はずっと基幹系統が主舞台でした——潮流計算もSCUC/SCEDも、詳細にモデル化されるのは基幹でした（C-03）。
+        </p>
+        <p>
+          しかし「潮流 ≤ 容量」という物差し（B-01）は、<strong>どの階層の線にも</strong>当てはまります。
+          ローカル系統の送電線にも、配電線にも、変圧器にも容量はある。
+          そして太陽光の接続がローカル・配電へ大量に進んだ結果、<strong>容量と混雑の問題が系統の末端でも起きる</strong>ようになりました。
+          基幹とは違う顔をした混雑——それが本ユニットの主役です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 逆潮流：電気が逆向きに流れる日</h2>
+        <p>
+          配電系統は長らく<strong>一方通行</strong>でした——変電所から需要家へ、上から下へ。
+          設備もその前提で設計されています。ところが屋根の太陽光が増えると、
+          よく晴れた昼には<strong>地域の発電が地域の需要を上回り</strong>、余った電力が変電所へ向かって<strong>逆向きに</strong>流れます。
+          これが<span class="term">逆潮流<span class="term-tooltip">需要側（配電系統の末端側）から系統側（変電所側）へ向かう、従来と逆向きの電力の流れ。太陽光の発電が地域の需要を上回ると生じる。配電線の電圧を押し上げ、熱容量にも影響する、配電系統の混雑・電圧問題の主因。</span></span>です。
+        </p>
+        <p>
+          逆潮流そのものは悪ではありません（余剰を系統に送るのは売電の仕組みそのもの）。
+          問題は、一方通行の前提で作られた設備に、<strong>想定外の向き・大きさ</strong>の流れが乗ることです。
+          具体的には2つ——配電線・変圧器の<strong>熱容量</strong>（流れの向きが逆でも発熱は同じ、A-08）と、
+          もう1つが次節の<strong>電圧上昇</strong>です。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 195" role="img"
+               aria-label="配電系統の順潮流と逆潮流の対比。夜は変電所から需要家へ従来どおりの向きに流れるが、よく晴れた昼は屋根の太陽光の発電が需要を上回り、余剰が変電所へ向かって逆向きに流れることを示す図"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="b6-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+              <marker id="b6-ah-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"></path>
+              </marker>
+            </defs>
+            <!-- 夜 -->
+            <rect x="15" y="20" width="210" height="160" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="120" y="42" font-size="10.5" text-anchor="middle" fill="#4a5568" font-weight="bold">夜：順潮流（従来どおり）</text>
+            <rect x="35" y="60" width="60" height="34" rx="6" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="65" y="81" font-size="9" text-anchor="middle" fill="#1a1a2e">変電所</text>
+            <rect x="145" y="60" width="60" height="34" rx="6" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="175" y="81" font-size="9" text-anchor="middle" fill="#1a1a2e">需要家</text>
+            <line x1="95" y1="77" x2="142" y2="77" stroke="#4a5568" stroke-width="2" marker-end="url(#b6-ah)"></line>
+            <text x="120" y="130" font-size="9" text-anchor="middle" fill="#4a5568">上から下への一方通行</text>
+            <text x="120" y="146" font-size="9" text-anchor="middle" fill="#4a5568">（設備はこの前提で設計）</text>
+            <!-- 昼 -->
+            <rect x="235" y="20" width="210" height="160" rx="8" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="340" y="42" font-size="10.5" text-anchor="middle" fill="#b45309" font-weight="bold">晴れた昼：逆潮流</text>
+            <rect x="255" y="60" width="60" height="34" rx="6" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="285" y="81" font-size="9" text-anchor="middle" fill="#1a1a2e">変電所</text>
+            <rect x="365" y="60" width="60" height="34" rx="6" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="395" y="75" font-size="9" text-anchor="middle" fill="#1a1a2e">需要家</text>
+            <text x="395" y="88" font-size="8" text-anchor="middle" fill="#15803d">＋屋根の太陽光</text>
+            <line x1="362" y1="77" x2="318" y2="77" stroke="#dc2626" stroke-width="2.2" marker-end="url(#b6-ah-r)"></line>
+            <text x="340" y="130" font-size="9" text-anchor="middle" fill="#dc2626">発電＞需要 → 余剰が逆向きに流れる</text>
+            <text x="340" y="146" font-size="9" text-anchor="middle" fill="#4a5568">→ 電圧上昇・熱容量が問題に</text>
+          </svg>
+          <figcaption>図1: 逆潮流。一方通行の前提で作られた配電系統に、逆向きの流れが乗る</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. R≫X：配電では電圧が主役になる</h2>
+        <p>
+          A-03で「送電線では<strong>X≫R</strong>（リアクタンスが支配的）」と学びました。実は配電線は<strong>逆</strong>です——
+          細い電線を使う配電線では<strong>抵抗Rが支配的（R≫X）</strong>。この違いが、問題の顔を変えます。
+        </p>
+        <p>
+          抵抗が支配的な線では、<strong>有効電力の流れがそのまま電圧に効きます</strong>。
+          逆潮流が抵抗を通って変電所側へ流れると、A-01のオームの法則そのままに、
+          流れの根元（需要家側）の電圧が<strong>押し上げられます</strong>——目安は ΔV ≒ R × I。
+          たとえば抵抗 0.5 Ω の配電線に 20 A の逆潮流が流れれば、電圧上昇は約 10 V。
+          家庭のコンセントの電圧は 101±6 V という枠（電気事業法の維持基準）に収める必要があるので、
+          この数ボルトが<strong>効いてしまう</strong>のです。電圧が上限に達すると、太陽光のパワーコンディショナは
+          出力を自動的に絞ります（電圧上昇抑制）——<strong>売りたくても売れない</strong>状態です。
+        </p>
+        <p>
+          まとめると：基幹の混雑は「<strong>熱容量・安定度</strong>」が主役（B-02・B-04）でしたが、
+          配電の混雑は<strong>電圧が先に効く</strong>ことが多い——R≫XかX≫Rか、という線の性質の違いが、
+          同じ「容量の問題」に違う顔を与えているのです。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. ローカル系統へ広がるノンファーム</h2>
+        <p>
+          空き容量の問題（E-05）も、基幹だけの話ではなくなりました。
+          再エネの接続申込みは、基幹よりむしろ<strong>ローカル系統・配電系統に殺到</strong>します（設置場所に近いから）。
+          従来なら「空き容量がないので、増強費用（特定負担、E-12）を払って何年も待ってください」となっていた接続に対し、
+          <strong>ノンファーム型接続の適用がローカル系統へも拡大</strong>されてきました——
+          混雑時の出力制御を条件に、増強を待たずにつなぐ、あの仕組みです。
+        </p>
+        <p>
+          つまりB-03で学んだ「枠を賢く使う」の発想が、系統の階層を降りてきている——
+          コネクト&マネージは基幹の専売特許ではなく、<strong>系統全体の設計思想</strong>になりつつあります。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. DERは課題であり戦力である</h2>
+        <p>
+          末端の主役たちに名前を付けましょう。屋根の太陽光、家庭・業務用の蓄電池、EVと充電器、エコキュートなどの制御可能な負荷——
+          需要側に分散してつながるこれらのリソースを
+          <span class="term">DER<span class="term-tooltip">Distributed Energy Resources（分散型エネルギーリソース）。屋根の太陽光・蓄電池・EVと充電器・制御可能な負荷など、需要側に分散して接続されるリソースの総称。逆潮流・電圧上昇など配電系統の課題の源である一方、制御・集約（アグリゲーション）できれば調整力や混雑対策の戦力にもなる。</span></span>
+          （Distributed Energy Resources＝分散型エネルギーリソース）と総称します。
+        </p>
+        <p>
+          DERは本ユニットで見たとおり<strong>課題の源</strong>です——逆潮流・電圧上昇・熱容量。
+          しかし同時に、<strong>制御できれば戦力</strong>でもあります。
+          蓄電池が昼の余剰を貯めれば逆潮流は減り（D-08の時間の価値の配電版）、
+          たくさんのDERを束ねて動かせば（アグリゲーション）、調整力（E-03）やデマンドレスポンスの供給源になります。
+          この「課題→戦力」の転換を支えるには、基幹を見る側（TSO）と配電を見る側（DSO）の情報連携——
+          いわゆる<strong>TSO/DSO協調</strong>——が必要で、世界的な検討テーマになっています（名前レベルの紹介にとどめます）。
+        </p>
+        <p>
+          これでB領域は、基幹の混雑（B-01〜B-05）から系統の末端まで、「混雑」の全景を見渡したことになります。
+          物差しはどこでも同じ「流れ ≤ 容量」。でも階層によって、効く制約も、打ち手も、主役も変わる——
+          それがこのユニットの持ち帰りです。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（逆潮流とは） -->
+        <div class="exercise" data-exercise-id="b-06-ex01" data-type="choice">
+          <h3>演習 1: 逆潮流とは</h3>
+          <div class="exercise-problem">
+            <p>逆潮流の説明として、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="b-06-ex01" value="1">
+              <span>太陽光の発電が地域の需要を上回ったときなどに、需要側から変電所側へ向かって流れる、従来と逆向きの電力の流れ</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-06-ex01" value="2">
+              <span>交流の電流が1秒間に50回または60回向きを変えること</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-06-ex01" value="3">
+              <span>N-1事故のときに、停止した回線の潮流が残りの回線へ移ること</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-06-ex01",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "逆潮流は「上から下へ」の一方通行を前提に作られた配電系統で、需要側から系統側へ電力が逆向きに流れる現象です。よく晴れた昼、屋根の太陽光の発電が地域の需要を上回ると生じます。2は交流そのものの性質（周波数）で別の話、3は転流（B-01・D-04）です——名前は似ていますが、逆潮流は「日常的に起きる向きの逆転」、転流は「事故時の経路の切り替わり」です。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（電圧上昇・バリアント付き） -->
+        <div class="exercise" data-exercise-id="b-06-ex02" data-type="numeric">
+          <h3>演習 2: 逆潮流の電圧上昇</h3>
+          <div class="exercise-problem">
+            <p>
+              抵抗が支配的な配電線（往復の抵抗 <span class="var" data-var="r">0.5</span> Ω とする）に、
+              太陽光の余剰による <span class="var" data-var="i">20</span> A の逆潮流が流れている。
+              オームの法則による電圧上昇の目安 ΔV ＝ R × I は何 V か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              電圧上昇:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> V
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-06-ex02",
+          "type": "numeric",
+          "correct": 10,
+          "tolerance": 0,
+          "unit": "V",
+          "explanation": "ΔV ＝ R × I ＝ 0.5 × 20 ＝ 10 V。A-01のオームの法則そのものです。家庭の電圧は101±6Vの枠に収める必要があるので、10Vの上昇は十分「効く」大きさ——電圧が上限に達すると、パワーコンディショナの電圧上昇抑制で太陽光の出力が絞られます（売りたくても売れない状態）。",
+          "variants": [
+            {
+              "vars": { "r": "0.4", "i": "30" },
+              "correct": 12,
+              "explanation": "ΔV ＝ 0.4 × 30 ＝ 12 V。逆潮流（電流）が大きいほど電圧上昇も大きくなります。晴れた昼に太陽光が一斉に発電する時間帯が、配電の電圧のいちばん厳しい場面です。"
+            },
+            {
+              "vars": { "r": "0.8", "i": "25" },
+              "correct": 20,
+              "explanation": "ΔV ＝ 0.8 × 25 ＝ 20 V。抵抗の大きい（細く長い）配電線ほど電圧が上がりやすい——同じ量の太陽光でも、線路の性質によって受け入れられる量が変わります。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（配電の混雑と制度） -->
+        <div class="exercise" data-exercise-id="b-06-ex03" data-type="multi-choice">
+          <h3>演習 3: 基幹の外の混雑</h3>
+          <div class="exercise-problem">
+            <p>ローカル系統・配電系統の混雑について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="b-06-ex03" value="1">
+              <span>配電線は抵抗が支配的（R≫X）なため、有効電力の逆潮流がそのまま電圧を押し上げる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-06-ex03" value="2">
+              <span>ノンファーム型接続の適用は、基幹系統からローカル系統へと広がってきた</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-06-ex03" value="3">
+              <span>DERは逆潮流・電圧上昇など課題の源である一方、制御・集約できれば調整力や混雑対策の戦力にもなる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-06-ex03" value="4">
+              <span>混雑は基幹系統だけの現象であり、配電系統で容量や電圧が問題になることはない</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-06-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（R≫Xゆえ有効電力が電圧に直結）、2（コネクト&マネージの発想が階層を降りてきている）、3（DERの課題→戦力の両面性。アグリゲーションやTSO/DSO協調が鍵）はいずれも正しい。4は誤りで、「流れ≤容量」の物差しはどの階層にも当てはまり、太陽光の大量接続で配電・ローカルの容量と電圧はまさに現在進行形の問題です。"
+        }
+        </script>
+
+        <!-- 演習4: choice（R≫Xの意味） -->
+        <div class="exercise" data-exercise-id="b-06-ex04" data-type="choice">
+          <h3>演習 4: なぜ配電では電圧が主役なのか</h3>
+          <div class="exercise-problem">
+            <p>基幹系統の混雑では熱容量・安定度が主役だったのに、配電系統では電圧の問題が先に顕在化しやすい。その理由として最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="b-06-ex04" value="1">
+              <span>送電線はX≫Rだが配電線はR≫Xであり、抵抗が支配的な線では有効電力の流れが電圧に直接効くから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-06-ex04" value="2">
+              <span>配電系統には電圧という概念がなく、電流だけで管理されているから</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-06-ex04" value="3">
+              <span>配電系統の周波数は基幹系統と異なり、100Hzで運用されているから</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-06-ex04",
+          "type": "choice",
+          "correct": "1",
+          "explanation": "線の性質の違いが問題の顔を変えます。X≫Rの送電線では電圧を支えるのは無効電力でした（A-04）。R≫Xの配電線では、有効電力の流れ（逆潮流）がオームの法則で直接電圧を押し上げます。しかも需要家の電圧は101±6Vの狭い枠に収める必要があるため、電圧が熱容量より先に効きやすいのです。2・3は誤りで、配電にも電圧管理はあり（むしろ主役）、周波数は系統全体で共通です（A-07）。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/grid/public/riyoukaikaku.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「電力ネットワーク利用の改革」（ノンファーム型接続のローカル系統への適用など）</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/about/special/tokushu/saiene/keitouseiyaku.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「再エネの大量導入に向けて〜『系統制約』問題と対策」</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="05-n1-shedding-and-flow-rationalization.html" class="unit-nav-prev">&larr; コネクト&amp;マネージの残り2本──N-1電制と想定潮流の合理化</a>
+      <a href="../c-grid-model/index.html" class="unit-nav-next">次の領域へ: C 系統モデル &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>
