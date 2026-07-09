@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F-11: 総合演習──ある日の中給を通しで解く - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="f" data-unit="f-11">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">F: 中央給電指令所システム</a> &gt;
+      <span>総合演習</span>
+    </nav>
+
+    <article>
+      <h1>F-11: 総合演習──ある日の中給を通しで解く</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        <a href="../d-algorithms/05-integrated-exercise.html">D-05</a>（計算の背骨）、
+        <a href="../e-market/09-integrated-exercise.html">E-09</a>（制度とお金の背骨）に続く、
+        <strong>3本目にして最後の総合演習</strong>です。今度の背骨は<strong>時間</strong>——
+        前日15時の予測から、SCUCの起動判断、当日の予測外れ、時間前市場、直前のSCED、
+        実需給の数秒、そして翌日の精算まで、<strong>中給の一日</strong>をまるごと通しで解きます。
+        <strong>新しい知識はゼロ</strong>。学んだ道具が時間軸の上で順番に呼び出されていく感覚を味わってください。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>進め方</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li>演習は8問の<strong>数珠つなぎ</strong>です。時間の流れに沿って、前の場面の数字が次の場面につながります。</li>
+          <li>間違えても大丈夫です。「解答を確認」で正解と解説が出るので、<strong>その値を持って次の問へ</strong>進んでください。</li>
+          <li>つまずいたら、§2の「解き方の地図」で該当ユニットに戻ってから再挑戦してください。</li>
+          <li>一度解き終えたら、演習の冒頭の<strong>「別の数字で解き直す」</strong>ボタンで、全8問を別の数字セットで通しで解き直せます。</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：数値はすべて<strong>教材用の例示値</strong>です（D-05・E-09と同じ考え方）。
+          新出用語・参考資料はありません。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. シナリオとその日のデータ</a></li>
+          <li><a href="#section-2">2. 解き方の地図</a></li>
+          <li><a href="#exercises">演習（8問の数珠つなぎ）</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. シナリオとその日のデータ</h2>
+        <p>
+          あなたは<strong>エリアAの中央給電指令所の運用担当</strong>です。
+          注目するのは<strong>明日の夕方コマ（18:00〜18:30）</strong>——太陽光が沈み、需要が残る、一日でいちばん気の抜けない時間帯です。
+          物語は前日の15時、明日の予測を確認するところから始まり、翌日のインバランス精算で終わります（図1）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 190" role="img"
+               aria-label="前日15時の予測と予備率の確認から、前日夜のSCUC起動判断、当日昼の予測下振れ、時間前市場での調達、直前のSCED、実需給の数秒、翌日の精算まで、中給の一日を時間軸に並べた図"
+               xmlns="http://www.w3.org/2000/svg">
+            <line x1="30" y1="95" x2="440" y2="95" stroke="#cbd5e1" stroke-width="1.5"></line>
+            <g font-size="8.5" text-anchor="middle">
+              <circle cx="55" cy="95" r="4" fill="#16a34a"></circle>
+              <text x="55" y="75" fill="#15803d">前日15時</text>
+              <text x="55" y="115" fill="#4a5568">予測・予備率</text>
+              <text x="55" y="127" fill="#4a5568">（①）</text>
+              <circle cx="120" cy="95" r="4" fill="#16a34a"></circle>
+              <text x="120" y="75" fill="#15803d">前日夜</text>
+              <text x="120" y="115" fill="#4a5568">SCUC起動判断</text>
+              <text x="120" y="127" fill="#4a5568">（②）</text>
+              <circle cx="195" cy="95" r="4" fill="#d97706"></circle>
+              <text x="195" y="75" fill="#b45309">当日昼</text>
+              <text x="195" y="115" fill="#4a5568">予測下振れ</text>
+              <text x="195" y="127" fill="#4a5568">（③）</text>
+              <circle cx="260" cy="95" r="4" fill="#d97706"></circle>
+              <text x="260" y="75" fill="#b45309">午後</text>
+              <text x="260" y="115" fill="#4a5568">時間前市場</text>
+              <text x="260" y="127" fill="#4a5568">（④）</text>
+              <circle cx="320" cy="95" r="4" fill="#dc2626"></circle>
+              <text x="320" y="75" fill="#dc2626">直前</text>
+              <text x="320" y="115" fill="#4a5568">SCED</text>
+              <text x="320" y="127" fill="#4a5568">（⑤）</text>
+              <circle cx="375" cy="95" r="4" fill="#dc2626"></circle>
+              <text x="375" y="75" fill="#dc2626">実需給</text>
+              <text x="375" y="115" fill="#4a5568">慣性・GF</text>
+              <text x="375" y="127" fill="#4a5568">（⑥）</text>
+              <circle cx="425" cy="95" r="4" fill="#6366f1"></circle>
+              <text x="425" y="75" fill="#4338ca">翌日</text>
+              <text x="425" y="115" fill="#4a5568">精算・総括</text>
+              <text x="425" y="127" fill="#4a5568">（⑦⑧）</text>
+            </g>
+            <text x="235" y="35" font-size="10" text-anchor="middle" fill="#1a1a2e">舞台：明日の夕方コマ（18:00〜18:30）を、前日から翌日まで追いかける</text>
+            <text x="235" y="165" font-size="9.5" text-anchor="middle" fill="#4a5568">計画で先を読み、市場で直し、制御で今を守り、精算で締める——中給の一日</text>
+          </svg>
+          <figcaption>図1: この総合演習の時間軸。①〜⑧が一日の流れに沿って並ぶ</figcaption>
+        </figure>
+
+        <p>
+          前日15時、明日の夕方コマについて手元にあるデータは次のとおりです。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 215" role="img"
+               aria-label="前日15時時点のデータ表。夕方コマの需要予測、確保している供給力、停止中の大型火力G1の起動所要時間が載っている。数値は表示中のシナリオに従う"
+               xmlns="http://www.w3.org/2000/svg">
+            <text x="230" y="24" font-size="10.5" text-anchor="middle" fill="#1a1a2e" font-weight="bold">前日15時のデータ（明日の夕方コマ・教材用の例示値）</text>
+            <rect x="50" y="38" width="360" height="30" fill="#eff6ff" stroke="#94a3b8"></rect>
+            <text x="70" y="58" font-size="10" fill="#1a1a2e">需要予測（F-07）</text>
+            <text x="390" y="58" font-size="10" text-anchor="end" fill="#1a1a2e"><tspan class="var" data-var="d">5,000</tspan> MW</text>
+            <rect x="50" y="68" width="360" height="30" fill="#fff" stroke="#94a3b8"></rect>
+            <text x="70" y="88" font-size="10" fill="#1a1a2e">確保している供給力</text>
+            <text x="390" y="88" font-size="10" text-anchor="end" fill="#1a1a2e"><tspan class="var" data-var="s">5,350</tspan> MW</text>
+            <rect x="50" y="98" width="360" height="30" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="70" y="118" font-size="10" fill="#1a1a2e" font-weight="bold">予備率</text>
+            <text x="390" y="118" font-size="10" text-anchor="end" fill="#d97706" font-weight="bold">？ %（演習1で計算）</text>
+            <rect x="50" y="128" width="360" height="30" fill="#fff" stroke="#94a3b8"></rect>
+            <text x="70" y="148" font-size="10" fill="#1a1a2e">大型火力G1（停止中）の起動所要時間（A-06）</text>
+            <text x="390" y="148" font-size="10" text-anchor="end" fill="#1a1a2e"><tspan class="var" data-var="st">10</tspan> 時間</text>
+            <rect x="50" y="158" width="360" height="30" fill="#fff" stroke="#94a3b8"></rect>
+            <text x="70" y="178" font-size="10" fill="#1a1a2e">夕方コマの需給が厳しいときの頼みの綱</text>
+            <text x="390" y="178" font-size="10" text-anchor="end" fill="#1a1a2e">G1の起動・時間前市場・調整力</text>
+            <text x="230" y="207" font-size="9.5" text-anchor="middle" fill="#4a5568">予備率の欄を自分で埋めるところから、中給の一日が始まる（F-07）</text>
+          </svg>
+          <figcaption>図2: 前日15時の手持ちデータ。まず予備率を確認する</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 解き方の地図</h2>
+        <p>
+          使う道具は、すべて学習済みです。①②は前日（計画）、③④は当日（修正）、⑤⑥は直前と実需給（制御）、
+          ⑦⑧は翌日（精算と総括）。つまずいたら、矢印の下のユニットへ戻ってください。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="演習の8ステップの地図。①予備率（F-07）→②起動リミット（A-06・F-04）→③下振れ後の予備率（F-07・F-10）→④時間前市場（E-11）→⑤SCEDの再配分（D-02・D-03）→⑥慣性の持ち時間（A-07・F-05）→⑦インバランス精算（E-10）→⑧一日の総括、の順に時間軸に沿って進む"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="f11-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"></path>
+              </marker>
+            </defs>
+            <rect x="20" y="30" width="95" height="50" rx="6" fill="#f0fdf4" stroke="#94a3b8"></rect>
+            <text x="67" y="50" font-size="9.5" text-anchor="middle" fill="#1a1a2e">① 予備率</text>
+            <text x="67" y="66" font-size="8.5" text-anchor="middle" fill="#4a5568">F-07</text>
+            <line x1="115" y1="55" x2="130" y2="55" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#f11-ah)"></line>
+            <rect x="132" y="30" width="95" height="50" rx="6" fill="#f0fdf4" stroke="#94a3b8"></rect>
+            <text x="179" y="50" font-size="9.5" text-anchor="middle" fill="#1a1a2e">② 起動リミット</text>
+            <text x="179" y="66" font-size="8.5" text-anchor="middle" fill="#4a5568">A-06・F-04</text>
+            <line x1="227" y1="55" x2="242" y2="55" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#f11-ah)"></line>
+            <rect x="244" y="30" width="95" height="50" rx="6" fill="#fffbeb" stroke="#94a3b8"></rect>
+            <text x="291" y="50" font-size="9.5" text-anchor="middle" fill="#1a1a2e">③ 下振れ後の予備率</text>
+            <text x="291" y="66" font-size="8.5" text-anchor="middle" fill="#4a5568">F-07・F-10</text>
+            <line x1="339" y1="55" x2="354" y2="55" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#f11-ah)"></line>
+            <rect x="356" y="30" width="95" height="50" rx="6" fill="#fffbeb" stroke="#94a3b8"></rect>
+            <text x="403" y="50" font-size="9.5" text-anchor="middle" fill="#1a1a2e">④ 時間前市場</text>
+            <text x="403" y="66" font-size="8.5" text-anchor="middle" fill="#4a5568">E-11</text>
+            <path d="M403,80 L403,100 L67,100 L67,118" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#f11-ah)"></path>
+            <rect x="20" y="120" width="95" height="50" rx="6" fill="#fef2f2" stroke="#94a3b8"></rect>
+            <text x="67" y="140" font-size="9.5" text-anchor="middle" fill="#1a1a2e">⑤ SCEDの再配分</text>
+            <text x="67" y="156" font-size="8.5" text-anchor="middle" fill="#4a5568">D-02・D-03</text>
+            <line x1="115" y1="145" x2="130" y2="145" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#f11-ah)"></line>
+            <rect x="132" y="120" width="95" height="50" rx="6" fill="#fef2f2" stroke="#94a3b8"></rect>
+            <text x="179" y="140" font-size="9.5" text-anchor="middle" fill="#1a1a2e">⑥ 慣性の持ち時間</text>
+            <text x="179" y="156" font-size="8.5" text-anchor="middle" fill="#4a5568">A-07・F-05</text>
+            <line x1="227" y1="145" x2="242" y2="145" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#f11-ah)"></line>
+            <rect x="244" y="120" width="95" height="50" rx="6" fill="#eef2ff" stroke="#94a3b8"></rect>
+            <text x="291" y="140" font-size="9.5" text-anchor="middle" fill="#1a1a2e">⑦ 精算</text>
+            <text x="291" y="156" font-size="8.5" text-anchor="middle" fill="#4a5568">E-10</text>
+            <line x1="339" y1="145" x2="354" y2="145" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#f11-ah)"></line>
+            <rect x="356" y="120" width="95" height="50" rx="6" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="403" y="140" font-size="9.5" text-anchor="middle" fill="#1a1a2e">⑧ 一日の総括</text>
+            <text x="403" y="156" font-size="8.5" text-anchor="middle" fill="#4a5568">F領域ぜんぶ</text>
+            <text x="230" y="196" font-size="10" text-anchor="middle" fill="#4a5568">前日（計画）→ 当日（修正）→ 直前・実需給（制御）→ 翌日（精算）——時間が背骨</text>
+          </svg>
+          <figcaption>図3: 解き方の地図。学んだ道具が時間軸の上で順番に呼び出される</figcaption>
+        </figure>
+
+        <p>
+          D-05は「計算」、E-09は「お金」、そしてこのF-11は「<strong>時間</strong>」——
+          同じ系統の一日を、3つの背骨で通しで歩けたら、本サイトの旅は完成です。では、前日15時から始めましょう。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習（8問の数珠つなぎ）</h2>
+
+        <div class="scenario-controls"><!-- exercise-engine.js がシナリオ切替ボタンを生成 --></div>
+        <script type="application/json" class="scenario-data">
+        {
+          "unitId": "f-11",
+          "scenarios": [
+            { "vars": { "d": "4,800", "s": "5,088", "resv": "288", "st": "8", "short": "192", "p1": "12", "q1": "70", "p2": "15", "q2": "60", "qbuy": "100", "flow": "884", "cap": "800", "p3": "0.6", "p4": "0.2", "e": "2,800", "drop": "400", "plan": "150", "act": "147", "price": "60" } },
+            { "vars": { "d": "5,500", "s": "5,940", "resv": "440", "st": "12", "short": "165", "p1": "13", "q1": "90", "p2": "17", "q2": "50", "qbuy": "120", "flow": "836", "cap": "800", "p3": "0.55", "p4": "0.25", "e": "4,500", "drop": "250", "plan": "240", "act": "236", "price": "30" } }
+          ]
+        }
+        </script>
+
+        <!-- 演習1: 予備率（前日15時） -->
+        <div class="exercise" data-exercise-id="f-11-ex01" data-type="numeric">
+          <h3>演習 1: 前日15時──まず予備率を確かめる</h3>
+          <div class="exercise-problem">
+            <p>
+              図2のデータから、明日の夕方コマの予備率を求めよ。
+              需要予測は <span class="var" data-var="d">5,000</span> MW、確保している供給力は <span class="var" data-var="s">5,350</span> MW である（小数第1位まで）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              予備率:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> %
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-11-ex01",
+          "type": "numeric",
+          "correct": 7,
+          "tolerance": 0.1,
+          "unit": "%",
+          "explanation": "予備率 =（供給力 − 需要予測）÷ 需要予測 × 100 =（5,350 − 5,000）÷ 5,000 × 100 = 7.0%（F-07: 需要予測・再エネ予測）。予備力は350 MW。注意報の基準（5%）は上回っており、現時点では平常運転です。ただし夕方コマは太陽光が沈む時間帯——予測が外れる余地を考えて、次の手（G1の起動判断）を先に打っておきます（→演習2へ）。",
+          "variants": [
+            {
+              "correct": 6,
+              "explanation": "予備率 =（5,088 − 4,800）÷ 4,800 × 100 = 6.0%（F-07）。予備力は288 MW。注意報の基準（5%）は上回っていますが、余裕は薄め——夕方コマの予測外れに備えて、次の手（G1の起動判断）を先に打っておきます（→演習2へ）。"
+            },
+            {
+              "correct": 8,
+              "explanation": "予備率 =（5,940 − 5,500）÷ 5,500 × 100 = 8.0%（F-07）。予備力は440 MW。比較的余裕のある見込みですが、夕方コマは太陽光が沈む時間帯であり油断はできません。次の手（G1の起動判断）を確認しておきます（→演習2へ）。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習2: 起動リミット（前日夜・SCUC） -->
+        <div class="exercise" data-exercise-id="f-11-ex02" data-type="numeric">
+          <h3>演習 2: SCUCの時間感覚──起動のリミットは何時か</h3>
+          <div class="exercise-problem">
+            <p>
+              夕方コマ（18:00開始）の需給が厳しくなった場合の頼みの綱は、停止中の大型火力G1である。
+              G1は起動操作を始めてから系統に出力を出せるまで <span class="var" data-var="st">10</span> 時間かかる（A-06）。
+              18:00に間に合わせるには、遅くとも当日の<strong>何時</strong>までに起動操作を始める必要があるか（24時間表記の「時」で答えよ）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              リミット:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 時
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-11-ex02",
+          "type": "numeric",
+          "correct": 8,
+          "tolerance": 0,
+          "unit": "時",
+          "explanation": "18時 − 10時間 = 当日の8時がリミットです。つまり「夕方に足りるかどうか」の判断は、当日の朝までに済ませなければなりません——これがSCUC（起動停止計画）が早めに・先のコマまで見て実行される理由の体感版です（A-06: 起動時間、F-04: SCUCは早めに）。中給の時計は、いつも実需給よりずっと先を向いています（→当日昼、演習3へ）。",
+          "variants": [
+            {
+              "correct": 10,
+              "explanation": "18時 − 8時間 = 当日の10時がリミットです。起動の速いG1でも、判断は昼前まで——「夕方に足りるか」は午前中に見極める必要があります（A-06・F-04）。SCUCが早めに実行される理由の体感版です（→当日昼、演習3へ）。"
+            },
+            {
+              "correct": 6,
+              "explanation": "18時 − 12時間 = 当日の6時がリミットです。起動に半日かかる電源では、判断は夜明け前——実質的に前日夜のSCUCで決めておくしかありません（A-06・F-04）。起動時間が長い電源ほど、計画はより早く・より先を見る必要があります（→当日昼、演習3へ）。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: 下振れ後の予備率（当日昼） -->
+        <div class="exercise" data-exercise-id="f-11-ex03" data-type="numeric">
+          <h3>演習 3: 当日昼──予測が外れた</h3>
+          <div class="exercise-problem">
+            <p>
+              当日昼、気象予報が変わった。想定より雲が早く広がり、夕方コマの太陽光出力の見込みが
+              <span class="var" data-var="short">150</span> MW <strong>下振れ</strong>した（F-07）。
+              演習1の予備力 <span class="var" data-var="resv">350</span> MW がこの分だけ削られるとすると、
+              夕方コマの新しい予備率は何 % か（需要予測 <span class="var" data-var="d">5,000</span> MW は変わらないものとする。小数第1位まで）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              新しい予備率:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> %
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-11-ex03",
+          "type": "numeric",
+          "correct": 4,
+          "tolerance": 0.1,
+          "unit": "%",
+          "explanation": "新しい予備力 = 350 − 150 = 200 MW。予備率 = 200 ÷ 5,000 × 100 = 4.0%。5%を下回る見込みなので、需給ひっ迫「注意報」の水準に入りました（F-10）。E-10で学んだとおり、このコマのインバランス単価も需給ひっ迫時補正で高くなっていきます——市場参加者にも「早めに手当てせよ」のシグナルが飛んでいる状態です。実際、太陽光を抱えるBGは動き始めました（→演習4へ）。",
+          "variants": [
+            {
+              "correct": 2,
+              "explanation": "新しい予備力 = 288 − 192 = 96 MW。予備率 = 96 ÷ 4,800 × 100 = 2.0%。3%を下回る見込み——需給ひっ迫「警報」の水準です（F-10）。打ち手の階段が本格的に動きます：G1の起動（演習2のリミットに間に合ったかが効いてきます）、広域融通の検討、そして市場ではひっ迫時補正の高単価が「早めの手当て」を促します（→演習4へ）。"
+            },
+            {
+              "correct": 5,
+              "explanation": "新しい予備力 = 440 − 165 = 275 MW。予備率 = 275 ÷ 5,500 × 100 = 5.0%。注意報の基準（5%を下回る見込み）にちょうど接する際どい水準で、監視が強まります（F-10）。余裕があるように見えた朝の8%が、予測の変化ひとつでここまで削られる——予備率は「削られる前提の残量メーター」です（→演習4へ）。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習4: 時間前市場（午後・BGの帽子） -->
+        <div class="exercise" data-exercise-id="f-11-ex04" data-type="numeric">
+          <h3>演習 4: 午後──BGは時間前市場で埋める</h3>
+          <div class="exercise-problem">
+            <p>
+              ここで帽子を替えて、太陽光を抱える<strong>BGの担当者</strong>になる。下振れで夕方コマの計画が
+              <span class="var" data-var="qbuy">120</span> MWh 不足する見込みだ。時間前市場の板には、売り注文が
+              「<span class="var" data-var="p1">14</span> 円/kWh で <span class="var" data-var="q1">80</span> MWh」
+              「<span class="var" data-var="p2">16</span> 円/kWh で <span class="var" data-var="q2">60</span> MWh」の順に出ている。
+              不足分を安い順に全量調達したときの<strong>平均単価</strong>は何 円/kWh か（小数第1位まで）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              平均単価:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 円/kWh
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-11-ex04",
+          "type": "numeric",
+          "correct": 14.7,
+          "tolerance": 0.05,
+          "unit": "円/kWh",
+          "explanation": "安い順に、14円の売り80 MWhを全量、16円の売りから残り40 MWh。平均単価 =（80×14 + 40×16）÷ 120 = 1,760 ÷ 120 ≒ 14.7円/kWh（E-11: 時間前市場）。ゲートクローズ前に計画を直せたので、このBGの計画は実態に追いつきました——直した計画は広域機関システム（F-09）経由で中給にも届き、系統側の計算も最新の姿に更新されます。あなた（中給）の画面に戻りましょう（→演習5へ）。",
+          "variants": [
+            {
+              "correct": 12.9,
+              "explanation": "安い順に、12円の売り70 MWhを全量、15円の売りから残り30 MWh。平均単価 =（70×12 + 30×15）÷ 100 = 1,290 ÷ 100 = 12.9円/kWh（E-11）。警報水準の日は、何もせずインバランス（ひっ迫時補正の高単価）で精算するより、事前調達がはるかに安全です——E-10とE-11の天秤が実際に効く場面です（→演習5へ）。"
+            },
+            {
+              "correct": 14,
+              "explanation": "安い順に、13円の売り90 MWhを全量、17円の売りから残り30 MWh。平均単価 =（90×13 + 30×17）÷ 120 = 1,680 ÷ 120 = 14.0円/kWh（E-11）。板の安い注文から食っていくので、調達量が増えるほど平均単価は上がります。直した計画は広域機関システム（F-09）経由で系統側にも伝わります（→演習5へ）。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習5: SCEDの再配分（直前・混雑対応） -->
+        <div class="exercise" data-exercise-id="f-11-ex05" data-type="numeric">
+          <h3>演習 5: 直前──SCEDが混雑を織り込む</h3>
+          <div class="exercise-problem">
+            <p>
+              中給に戻る。最新の計画でSCEDを回すと、夕方コマの基幹線路L（容量 <span class="var" data-var="cap">800</span> MW）の計画潮流が
+              <span class="var" data-var="flow">860</span> MW と計算された——このままでは混雑する。
+              線路Lへの効きは、下げ候補の発電機G3がPTDF <span class="var" data-var="p3">0.5</span>、上げ候補のG4がPTDF <span class="var" data-var="p4">0.1</span>。
+              需給を保つペア操作（G3を下げ、同量G4を上げる）で潮流を容量ちょうどまで下げるには、何 MW の入れ替えが必要か。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              入れ替え量:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-11-ex05",
+          "type": "numeric",
+          "correct": 150,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "下げたい潮流は 860 − 800 = 60 MW。ペア操作の効きはPTDF差 0.5 − 0.1 = 0.4 なので、入れ替え量 = 60 ÷ 0.4 = 150 MW（D-02: 再給電、D-03: SCED）。量（需給）を保ったまま場所（潮流）だけを直す——F-05以来の「量と場所」の対比が、この1問に凝縮されています。計画は確定し、いよいよ実需給です（→演習6へ）。",
+          "variants": [
+            {
+              "correct": 210,
+              "explanation": "下げたい潮流は 884 − 800 = 84 MW。PTDF差 = 0.6 − 0.2 = 0.4 なので、入れ替え量 = 84 ÷ 0.4 = 210 MW（D-02・D-03）。警報水準の日でも混雑（場所）は待ってくれません——量の危機と場所の制約が同時に来るのが、いちばん難しい日です（→演習6へ）。"
+            },
+            {
+              "correct": 120,
+              "explanation": "下げたい潮流は 836 − 800 = 36 MW。PTDF差 = 0.55 − 0.25 = 0.3 なので、入れ替え量 = 36 ÷ 0.3 = 120 MW（D-02・D-03）。過負荷が小さくても、PTDF差が小さい（効きの近い）ペアしかなければ入れ替え量は大きくなる——「どのペアを選ぶか」の感度がここで効きます（→演習6へ）。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習6: 慣性の持ち時間（実需給） -->
+        <div class="exercise" data-exercise-id="f-11-ex06" data-type="numeric">
+          <h3>演習 6: 実需給18:05──電源脱落、最初の数秒</h3>
+          <div class="exercise-problem">
+            <p>
+              実需給の最中、18:05に他社の中型電源がトラブルで停止し、<span class="var" data-var="drop">300</span> MW の供給不足が突然生じた。
+              系統の回転エネルギーの使える貯金は <span class="var" data-var="e">3,600</span> MW·s 分ある。
+              回転エネルギーだけで不足を埋められる時間はおよそ何秒か（周波数一定とみなした目安の計算でよい。A-07）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              持ち時間:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 秒
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-11-ex06",
+          "type": "numeric",
+          "correct": 12,
+          "tolerance": 0,
+          "unit": "秒",
+          "explanation": "3,600 ÷ 300 = 12秒（A-07: 周波数と慣性）。この12秒の間に、GF（ガバナフリー）が自律的に立ち上がって不足を埋め始め、続いてLFCの指令が残りを引き受けます（F-05）。計画（SCUC/SCED）がどれだけ精緻でも、実需給の最初の数秒を守るのは物理と自動制御——中給の一日は、この2階建てでできています（→翌日、演習7へ）。",
+          "variants": [
+            {
+              "correct": 7,
+              "explanation": "2,800 ÷ 400 = 7秒（A-07）。大きめの脱落と少なめの慣性——持ち時間は7秒しかなく、GF（F-05）の立ち上がりがぎりぎりの勝負になります。警報水準の日に電源脱落が重なる、いちばん厳しいケースです（→翌日、演習7へ）。"
+            },
+            {
+              "correct": 18,
+              "explanation": "4,500 ÷ 250 = 18秒（A-07）。慣性に余裕があれば、制御のリレー（GF→LFC）は落ち着いてバトンを受け取れます。同じ脱落でも、系統の慣性次第で「最初の数秒」の景色はまるで違います（→翌日、演習7へ）。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習7: インバランス精算（翌日） -->
+        <div class="exercise" data-exercise-id="f-11-ex07" data-type="numeric">
+          <h3>演習 7: 翌日──ズレの値段を精算する</h3>
+          <div class="exercise-problem">
+            <p>
+              翌日、精算の時間だ。あるBGはこの夕方コマ、計画 <span class="var" data-var="plan">200</span> MWh に対して実績 <span class="var" data-var="act">195</span> MWh だった。
+              このコマのインバランス料金単価は、需給ひっ迫時補正が効いて <span class="var" data-var="price">45</span> 円/kWh になっていた。
+              このBGの支払い額は何円か（E-10）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              支払い額:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> 円
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-11-ex07",
+          "type": "numeric",
+          "correct": 225000,
+          "tolerance": 0,
+          "unit": "円",
+          "explanation": "不足インバランス = 200 − 195 = 5 MWh = 5,000 kWh。支払い = 5,000 × 45 = 225,000円（E-10: インバランス料金）。ひっ迫気味の日は単価が高く、小さなズレも高くつきます。演習4で時間前市場で計画を直したBGと、直さなかったBGの差が、ここで金額になって現れる——「事前に直すか、事後に払うか」の天秤の答え合わせです（→演習8で一日を総括）。",
+          "variants": [
+            {
+              "correct": 180000,
+              "explanation": "不足インバランス = 150 − 147 = 3 MWh = 3,000 kWh。支払い = 3,000 × 60 = 180,000円（E-10）。警報水準の日は補正で単価が跳ね上がっており、わずか3 MWhの不足でも18万円。時間前市場（演習4の12.9円）で埋めていれば約4万円で済んだ計算——天秤は圧倒的に事前調達に傾いていました（→演習8へ）。"
+            },
+            {
+              "correct": 120000,
+              "explanation": "不足インバランス = 240 − 236 = 4 MWh = 4,000 kWh。支払い = 4,000 × 30 = 120,000円（E-10）。比較的落ち着いた日でも、ズレの後始末は実費でBGに返ってきます。予測（F-07）・時間前市場（E-11）・調整——BGの一日も、中給と同じ時間軸で回っています（→演習8へ）。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習8: 一日の総括（multi-choice・シナリオ共通） -->
+        <div class="exercise" data-exercise-id="f-11-ex08" data-type="multi-choice">
+          <h3>演習 8: 一日の総括</h3>
+          <div class="exercise-problem">
+            <p>今日一日の出来事をふりかえって、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="f-11-ex08" value="1">
+              <span>予備率にもとづく注意報・警報（F-10）と、インバランス料金の需給ひっ迫時補正（E-10）は、同じ広域予備率の物差しで連動して働いていた</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-11-ex08" value="2">
+              <span>起動に時間がかかるため起動判断（SCUC）は早めに行い、出力配分（SCED）は最新の予測と計画で直前に行った</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-11-ex08" value="3">
+              <span>混雑（場所）への対応は需給（量）を保ったまま行う必要があるため、再給電は「下げ＝上げ」のペアで行った</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="f-11-ex08" value="4">
+              <span>実需給で電源が脱落した直後の最初の数秒を支えたのは、中央給電指令所からの指令だった</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "f-11-ex08",
+          "type": "multi-choice",
+          "correct": ["1", "2", "3"],
+          "explanation": "1（運用の警報と市場の価格シグナルが同じ予備率で連動——制度が一枚の絵）、2（SCUCは早め・SCEDは直前——起動時間と計算の重さが決めた分業）、3（量を保って場所を直す——再給電のペア操作の本質）はいずれも今日の出来事のとおりです。4は誤りで、脱落直後の最初の数秒を支えたのは慣性（物理）とGF（自律制御）であり、指令（LFC・EDC）はその後にバトンを受け取ります（A-07・F-05）。——これで、計算（D-05）・お金（E-09）・時間（F-11）の3本の背骨がそろいました。本サイトの総合演習はこれで完結です。おつかれさまでした。"
+        }
+        </script>
+
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="10-supply-demand-emergency.html" class="unit-nav-prev">&larr; 需給ひっ迫と緊急時の運用</a>
+      <a href="../../index.html" class="unit-nav-next">トップへ戻る &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>
