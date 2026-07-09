@@ -377,6 +377,29 @@ section { margin-bottom: var(--space-2xl); }
 }
 .btn-reset:hover { border-color: var(--color-incorrect); color: var(--color-incorrect); }
 
+/* 進捗のエクスポート/インポート（第8章 8.8） */
+.progress-transfer {
+  text-align: center;
+  margin-bottom: var(--space-md);
+}
+.btn-export, .btn-import {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-light);
+  font-size: var(--font-size-sm);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  margin: 0 var(--space-xs) var(--space-sm);
+}
+.btn-export:hover, .btn-import:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.transfer-note {
+  max-width: 42rem;
+  margin: 0 auto;
+  font-size: var(--font-size-xs);
+  line-height: 1.7;
+}
+
 /* ------------------------------------------------------------
    領域トップページ
    ------------------------------------------------------------ */
@@ -442,7 +465,8 @@ section { margin-bottom: var(--space-2xl); }
   margin-bottom: var(--space-xl);
 }
 .page-toc h2 { font-size: var(--font-size-base); margin-bottom: var(--space-sm); color: var(--color-text-light); }
-.page-toc ol { margin: 0; padding-left: 1.25rem; }
+/* 目次の見出しテキスト自体が「1.」等の番号を持つため、olのマーカーは出さない（二重番号防止） */
+.page-toc ol { margin: 0; padding-left: 0; list-style: none; }
 .page-toc li { margin-bottom: var(--space-xs); }
 
 /* 知識セクション */
@@ -488,6 +512,9 @@ figure.diagram figcaption {
   cursor: help;
 }
 .term-tooltip {
+  /* 非表示は display:none にする。visibility:hidden だと不可視のまま
+     レイアウト幅を占有し、右端近くの用語でページ全体に横スクロールバーが出る */
+  display: none;
   position: absolute;
   left: 0;
   bottom: 125%;
@@ -501,12 +528,9 @@ figure.diagram figcaption {
   line-height: 1.6;
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-md);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.15s ease;
 }
 .term:hover .term-tooltip,
-.term:focus-within .term-tooltip { opacity: 1; visibility: visible; }
+.term:focus-within .term-tooltip { display: block; }
 
 /* 参考資料（ユニット末尾。第6章 6.3） */
 .references {
@@ -877,8 +901,9 @@ a.review-item-label:hover { color: var(--color-primary); }
    既定はモバイル。640px以上で調整する。
    ------------------------------------------------------------ */
 
-/* モバイル: ナビメニューはトグルで開閉 */
-@media (max-width: 639px) {
+/* ナビ全体（A〜F＋用語集＋復習）が横一列で収まらない幅では
+   メニューをトグルで開閉する（横スクロールバー発生の防止） */
+@media (max-width: 1099px) {
   .nav-menu {
     display: none;
     position: absolute;
@@ -895,12 +920,20 @@ a.review-item-label:hover { color: var(--color-primary); }
   }
   .nav-menu.is-open { display: flex; }
   .nav-menu a { padding: var(--space-sm) var(--space-md); }
+}
+
+/* ナビが収まる幅: ハンバーガーを隠してメニューを横並びに */
+@media (min-width: 1100px) {
+  .nav-toggle { display: none; }
+}
+
+/* モバイルのみのレイアウト調整 */
+@media (max-width: 639px) {
   .unit-nav { flex-direction: column; }
 }
 
-/* タブレット以上: ハンバーガーを隠してメニューを横並びに */
+/* タブレット以上 */
 @media (min-width: 640px) {
-  .nav-toggle { display: none; }
   .domain-cards { grid-template-columns: repeat(2, 1fr); }
 }
 

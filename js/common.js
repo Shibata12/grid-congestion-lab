@@ -31,6 +31,28 @@
     gtag('config', GA_ID);
   })();
 
+  /* ------------------------------------------------------------
+     favicon（第6章 6.5）— SVG data URI を動的挿入する。
+     各HTMLへの<link>追加を不要にし、更新箇所を1ファイルに集約する
+     （ナビ生成・フッター注記と同じ方針）。
+     図柄: 2本の母線をつなぐ送電線と、混雑地点を示す琥珀色の点。
+     ------------------------------------------------------------ */
+  (function initFavicon() {
+    if (document.querySelector('link[rel~="icon"]')) return;
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+      + '<rect width="64" height="64" rx="12" fill="#2563eb"/>'
+      + '<rect x="12" y="14" width="40" height="6" rx="3" fill="#fff"/>'
+      + '<rect x="12" y="44" width="40" height="6" rx="3" fill="#fff"/>'
+      + '<path d="M25 20 L39 44" stroke="#fff" stroke-width="5" stroke-linecap="round"/>'
+      + '<circle cx="32" cy="32" r="6" fill="#f59e0b"/>'
+      + '</svg>';
+    var link = document.createElement('link');
+    link.rel = 'icon';
+    link.type = 'image/svg+xml';
+    link.href = 'data:image/svg+xml,' + encodeURIComponent(svg);
+    document.head.appendChild(link);
+  })();
+
 /* ------------------------------------------------------------
    サイト構成データ（第8章 8.6）
    新ユニット追加時はこのオブジェクトを更新する（第9章 9.4）。
@@ -329,6 +351,108 @@ function resetAllProgress() {
   }
 }
 
+/* ------------------------------------------------------------
+   進捗のエクスポート / インポート（第8章 8.8）
+   localStorage はブラウザ・オリジン（file:// と GitHub Pages は別）ごとに
+   独立しているため、JSONファイルで進捗を持ち運べるようにする。
+   ------------------------------------------------------------ */
+const EXPORT_SITE_MARKER = 'grid-congestion-lab';
+
+function buildExportData() {
+  return {
+    site: EXPORT_SITE_MARKER,
+    exportedAt: new Date().toISOString(),
+    progress: getProgress(),
+    review: readReviewState(),
+  };
+}
+
+/** 進捗をJSONファイルとしてダウンロードする */
+function downloadProgressFile() {
+  const blob = new Blob([JSON.stringify(buildExportData(), null, 2)],
+    { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gcl-progress-${localDateString(new Date())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/** インポートテキストの検証。エクスポート形式（envelope）と gcl-progress 単体の
+    両方を受け付ける。妥当なら { progress, review } を、不正なら null を返す */
+function parseImportData(text) {
+  let data;
+  try { data = JSON.parse(text); } catch (e) { return null; }
+  if (!data || typeof data !== 'object') return null;
+  const isEnvelope = data.site === EXPORT_SITE_MARKER;
+  const progress = isEnvelope ? data.progress : data;
+  if (!progress || typeof progress !== 'object'
+      || !progress.exercises || typeof progress.exercises !== 'object') return null;
+  return { progress, review: isEnvelope ? data.review : null };
+}
+
+/** 進捗をインポートする（既存の進捗は上書き。確認ダイアログあり）。
+    v1形式のprogressは次回読み込み時の移行処理（8.2）がそのまま適用される。 */
+function importProgressFromText(text) {
+  const parsed = parseImportData(text);
+  if (!parsed) {
+    window.alert('読み込めませんでした。このサイトの「学習進捗をエクスポート」で保存したJSONファイルを選んでください。');
+    return false;
+  }
+  const incoming = Object.keys(parsed.progress.exercises).length;
+  const current = Object.keys(getProgress().exercises).length;
+  const ok = window.confirm(
+    `インポートすると、このブラウザの進捗（解答記録 ${current} 件）は、`
+    + `読み込んだファイルの進捗（解答記録 ${incoming} 件）で置き換えられます。よろしいですか？`);
+  if (!ok) return false;
+  const store = safeStorage();
+  if (!store) {
+    window.alert('このブラウザでは進捗を保存できません（localStorageが利用できません）。');
+    return false;
+  }
+  try {
+    store.setItem(STORAGE_KEY, JSON.stringify(parsed.progress));
+    if (parsed.review && typeof parsed.review === 'object' && Array.isArray(parsed.review.queue)) {
+      store.setItem(REVIEW_KEY, JSON.stringify(parsed.review));
+    } else {
+      /* 古いキューを残さない（キューは進捗から日次で再生成される） */
+      store.removeItem(REVIEW_KEY);
+    }
+  } catch (e) {
+    window.alert('進捗の保存に失敗しました。');
+    return false;
+  }
+  return true;
+}
+
+/** トップページのエクスポート/インポートボタンを配線する（第8章 8.8） */
+function setupProgressTransfer() {
+  const box = document.querySelector('.progress-transfer');
+  if (!box) return;
+  const exportBtn = box.querySelector('.btn-export');
+  const importBtn = box.querySelector('.btn-import');
+  if (exportBtn) exportBtn.addEventListener('click', downloadProgressFile);
+  if (!importBtn) return;
+  const file = el('input', { type: 'file', accept: '.json,application/json', hidden: true });
+  box.appendChild(file);
+  importBtn.addEventListener('click', () => { file.value = ''; file.click(); });
+  file.addEventListener('change', () => {
+    const f = file.files && file.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (importProgressFromText(String(reader.result))) {
+        window.alert('進捗をインポートしました。');
+        window.location.reload();
+      }
+    };
+    reader.onerror = () => window.alert('ファイルを読み込めませんでした。');
+    reader.readAsText(f);
+  });
+}
+
 /** 領域内の完了状況を集計する → { total, correct } */
 function domainProgress(key) {
   const domain = SITE_STRUCTURE[key];
@@ -569,6 +693,7 @@ function renderTopPage() {
     container.replaceChildren(...DOMAIN_KEYS.map(renderDomainCard));
   }
   setupResetButton();
+  setupProgressTransfer(); // .progress-transfer があるページ（トップ）のみ動作
 }
 
 function renderDomainCard(key) {
@@ -789,7 +914,10 @@ function renderWeaknessSummary(data) {
     if (row.incorrect > 0) parts.push(`不正解のまま ${row.incorrect} 問`);
     if (row.stumbled > 0) parts.push(`初回つまずき ${row.stumbled} 問（今は正解）`);
     ul.appendChild(el('li', {}, [badge,
-      el('span', {}, `${SITE_STRUCTURE[row.key].name}: ${parts.join(' ／ ')}`)]));
+      el('span', {}, [
+        el('a', { href: urlDomain(row.key) }, SITE_STRUCTURE[row.key].name),
+        `: ${parts.join(' ／ ')}`,
+      ])]));
   });
   box.appendChild(ul);
 }
