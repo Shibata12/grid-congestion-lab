@@ -422,8 +422,14 @@ types['diagram-label'] = {
   },
   highlight() {},
   lock(ex) {
-    ex.querySelectorAll('.draggable-label').forEach((l) => { l.draggable = false; l.style.pointerEvents = 'none'; });
-    ex.querySelectorAll('.drop-zone').forEach((z) => { z.style.pointerEvents = 'none'; });
+    ex.querySelectorAll('.draggable-label').forEach((l) => {
+      l.draggable = false; l.style.pointerEvents = 'none';
+      l.setAttribute('tabindex', '-1'); l.setAttribute('aria-disabled', 'true');
+    });
+    ex.querySelectorAll('.drop-zone').forEach((z) => {
+      z.style.pointerEvents = 'none';
+      z.setAttribute('tabindex', '-1'); z.setAttribute('aria-disabled', 'true');
+    });
   },
   reset(ex) { resetDiagram(ex); },
 };
@@ -531,7 +537,10 @@ function refreshOrderingButtons(ex) {
 }
 
 /* ------------------------------------------------------------
-   diagram-label の操作 UI（ドラッグ＆ドロップ ＋ クリック配置）
+   diagram-label の操作 UI
+   （ドラッグ＆ドロップ ＋ クリック配置 ＋ キーボード操作）
+   キーボード: Tabでラベル/配置先を移動し、Enter/Spaceで
+   「ラベルを選択 → 配置先に置く」の2ステップで配置できる。
    ------------------------------------------------------------ */
 function setupDiagram(ex) {
   const wrap = ex.querySelector('.diagram-exercise');
@@ -539,18 +548,43 @@ function setupDiagram(ex) {
   let selected = null;
 
   const select = (lbl) => {
-    if (selected) selected.classList.remove('is-selected');
+    if (selected) {
+      selected.classList.remove('is-selected');
+      selected.setAttribute('aria-pressed', 'false');
+    }
     selected = lbl;
-    if (lbl) lbl.classList.add('is-selected');
+    if (lbl) {
+      lbl.classList.add('is-selected');
+      lbl.setAttribute('aria-pressed', 'true');
+    }
+  };
+
+  /* Enter / Space をクリックと同等に扱う（role=buttonのキーボード対応） */
+  const onActionKey = (handler) => (e) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      handler();
+    }
   };
 
   ex.querySelectorAll('.draggable-label').forEach((lbl) => {
     lbl.setAttribute('draggable', 'true');
+    lbl.setAttribute('role', 'button');
+    lbl.setAttribute('tabindex', '0');
+    lbl.setAttribute('aria-pressed', 'false');
+    const toggle = () => select(selected === lbl ? null : lbl);
     lbl.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', lbl.dataset.labelId); select(lbl); });
-    lbl.addEventListener('click', () => select(selected === lbl ? null : lbl));
+    lbl.addEventListener('click', toggle);
+    lbl.addEventListener('keydown', onActionKey(toggle));
   });
 
   ex.querySelectorAll('.drop-zone').forEach((zone) => {
+    zone.setAttribute('role', 'button');
+    zone.setAttribute('tabindex', '0');
+    if (!zone.getAttribute('aria-label')) {
+      zone.setAttribute('aria-label', `配置先 ${zone.dataset.slot}（選択中のラベルをここに置く）`);
+    }
+    const placeSelected = () => { if (selected) { placeLabel(zone, selected); select(null); } };
     zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
     zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
     zone.addEventListener('drop', (e) => {
@@ -560,7 +594,8 @@ function setupDiagram(ex) {
       const lbl = ex.querySelector(`.draggable-label[data-label-id="${CSS.escape(id)}"]`);
       placeLabel(zone, lbl);
     });
-    zone.addEventListener('click', () => { if (selected) { placeLabel(zone, selected); select(null); } });
+    zone.addEventListener('click', placeSelected);
+    zone.addEventListener('keydown', onActionKey(placeSelected));
   });
 
   function placeLabel(zone, lbl) {
@@ -583,8 +618,15 @@ function resetDiagram(ex) {
     pool.appendChild(lbl);
     lbl.classList.remove('is-used', 'is-selected');
   });
-  ex.querySelectorAll('.drop-zone').forEach((z) => { z.classList.remove('filled'); z.style.pointerEvents = ''; });
-  ex.querySelectorAll('.draggable-label').forEach((l) => { l.draggable = true; l.style.pointerEvents = ''; });
+  ex.querySelectorAll('.drop-zone').forEach((z) => {
+    z.classList.remove('filled'); z.style.pointerEvents = '';
+    z.setAttribute('tabindex', '0'); z.removeAttribute('aria-disabled');
+  });
+  ex.querySelectorAll('.draggable-label').forEach((l) => {
+    l.draggable = true; l.style.pointerEvents = '';
+    l.setAttribute('tabindex', '0'); l.removeAttribute('aria-disabled');
+    l.setAttribute('aria-pressed', 'false');
+  });
 }
 
 /* ------------------------------------------------------------
@@ -633,6 +675,11 @@ function showFeedback(ex, handler, data, isCorrect) {
 
   const checkBtn = ex.querySelector('.btn-check');
   if (checkBtn) checkBtn.disabled = true;
+
+  // 判定結果へフォーカスを移す。btn-check の disabled 化でフォーカスが
+  // 迷子になるのを防ぎ、スクリーンリーダーにも結果を確実に届ける
+  verdict.setAttribute('tabindex', '-1');
+  verdict.focus();
 }
 
 function retryExercise(ex, handler) {
@@ -641,7 +688,11 @@ function retryExercise(ex, handler) {
   handler.reset(ex);
   ex.classList.remove('is-locked');
   const checkBtn = ex.querySelector('.btn-check');
-  if (checkBtn) checkBtn.disabled = false;
+  if (checkBtn) {
+    checkBtn.disabled = false;
+    // 「やり直す」ボタンはフィードバックごと消えるため、フォーカスを戻す
+    checkBtn.focus();
+  }
   // 進捗を未着手に戻す（statusのみ削除。履歴は残る / 第8章 8.3）
   clearExerciseStatus(ex.dataset.exerciseId);
   // 前回結果の表示があれば消す
@@ -682,6 +733,14 @@ function initExercise(ex) {
   if (type === 'ordering') setupOrdering(ex);
   if (type === 'diagram-label') setupDiagram(ex);
   saveVarOriginals(ex); // バリアント0の数字を保存（第7章 7.6）
+
+  // フィードバック領域をライブリージョン化しておく（内容挿入前に設定して
+  // おくことで、判定結果がスクリーンリーダーに読み上げられる）
+  const fbRegion = ex.querySelector('.exercise-feedback');
+  if (fbRegion) {
+    fbRegion.setAttribute('role', 'status');
+    fbRegion.setAttribute('aria-live', 'polite');
+  }
 
   const checkBtn = ex.querySelector('.btn-check');
   if (!checkBtn) return;

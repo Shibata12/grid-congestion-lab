@@ -76,7 +76,8 @@
           </g>
 
           <!-- ノード -->
-          <g font-family="var(--font-body)" font-size="13" text-anchor="middle">
+          <!-- font-familyは属性で指定しない（SVG属性ではvar()が効かないため。CSSのbody継承に任せる） -->
+          <g font-size="13" text-anchor="middle">
             <!-- A -->
             <rect x="40" y="60" width="84" height="44" rx="8" fill="#fff" stroke="#3b82f6" stroke-width="2"></rect>
             <text x="82" y="78" font-weight="700" fill="#3b82f6">A</text>

@@ -139,9 +139,22 @@ code, kbd, samp {
 
 img, svg { max-width: 100%; }
 
+/* フォーカスリングは白背景でも視認できる濃色にする（--color-primary-light
+   #dbeafe は白に対し約1.1:1でほぼ見えない）。淡色はハロー側に回す */
 :focus-visible {
-  outline: 3px solid var(--color-primary-light);
+  outline: 3px solid var(--color-primary);
   outline-offset: 2px;
+  box-shadow: 0 0 0 6px var(--color-primary-light);
+}
+
+/* 動きの低減設定を尊重する（前庭障害への配慮） */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
 
 /* ------------------------------------------------------------
@@ -857,7 +870,9 @@ a.review-item-label:hover { color: var(--color-primary); }
   padding: 0 var(--space-sm);
   border-radius: 999px;
   background: var(--color-hint-bg);
-  color: var(--color-hint);
+  /* 小サイズ文字のためヒント色より濃い同系アンバーでAAコントラストを確保
+     （#d97706 は #fffbeb に対し約3.1:1 と不足） */
+  color: #b45309;
   border: 1px solid var(--color-hint);
   font-size: var(--font-size-xs);
   font-weight: 700;

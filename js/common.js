@@ -647,6 +647,7 @@ function buildHeader() {
     type: 'button',
     'aria-label': 'メニューを開閉',
     'aria-expanded': 'false',
+    'aria-controls': 'global-nav-menu',
   }, [el('span'), el('span'), el('span')]);
 
   const menu = el('ul', { class: 'nav-menu', id: 'global-nav-menu' });

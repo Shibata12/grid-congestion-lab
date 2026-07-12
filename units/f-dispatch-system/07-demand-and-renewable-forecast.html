@@ -152,7 +152,7 @@
 
         <p>
           数値の感覚をつかみましょう。あるエリアの明日の最大需要を 1,000 万kW と予測したとします。
-          需要予測の誤差が ±2% なら、外れ幅は ±20 万kW——大型の発電所1基分に相当します。
+          需要予測の誤差が ±2% なら、外れ幅は ±20 万kW——中型の発電機1基分に相当します（大型の火力・原子力は1基50〜100万kW規模）。
           「たった2%」でも系統にとっては大きい。だから外れる前提の備え（§4）が要るのです。
           そして<a href="04-computation-timing.html">F-04</a> で学んだとおり、
           <strong>実需給に近づくほど（気象予報が確定するほど）予測は当たる</strong>ようになります。予測を何度も更新するのはこのためです。
@@ -381,12 +381,12 @@
             <p>あるコマ（時間断面）について、予測から実需給までの流れを正しい順に並べ替えよ。</p>
           </div>
           <div class="exercise-input">
-            <ul class="ordering-list" role="listbox">
-              <li class="ordering-item" draggable="true" data-item-id="c">当日、更新された予測に合わせてSCEDが出力配分を合わせ込む</li>
-              <li class="ordering-item" draggable="true" data-item-id="a">前日の予測に基づいて計画を立て、予備力を確保する</li>
-              <li class="ordering-item" draggable="true" data-item-id="e">実需給で残った誤差を調整力（GF・LFC・EDC）が埋める</li>
-              <li class="ordering-item" draggable="true" data-item-id="b">SCUCが先のコマまで見て、早めに起動停止を決める</li>
-              <li class="ordering-item" draggable="true" data-item-id="d">ゲートクローズでそのコマの計画が確定する</li>
+            <ul class="ordering-list" aria-label="順序の並べ替え">
+              <li class="ordering-item" data-item-id="c">当日、更新された予測に合わせてSCEDが出力配分を合わせ込む</li>
+              <li class="ordering-item" data-item-id="a">前日の予測に基づいて計画を立て、予備力を確保する</li>
+              <li class="ordering-item" data-item-id="e">実需給で残った誤差を調整力（GF・LFC・EDC）が埋める</li>
+              <li class="ordering-item" data-item-id="b">SCUCが先のコマまで見て、早めに起動停止を決める</li>
+              <li class="ordering-item" data-item-id="d">ゲートクローズでそのコマの計画が確定する</li>
             </ul>
           </div>
           <button type="button" class="btn-check">解答を確認</button>
