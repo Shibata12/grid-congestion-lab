@@ -365,6 +365,54 @@
         }
         </script>
 
+        <!-- 演習4: diagram-label（電力の三角形のラベル付け） -->
+        <div class="exercise" data-exercise-id="a-04-ex04" data-type="diagram-label">
+          <h3>演習 4: 電力の三角形に名前をつける</h3>
+          <div class="exercise-problem">
+            <p>
+              交流の電力を表す「電力の三角形」の3つの辺に、正しい名前を配置せよ。
+              ラベルをドラッグするか、ラベルを選んでから空欄をクリックして配置できます。使わないラベルが1つあります。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <div class="diagram-exercise">
+              <svg class="diagram-base" viewBox="0 0 440 290" role="img"
+                   aria-label="直角三角形の電力の三角形。底辺（横の辺）と縦の辺のなす角が直角で、斜辺がもう1つの辺。3つの辺のそれぞれの近くに、名前を置く空欄がある。A-03のインピーダンス三角形と同じ形。"
+                   xmlns="http://www.w3.org/2000/svg">
+                <polygon points="120,200 240,200 240,95" fill="#ecfdf5" stroke="#10b981" stroke-width="2"></polygon>
+                <line x1="120" y1="200" x2="240" y2="200" stroke="#16a34a" stroke-width="4"></line>
+                <line x1="240" y1="200" x2="240" y2="95" stroke="#3b82f6" stroke-width="4"></line>
+                <line x1="120" y1="200" x2="240" y2="95" stroke="#4338ca" stroke-width="4"></line>
+                <polyline points="228,200 228,188 240,188" fill="none" stroke="#4a5568" stroke-width="1.4"></polyline>
+                <line x1="180" y1="200" x2="180" y2="238" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4 3"></line>
+                <line x1="240" y1="147" x2="308" y2="147" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4 3"></line>
+                <line x1="176" y1="143" x2="118" y2="104" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4 3"></line>
+              </svg>
+              <div class="label-targets">
+                <div class="drop-zone" data-slot="1" style="left:41%; top:72%;" aria-label="底辺（横の辺）の名前を置く"></div>
+                <div class="drop-zone" data-slot="2" style="left:73%; top:45%;" aria-label="縦の辺の名前を置く"></div>
+                <div class="drop-zone" data-slot="3" style="left:27%; top:32%;" aria-label="斜辺の名前を置く"></div>
+              </div>
+              <div class="label-choices">
+                <span class="draggable-label" data-label-id="a">有効電力 P</span>
+                <span class="draggable-label" data-label-id="b">無効電力 Q</span>
+                <span class="draggable-label" data-label-id="c">皮相電力 S</span>
+                <span class="draggable-label" data-label-id="d">力率 cosθ</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-04-ex04",
+          "type": "diagram-label",
+          "correct": {"1": "a", "2": "b", "3": "c"},
+          "explanation": "底辺は実際に仕事をする有効電力 P、直角に立つ縦の辺はリアクタンスと行き来する無効電力 Q、そして斜辺が両者を直角に合成した皮相電力 S＝√(P²+Q²) です。これは A-03 のインピーダンス三角形（Z＝√(R²+X²)）とまったく同じ形で、R↔P・X↔Q・Z↔S が対応します（送電線や変圧器が負担するのは斜辺の S）。力率（cosθ＝P/S）は辺の長さではなく P と S の比なので、辺のラベルにはなりません。"
+        }
+        </script>
+
       </section>
     </article>
 
