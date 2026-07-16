@@ -99,6 +99,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b" id="term-phase-shifting-transformer">
+        <dt>移相器（PST・位相調整変圧器）</dt>
+        <dd>
+          <p>変圧器の巻線の工夫で、通過する電圧の位相を進み・遅れ側に数度ずらす装置。Phase Shifting Transformer。潮流は位相角差÷リアクタンスで決まるため、ルート間の「見かけの角度差」を変えることで、特定ルートの潮流を押し出したり引き込んだりできる（分子側への介入）。欧州の国境連系でループフロー対策として使われる。日本の基幹系統では採用例は少ない。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/07-flow-control-devices.html">B-07</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e,b" id="term-cost-allocation">
         <dt>一般負担・特定負担</dt>
         <dd>
@@ -155,6 +165,16 @@
           <p>送電線・連系線に流せる潮流の上限として運用上用いる値。熱容量・同期安定性・電圧安定性・周波数維持の4つの面の限度のうち、最小値で決まる。連系線ではOCCTOの運用容量検討会が算出方法・算出結果を公表している。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/b-congestion/02-operating-capacity-and-margin.html">B-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-hvdc">
+        <dt>HVDC（直流送電）</dt>
+        <dd>
+          <p>High Voltage Direct Current。交流→直流→交流の変換を挟んで電力を送る方式。直流区間には交流の分流則（位相角差とリアクタンス）が働かず、潮流を変換器への指令値どおりに決められる、系統で唯一「計画どおりに流せる」線。周波数の違う系統や同期を保てない系統同士も結べる（非同期連系）。東西の周波数変換所や北本連系が代表例で、長距離の海底ケーブル送電にも適する。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/07-flow-control-devices.html">B-07</a>
           </p>
         </dd>
       </div>
@@ -649,6 +669,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b,f" id="term-frequency-converter">
+        <dt>周波数変換所（FC）</dt>
+        <dd>
+          <p>50Hzの東日本と60Hzの西日本を結ぶための交直変換設備。Frequency Converter。交流のままでは周波数の違う系統はつなげないため、AC→DC→ACの変換を挟む（HVDCの一種）。佐久間・新信濃・東清水（BTB構成）と飛騨信濃（約90kmの直流送電線を挟む）の4か所・計約210万kW。東西間の電力融通の物理的なボトルネックであり、増強が進められている。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/07-flow-control-devices.html">B-07</a>、<a href="../units/f-dispatch-system/10-supply-demand-emergency.html">F-10</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="e" id="term-output-control">
         <dt>出力制御（出力抑制）</dt>
         <dd>
@@ -1029,6 +1059,26 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b" id="term-flow-control">
+        <dt>潮流制御</dt>
+        <dd>
+          <p>発電の分担（注入）を変えるのではなく、系統側の機器や運用で潮流の経路配分そのものを意図的に変えること。移相器・直列補償は交流の物理の中で配分を動かし、直流連系（HVDC）は変換器の指令で流量を直接決める。注入側の対策である再給電と対をなす、混雑対策のもう一つの軸。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/07-flow-control-devices.html">B-07</a>、<a href="../units/d-algorithms/02-redispatch.html">D-02</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-series-compensation">
+        <dt>直列補償（直列コンデンサ）</dt>
+        <dd>
+          <p>送電線に直列にコンデンサを入れ、コイル性のリアクタンスを打ち消して電気的距離を縮めること（合成リアクタンス X′＝X_L−X_C）。そのルートは「流れやすい道」になって潮流を呼び込むほか、送電できる上限（P-δカーブの山）も高くなり安定度にもプラス。海外の長距離送電で広く使われる。短絡電流の増加や次同期共振（SSR）への配慮が必要。並列に入れて電圧を支える調相設備とは、入れ方も目的も異なる。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/07-flow-control-devices.html">B-07</a>、<a href="../units/a-grid-fundamentals/03-impedance-reactance.html">A-03</a>、<a href="../units/b-congestion/04-stability-basics.html">B-04</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="b" id="term-der">
         <dt>DER（分散型エネルギーリソース）</dt>
         <dd>
@@ -1229,6 +1279,16 @@
         </dd>
       </div>
 
+      <div class="glossary-entry" data-domain="b" id="term-btb">
+        <dt>BTB（Back to Back）</dt>
+        <dd>
+          <p>直流送電（HVDC）のうち、直流の送電線を挟まず、交直変換所どうしを同じ場所で背中合わせにつないだ構成。周波数の異なる系統の接続（佐久間・新信濃・東清水の周波数変換所）など、「変換だけしたい」場面で使われる。飛騨信濃のように変換所の間に直流送電線を挟むタイプとは区別される。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/07-flow-control-devices.html">B-07</a>
+          </p>
+        </dd>
+      </div>
+
       <div class="glossary-entry" data-domain="a,d" id="term-ptdf">
         <dt>PTDF（Power Transfer Distribution Factor）</dt>
         <dd>
@@ -1265,6 +1325,16 @@
           <p>有効電力Pと無効電力Qを合わせた「見かけ上」の電力。S=√(P²+Q²)。記号S、単位はVA／MVA。送電線や変圧器の容量はこのSで決まるため、無効電力が大きい（力率が悪い）と送れる有効電力が減る。設備の定格容量や単位法の基準容量がMVAで表されるのはこのため。</p>
           <p class="glossary-related">
             関連ユニット: <a href="../units/a-grid-fundamentals/04-active-reactive-voltage.html">A-04</a>、<a href="../units/a-grid-fundamentals/05-three-phase-and-per-unit.html">A-05</a>
+          </p>
+        </dd>
+      </div>
+
+      <div class="glossary-entry" data-domain="b" id="term-asynchronous-interconnection">
+        <dt>非同期連系</dt>
+        <dd>
+          <p>周波数・位相を同期させずに系統同士を結ぶこと。交流で結んだ系統は1つの同期系統になり周波数を共有するが、直流（HVDC）を挟めば、周波数の違う系統（東西50/60Hz）や、交流では同期を保ちにくい長距離・海底の系統（北海道—本州の北本連系）も結べる。一方の系統の擾乱が他方へ波及しにくい利点もある。</p>
+          <p class="glossary-related">
+            関連ユニット: <a href="../units/b-congestion/07-flow-control-devices.html">B-07</a>、<a href="../units/a-grid-fundamentals/07-frequency-and-inertia.html">A-07</a>
           </p>
         </dd>
       </div>

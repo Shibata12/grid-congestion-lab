@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="発展編。運用（再給電）と増強の間にある第3の打ち手＝設備で潮流そのものを動かす。移相器（位相差で押し引き）・直列補償（電気的距離を縮める）・直流連系HVDC（指令値で流せる・非同期連系）を学び、B-03の対策地図に「機器」の軸を書き足す。東西の周波数変換所・北本連系の物理的背景も回収。">
+  <title>B-07: 設備で潮流を振り替える──移相器・直列補償と直流連系 - 系統混雑ラボ</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css" integrity="sha384-vlBdW0r3AcZO/HboRPznQNowvexd3fY8qHOWkBi5q7KGgqJ+F48+DceybYmrVbmB"
+        crossorigin="anonymous">
+</head>
+<body data-domain="b" data-unit="b-07">
+  <header class="site-header"><!-- common.js が生成 --></header>
+
+  <main class="unit-page">
+
+    <nav class="breadcrumb" aria-label="パンくずリスト">
+      <a href="../../index.html">トップ</a> &gt;
+      <a href="index.html">B: 系統混雑</a> &gt;
+      <span>移相器・直列補償と直流連系</span>
+    </nav>
+
+    <article>
+      <h1>B-07: 設備で潮流を振り替える──移相器・直列補償と直流連系</h1>
+
+      <p class="lead" style="color:var(--color-text-light)">
+        発展編の4本目、B領域の締めくくりです。混雑への打ち手はこれまで、<strong>発電側を動かす</strong>（再給電）か、
+        <strong>線を増やす</strong>（増強）かの話でした。でも実は第3の道があります——
+        <strong>機器を据えて、潮流の「分かれ方」そのものに手を突っ込む</strong>。
+        交流の物理の中で流れを押し引きする<strong>移相器</strong>と<strong>直列補償</strong>、
+        そして物理の外に出て「指令値で流す」<strong>直流連系（HVDC）</strong>。
+        東西の周波数変換所や北本連系の正体も、ここで種明かしします。
+      </p>
+
+      <div class="callout" style="margin-bottom:var(--space-xl)">
+        <p style="margin:0 0 var(--space-sm)">
+          <strong>このユニットで使うのは、次の3つの既習事項だけです</strong>：
+        </p>
+        <ul style="margin:0 0 var(--space-sm)">
+          <li><a href="../a-grid-fundamentals/02-power-flow-basics.html">A-02「潮流計算の基礎」</a>：潮流は「どこを通るか」を人が選べず、物理法則で勝手に決まる</li>
+          <li><a href="../a-grid-fundamentals/03-impedance-reactance.html">A-03「インピーダンスとリアクタンス」</a>：電気的な距離X。コイル（L）とコンデンサ（C）のリアクタンスは逆符号</li>
+          <li><a href="03-congestion-countermeasures-map.html">B-03「混雑対策の全体地図」</a>：打ち手は「運用でしのぐ／枠を賢く使う／設備を増やす」の3層</li>
+        </ul>
+        <p style="margin:0">
+          <strong>範囲について</strong>：変換器の内部（サイリスタ・IGBTなどの素子）、HVDCの方式の違い（他励式・自励式）、
+          共振現象の詳細には踏み込みません。
+          「機器で潮流の分かれ方を動かせる。直流だけは指令で流せる」という構図がわかれば合格です
+          （末尾の<a href="#references">参考資料</a>）。
+        </p>
+      </div>
+
+      <!-- ページ内目次 -->
+      <nav class="page-toc" aria-label="ページ内目次">
+        <h2>目次</h2>
+        <ol>
+          <li><a href="#section-1">1. 潮流は「勝手に」分かれる——だから混雑する</a></li>
+          <li><a href="#section-2">2. 移相器：角度差をいじって押し引きする</a></li>
+          <li><a href="#section-3">3. 直列補償：電気的距離を縮めて呼び込む</a></li>
+          <li><a href="#section-4">4. 直流連系（HVDC）：唯一「指令値で流せる」線</a></li>
+          <li><a href="#section-5">5. 対策地図の再訪——機器はどこに座るか</a></li>
+          <li><a href="#exercises">演習</a></li>
+          <li><a href="#references">参考資料</a></li>
+        </ol>
+      </nav>
+
+      <!-- ===================== 知識セクション ===================== -->
+      <section class="knowledge-section" id="section-1">
+        <h2>1. 潮流は「勝手に」分かれる——だから混雑する</h2>
+        <p>
+          A-02で学んだ潮流の性質を、もう一度正面から見ます。電気は宅配便と違って<strong>ルートを指定できません</strong>。
+          母線間の位相角の差とリアクタンスXから、
+          <a href="../c-grid-model/04-dc-and-ac-power-flow.html">C-04「DC潮流とAC潮流」</a>のDC潮流の式で決まります：
+        </p>
+        <div class="math-block"
+             data-tex="P_{ij} = \dfrac{\theta_i - \theta_j}{X_{ij}}"
+             data-fallback="P_ij = (θi − θj) / X_ij">
+        </div>
+        <p>
+          具体例で見ましょう。母線Sから母線Rへ、並行する2ルートで合計<strong>300MW</strong>を送ります。
+          ルート甲はX=0.2pu、ルート乙はX=0.4pu。流れは<strong>Xの逆数比</strong>（=流れやすさの比）で分かれるので、
+          甲:乙 = (1/0.2):(1/0.4) = <strong>2:1</strong>——つまり<strong>甲に200MW、乙に100MW</strong>。
+          ここで甲の運用容量が190MWなら、<strong>10MW超過＝混雑</strong>です。
+          乙には容量200MWに対して100MWの余裕がたっぷりあるのに、電気は「空いている方の道」を選んでくれません。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="母線Sから母線Rへ並行2ルートで300MWを送る系統図。リアクタンス0.2puのルート甲に200MW（容量190MWを10MW超過して混雑）、リアクタンス0.4puのルート乙に100MW（容量200MWで余裕あり）が、Xの逆数比2対1で自動的に分かれることを示す"
+               xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="b7-ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+              <marker id="b7-ah-r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#dc2626"></path>
+              </marker>
+              <marker id="b7-ah-b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"></path>
+              </marker>
+            </defs>
+            <!-- 発電機 -->
+            <circle cx="38" cy="105" r="13" fill="#eff6ff" stroke="#2563eb" stroke-width="2"></circle>
+            <text x="38" y="109" font-size="11" text-anchor="middle" fill="#1a1a2e" font-weight="bold">G</text>
+            <text x="38" y="132" font-size="8.5" text-anchor="middle" fill="#4a5568">300MW</text>
+            <line x1="51" y1="105" x2="78" y2="105" stroke="#4a5568" stroke-width="1.5"></line>
+            <!-- 母線S・R -->
+            <line x1="80" y1="55" x2="80" y2="155" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="80" y="45" font-size="9" text-anchor="middle" fill="#4a5568">母線S</text>
+            <line x1="380" y1="55" x2="380" y2="155" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="380" y="45" font-size="9" text-anchor="middle" fill="#4a5568">母線R</text>
+            <!-- ルート甲（混雑） -->
+            <line x1="82" y1="70" x2="372" y2="70" stroke="#dc2626" stroke-width="3" marker-end="url(#b7-ah-r)"></line>
+            <text x="230" y="62" font-size="9.5" text-anchor="middle" fill="#dc2626" font-weight="bold">ルート甲 X=0.2 → 200MW</text>
+            <text x="230" y="86" font-size="8.5" text-anchor="middle" fill="#dc2626">容量190MW：10MW超過＝混雑！</text>
+            <!-- ルート乙（余裕） -->
+            <line x1="82" y1="140" x2="372" y2="140" stroke="#2563eb" stroke-width="2.2" marker-end="url(#b7-ah-b)"></line>
+            <text x="230" y="132" font-size="9.5" text-anchor="middle" fill="#2563eb" font-weight="bold">ルート乙 X=0.4 → 100MW</text>
+            <text x="230" y="156" font-size="8.5" text-anchor="middle" fill="#4a5568">容量200MW：余裕あり</text>
+            <!-- 中央注記 -->
+            <text x="230" y="110" font-size="9" text-anchor="middle" fill="#4a5568">300MWがXの逆数比（2:1）で勝手に分かれる</text>
+            <!-- 負荷 -->
+            <line x1="382" y1="105" x2="420" y2="105" stroke="#4a5568" stroke-width="2" marker-end="url(#b7-ah)"></line>
+            <text x="404" y="125" font-size="8.5" text-anchor="middle" fill="#4a5568">需要 300MW</text>
+          </svg>
+          <figcaption>図1: 並行2ルートの自然な分流。空きがある乙ではなく、電気的に近い甲に流れが集中する</figcaption>
+        </figure>
+
+        <p>
+          <a href="../d-algorithms/02-redispatch.html">D-02「再給電（リディスパッチ）」</a>は、この分かれ方を<strong>物理任せのまま</strong>、
+          発電側（注入）を動かして辻褄を合わせる対策でした。効果はその日から出せますが、
+          安い電源を絞って高い電源を焚くぶん、<strong>毎日費用がかかります</strong>
+          （<a href="../e-market/12-congestion-cost-allocation.html">E-12「混雑処理の費用は誰が負担するか」</a>）。
+          そこで本ユニットの問いです——<strong>分かれ方そのものに手を突っ込めないか？</strong>
+          答えが、これから見る3つの機器です。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-2">
+        <h2>2. 移相器：角度差をいじって押し引きする</h2>
+        <p>
+          1つ目の道具は、潮流の式の<strong>分子</strong>（角度差）に介入します。
+          <span class="term">移相器<span class="term-tooltip">Phase Shifting Transformer（PST・位相調整変圧器）。変圧器の巻線の工夫で、通過する電圧の位相を進み・遅れ側に数度ずらす装置。ルート間の「見かけの角度差」を変えることで、特定ルートの潮流を押し出したり引き込んだりできる。欧州の国境連系でループフロー対策として活躍。</span></span>（PST・位相調整変圧器）は変圧器の親戚で、
+          巻線の工夫により、通過する電圧の<strong>位相を数度だけ進めたり遅らせたり</strong>できます。
+          P = (θの差)/X ですから、あるルートの「見かけの角度差」を小さくすればその道は<strong>通りにくく</strong>（押し出し）、
+          大きくすれば<strong>通りやすく</strong>なります（引き込み）。道路にたとえるなら、入口に信号を置いて青の時間を調整するイメージです。
+        </p>
+        <p>
+          図1の系統で、混雑している甲に「押し出し」向きの移相器を入れたとしましょう。
+          たとえば配分を200/100から<strong>180/120</strong>に動かせれば（動かせる量は装置の調整範囲によります）、
+          甲は容量190MW以下に収まって混雑解消。ここで大事なのは、<strong>送る総量300MWは1MWも変わっていない</strong>ことです。
+          再給電と違って発電計画には触らないので、メリットオーダーの崩れ（E-12）は起きません。
+          そのかわり、装置の建設費と損失・保守費という「機器のコスト」を払います。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="図1と同じ並行2ルートの系統で、混雑しているルート甲に移相器を挿入した図。位相を遅れ側にずらして甲を通りにくくすることで、潮流配分が甲200から180MW、乙100から120MWに変わり、甲が容量190MW以下に収まって混雑が解消することを示す。送る総量300MWは変わらない"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 発電機 -->
+            <circle cx="38" cy="105" r="13" fill="#eff6ff" stroke="#2563eb" stroke-width="2"></circle>
+            <text x="38" y="109" font-size="11" text-anchor="middle" fill="#1a1a2e" font-weight="bold">G</text>
+            <text x="38" y="132" font-size="8.5" text-anchor="middle" fill="#4a5568">300MW</text>
+            <line x1="51" y1="105" x2="78" y2="105" stroke="#4a5568" stroke-width="1.5"></line>
+            <!-- 母線S・R -->
+            <line x1="80" y1="55" x2="80" y2="155" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="80" y="45" font-size="9" text-anchor="middle" fill="#4a5568">母線S</text>
+            <line x1="380" y1="55" x2="380" y2="155" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="380" y="45" font-size="9" text-anchor="middle" fill="#4a5568">母線R</text>
+            <!-- ルート甲（移相器入り・解消） -->
+            <line x1="82" y1="70" x2="203" y2="70" stroke="#d97706" stroke-width="2.6"></line>
+            <rect x="205" y="58" width="50" height="24" rx="4" fill="#fffbeb" stroke="#d97706" stroke-width="1.5"></rect>
+            <text x="230" y="74" font-size="9" text-anchor="middle" fill="#b45309" font-weight="bold">移相器</text>
+            <line x1="257" y1="70" x2="372" y2="70" stroke="#d97706" stroke-width="2.6" marker-end="url(#b7-ah2)"></line>
+            <text x="230" y="50" font-size="9.5" text-anchor="middle" fill="#b45309" font-weight="bold">ルート甲：200 → 180MW（≤ 190MW、混雑解消）</text>
+            <text x="230" y="94" font-size="8.5" text-anchor="middle" fill="#4a5568">位相を遅れ側にずらす ＝ この道を「通りにくく」する（押し出し）</text>
+            <!-- ルート乙 -->
+            <line x1="82" y1="140" x2="372" y2="140" stroke="#2563eb" stroke-width="2.4" marker-end="url(#b7-ah2-b)"></line>
+            <text x="230" y="132" font-size="9.5" text-anchor="middle" fill="#2563eb" font-weight="bold">ルート乙：100 → 120MW（容量200MW内）</text>
+            <text x="230" y="156" font-size="8.5" text-anchor="middle" fill="#4a5568">押し出された20MWがこちらの空きへ</text>
+            <!-- 中央注記 -->
+            <text x="230" y="112" font-size="9" text-anchor="middle" fill="#15803d" font-weight="bold">送る総量300MWは変わらない——分け方だけが変わる</text>
+            <!-- 負荷 -->
+            <line x1="382" y1="105" x2="420" y2="105" stroke="#4a5568" stroke-width="2" marker-end="url(#b7-ah2)"></line>
+            <text x="404" y="125" font-size="8.5" text-anchor="middle" fill="#4a5568">需要 300MW</text>
+            <defs>
+              <marker id="b7-ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+              <marker id="b7-ah2-b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"></path>
+              </marker>
+            </defs>
+          </svg>
+          <figcaption>図2: 移相器による「押し出し」。数字は例示（動かせる量は装置の調整範囲による）</figcaption>
+        </figure>
+
+        <p>
+          実例は<strong>欧州の国境連系</strong>が有名です。ある国の南北の潮流が隣国の系統を経由して流れてしまう
+          「ループフロー」への対策として、国境の連系点に移相器を置いて自国経由の流れを制御する——
+          ドイツとポーランドの国境などで実際に使われています。
+          一方、<strong>日本の基幹系統では移相器はほとんど使われていません</strong>。
+          このように機器で潮流の経路配分を意図的に変えることを、まとめて
+          <span class="term">潮流制御<span class="term-tooltip">発電の分担（注入）を変えるのではなく、系統側の機器や運用で潮流の経路配分そのものを意図的に変えること。移相器・直列補償は交流の物理の中で配分を動かし、直流連系（HVDC）は変換器の指令で流量を直接決める。再給電（注入側の対策）と対をなす軸。</span></span>と呼びます。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-3">
+        <h2>3. 直列補償：電気的距離を縮めて呼び込む</h2>
+        <p>
+          2つ目の道具は、式の<strong>分母</strong>（X）に介入します。A-03の伏線をここで回収しましょう——
+          コイル（L）とコンデンサ（C）のリアクタンスは<strong>逆符号</strong>でした。
+          送電線はLの性質（X<sub>L</sub>）を持つので、線路に<strong>直列に</strong>コンデンサを入れると、互いに打ち消し合います：
+        </p>
+        <div class="math-block"
+             data-tex="X' = X_L - X_C"
+             data-fallback="X' ＝ X_L − X_C">
+        </div>
+        <p>
+          これが<span class="term">直列補償<span class="term-tooltip">送電線に直列にコンデンサを入れ、コイル性のリアクタンスX_Lを打ち消して電気的距離を縮めること（合成X'=X_L−X_C）。そのルートは「流れやすい道」になって潮流を呼び込み、送電できる上限（P-δカーブの山）も高くなる。海外の長距離送電で広く使われる。</span></span>（直列コンデンサ）です。
+          電線の長さは1mも変わらないのに、<strong>電気的な距離だけが縮む</strong>——つまりそのルートは「流れやすい太い道」になり、
+          潮流を<strong>呼び込みます</strong>。押し出しの移相器と、ちょうど対になる道具です。
+        </p>
+        <p>
+          図1の系統で試しましょう。余裕のある乙（X=0.4）に直列コンデンサを入れ、X<sub>C</sub>=0.2puぶん打ち消して<strong>X'=0.2</strong>にします。
+          甲と乙の流れやすさが同じになったので、300MWは<strong>1:1</strong>——<strong>甲150MW、乙150MW</strong>に分かれ直します。
+          甲は190MW以下で混雑解消、乙も容量200MWの範囲内。演習2でこの計算を自分の手で確かめます。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 210" role="img"
+               aria-label="図1と同じ並行2ルートの系統で、余裕のあるルート乙に直列コンデンサを挿入した図。乙のリアクタンスが0.4から0.2puに縮まって甲と同じ流れやすさになり、潮流が甲150MW・乙150MWの1対1に分かれ直して、甲が容量190MW以下に収まり混雑が解消することを示す"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 発電機 -->
+            <circle cx="38" cy="105" r="13" fill="#eff6ff" stroke="#2563eb" stroke-width="2"></circle>
+            <text x="38" y="109" font-size="11" text-anchor="middle" fill="#1a1a2e" font-weight="bold">G</text>
+            <text x="38" y="132" font-size="8.5" text-anchor="middle" fill="#4a5568">300MW</text>
+            <line x1="51" y1="105" x2="78" y2="105" stroke="#4a5568" stroke-width="1.5"></line>
+            <!-- 母線S・R -->
+            <line x1="80" y1="55" x2="80" y2="155" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="80" y="45" font-size="9" text-anchor="middle" fill="#4a5568">母線S</text>
+            <line x1="380" y1="55" x2="380" y2="155" stroke="#1a1a2e" stroke-width="5"></line>
+            <text x="380" y="45" font-size="9" text-anchor="middle" fill="#4a5568">母線R</text>
+            <!-- ルート甲（解消） -->
+            <line x1="82" y1="70" x2="372" y2="70" stroke="#16a34a" stroke-width="2.4" marker-end="url(#b7-ah3-g)"></line>
+            <text x="230" y="62" font-size="9.5" text-anchor="middle" fill="#15803d" font-weight="bold">ルート甲 X=0.2：200 → 150MW（≤ 190MW、混雑解消）</text>
+            <!-- ルート乙（直列コンデンサ入り） -->
+            <line x1="82" y1="140" x2="219" y2="140" stroke="#2563eb" stroke-width="2.6"></line>
+            <line x1="222" y1="130" x2="222" y2="150" stroke="#2563eb" stroke-width="2.5"></line>
+            <line x1="230" y1="130" x2="230" y2="150" stroke="#2563eb" stroke-width="2.5"></line>
+            <line x1="233" y1="140" x2="372" y2="140" stroke="#2563eb" stroke-width="2.6" marker-end="url(#b7-ah3-b)"></line>
+            <text x="230" y="122" font-size="9.5" text-anchor="middle" fill="#2563eb" font-weight="bold">ルート乙 X=0.4−0.2=0.2：100 → 150MW</text>
+            <text x="230" y="164" font-size="8.5" text-anchor="middle" fill="#4a5568">直列コンデンサがX_Lを打ち消す ＝ 電気的距離が縮んで流れを「呼び込む」</text>
+            <!-- 中央注記 -->
+            <text x="230" y="98" font-size="9" text-anchor="middle" fill="#4a5568">Xが同じになったので300MWは1:1で分かれ直す</text>
+            <!-- 負荷 -->
+            <line x1="382" y1="105" x2="420" y2="105" stroke="#4a5568" stroke-width="2" marker-end="url(#b7-ah3)"></line>
+            <text x="414" y="88" font-size="8.5" text-anchor="middle" fill="#4a5568">需要 300MW</text>
+            <defs>
+              <marker id="b7-ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+              </marker>
+              <marker id="b7-ah3-b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"></path>
+              </marker>
+              <marker id="b7-ah3-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#16a34a"></path>
+              </marker>
+            </defs>
+          </svg>
+          <figcaption>図3: 直列補償による「呼び込み」。乙のXを縮めると、分流比が2:1から1:1に変わる</figcaption>
+        </figure>
+
+        <p>
+          直列補償にはおまけの効果もあります。送電できる上限——
+          <a href="04-stability-basics.html">B-04「安定度入門」</a>のP-δカーブの山の高さ——はXに反比例するので、
+          Xを縮めれば<strong>山も高くなり、安定度にもプラス</strong>です。
+          この一石二鳥ゆえ、米国西部や北欧、ブラジルなど<strong>海外の長距離送電では定番</strong>の設備です
+          （日本の基幹系統では採用は限定的です）。
+          ただし副作用もあります——系統全体が電気的に「近く」なるため短絡電流が増えるほか、
+          発電機の軸とLC回路が共振する<strong>SSR（次同期共振）</strong>という現象への配慮が要ります（名前だけ覚えれば十分です）。
+        </p>
+        <p>
+          最後に、コンデンサつながりで混同しやすい設備をひとつ。<strong>調相設備</strong>（コンデンサ・リアクトル）や
+          その高速版のSVCは、線路に<strong>並列</strong>に入れて無効電力を出し入れし、<strong>電圧を支える</strong>道具でした
+          （<a href="../a-grid-fundamentals/04-active-reactive-voltage.html">A-04「有効電力・無効電力と電圧」</a>）。
+          <strong>直列</strong>に入れて<strong>潮流の分かれ方</strong>を変える直列補償とは、入れ方も目的も違います。
+        </p>
+      </section>
+
+      <section class="knowledge-section" id="section-4">
+        <h2>4. 直流連系（HVDC）：唯一「指令値で流せる」線</h2>
+        <p>
+          移相器も直列補償も、交流の物理<strong>の中で</strong>配分を動かす道具でした。式のパラメータは変えても、
+          「θ差とXで決まる」という法則そのものからは逃げられません。3つ目の道具は、その物理の<strong>外</strong>に出ます。
+          <span class="term">HVDC<span class="term-tooltip">High Voltage Direct Current（直流送電）。交流→直流→交流の変換を挟んで電力を送る方式。直流区間には交流の分流則（θ差とX）が働かず、変換器の制御で潮流を指令値どおりに決められる。周波数の違う系統や同期を保てない系統同士も結べる（非同期連系）。</span></span>（直流送電）は、
+          送り側で交流を直流に変換し、受け側で直流を交流に戻して送る方式です。
+        </p>
+        <p>
+          直流区間には位相角もXの分流則もありません。何MW流れるかは<strong>変換器への指令値</strong>で決まる——
+          つまりHVDCは、系統の中で唯一<strong>「計画どおりに流せる」線</strong>なのです。
+          交流連系線は市場で決めた計画（<a href="../e-market/07-wholesale-market-and-indirect-auction.html">E-07「卸電力市場と間接オークション」</a>）どおりに
+          流れてくれるとは限りませんが、直流連系なら計画値をそのまま指令にできます。
+        </p>
+        <p>
+          もう1つの特別な能力が<span class="term">非同期連系<span class="term-tooltip">周波数・位相を同期させずに系統同士を結ぶこと。交流で結ぶと両系統は1つの同期系統になるが、直流（HVDC）を挟めば、周波数の違う系統（東西50/60Hz）や、交流では同期を保ちにくい長距離・海底の系統（北海道—本州）も結べる。</span></span>です。
+          交流で結んだ系統は1つの同期系統になり、周波数を共有します
+          （<a href="../a-grid-fundamentals/07-frequency-and-inertia.html">A-07「周波数と慣性」</a>）。
+          裏を返せば、<strong>周波数の違う系統は交流ではつなげません</strong>。
+          日本の東（50Hz）と西（60Hz）を結ぶには、間にAC→DC→ACの変換を挟むしかない——それが
+          <span class="term">周波数変換所<span class="term-tooltip">50Hzの東日本と60Hzの西日本を結ぶための交直変換設備（FC: Frequency Converter）。佐久間・新信濃・東清水（BTB構成）と飛騨信濃（約90kmの直流送電線を挟む）の4か所・計約210万kW。東西間の電力融通の物理的なボトルネックで、増強が進められている。</span></span>（FC）です。
+          佐久間・新信濃・東清水の3か所は、送電線を挟まず変換所どうしを同じ構内で背中合わせにした
+          <span class="term">BTB<span class="term-tooltip">Back to Back。直流送電のうち、送電線を挟まず交直変換所どうしを同じ場所で背中合わせにつないだ構成。周波数の異なる系統の接続（佐久間・新信濃・東清水の周波数変換所）などに使う。</span></span>（Back to Back）という構成、
+          2021年運開の飛騨信濃は約90kmの直流送電線を挟むタイプで、<strong>4か所あわせて約210万kW</strong>です。
+        </p>
+        <p>
+          海を越えるのも直流の仕事です。北海道と本州（東北）を津軽海峡経由で結ぶ<strong>北本連系（約90万kW）</strong>は、
+          交流では同期を保ちにくい距離・海底ケーブルを直流で渡っています。
+          需給ひっ迫時の広域融通（<a href="../f-dispatch-system/10-supply-demand-emergency.html">F-10「需給ひっ迫と緊急時の運用」</a>）で
+          「東西の融通は最大210万kW」「北海道からの応援は北本の枠まで」といった制約が現れるのは、この物理が理由です。
+          OCCTOの広域系統長期方針（マスタープラン）では、こうしたボトルネックの解消に向けて、
+          FCのさらなる増強や、北海道と本州を結ぶ<strong>海底直流送電の新設（200万kW級）</strong>が位置づけられ、整備が進められています
+          （末尾の<a href="#references">参考資料</a>）。
+        </p>
+
+        <figure class="diagram">
+          <svg viewBox="0 0 460 200" role="img"
+               aria-label="直流連系の2つの代表例。左は周波数変換所（FC）：60Hzの西日本系統と50Hzの東日本系統を交流直流変換で結び、佐久間・新信濃・東清水はBTB構成、飛騨信濃を含め計約210万kW。右は北本連系：北海道と本州（東北）を津軽海峡の直流連系約90万kWで結ぶ。どちらも直流区間の潮流は変換器への指令値で決まる"
+               xmlns="http://www.w3.org/2000/svg">
+            <!-- 左パネル: FC -->
+            <rect x="15" y="20" width="210" height="150" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="120" y="40" font-size="10" text-anchor="middle" fill="#4a5568" font-weight="bold">周波数変換所（FC）：東西の壁</text>
+            <rect x="30" y="60" width="62" height="36" rx="6" fill="#fffbeb" stroke="#d97706"></rect>
+            <text x="61" y="75" font-size="9" text-anchor="middle" fill="#1a1a2e">西日本</text>
+            <text x="61" y="89" font-size="8.5" text-anchor="middle" fill="#b45309">60Hz</text>
+            <rect x="148" y="60" width="62" height="36" rx="6" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="179" y="75" font-size="9" text-anchor="middle" fill="#1a1a2e">東日本</text>
+            <text x="179" y="89" font-size="8.5" text-anchor="middle" fill="#2563eb">50Hz</text>
+            <rect x="100" y="64" width="19" height="28" rx="3" fill="#fff" stroke="#4a5568" stroke-width="1.2"></rect>
+            <rect x="121" y="64" width="19" height="28" rx="3" fill="#fff" stroke="#4a5568" stroke-width="1.2"></rect>
+            <text x="110" y="82" font-size="7.5" text-anchor="middle" fill="#4a5568">AC↔</text>
+            <text x="130" y="82" font-size="7.5" text-anchor="middle" fill="#4a5568">↔AC</text>
+            <line x1="92" y1="78" x2="99" y2="78" stroke="#4a5568" stroke-width="2"></line>
+            <line x1="140" y1="78" x2="147" y2="78" stroke="#4a5568" stroke-width="2"></line>
+            <text x="120" y="106" font-size="8" text-anchor="middle" fill="#4a5568">変換所を背中合わせ＝BTB</text>
+            <text x="120" y="126" font-size="8.5" text-anchor="middle" fill="#4a5568">佐久間・新信濃・東清水（BTB）</text>
+            <text x="120" y="140" font-size="8.5" text-anchor="middle" fill="#4a5568">＋飛騨信濃 ＝ 計約210万kW</text>
+            <text x="120" y="158" font-size="8.5" text-anchor="middle" fill="#b45309">周波数が違う系統は直流でしか結べない</text>
+            <!-- 右パネル: 北本 -->
+            <rect x="235" y="20" width="210" height="150" rx="8" fill="#f5f7fa" stroke="#94a3b8"></rect>
+            <text x="340" y="40" font-size="10" text-anchor="middle" fill="#4a5568" font-weight="bold">北本連系：海を越える</text>
+            <rect x="280" y="52" width="120" height="30" rx="6" fill="#f0fdf4" stroke="#16a34a"></rect>
+            <text x="340" y="71" font-size="9" text-anchor="middle" fill="#1a1a2e">北海道（50Hz）</text>
+            <rect x="280" y="118" width="120" height="30" rx="6" fill="#eff6ff" stroke="#2563eb"></rect>
+            <text x="340" y="137" font-size="9" text-anchor="middle" fill="#1a1a2e">本州・東北（50Hz）</text>
+            <line x1="340" y1="82" x2="340" y2="118" stroke="#dc2626" stroke-width="2.5" stroke-dasharray="5,3"></line>
+            <text x="351" y="97" font-size="8" fill="#dc2626">直流 約90万kW</text>
+            <text x="351" y="109" font-size="8" fill="#4a5568">津軽海峡</text>
+            <text x="340" y="162" font-size="8.5" text-anchor="middle" fill="#4a5568">同じ50Hzでも、海底の長距離は直流の出番</text>
+          </svg>
+          <figcaption>図4: 非同期連系の2つの顔。直流区間の潮流は「変換器への指令値」で決まる——KVL任せではない唯一の線</figcaption>
+        </figure>
+      </section>
+
+      <section class="knowledge-section" id="section-5">
+        <h2>5. 対策地図の再訪——機器はどこに座るか</h2>
+        <p>
+          B-03の3層の地図——「運用でしのぐ／枠を賢く使う／設備を増やす」——に、今日の3つの道具を書き込みましょう。
+          機器による潮流制御は<strong>「設備を増やす」の隣の、少し軽い椅子</strong>に座ります。
+          新しい送電線を引くわけではないので容量そのものは増えませんが、
+          いまある容量を<strong>使い切る向きに流れを整える</strong>ことができる。
+          打ち手を「使えるようになるまでの時間」で並べると、こんなグラデーションになります：
+        </p>
+        <ul>
+          <li><strong>再給電</strong>（D-02）——きょうの運用でできる。投資ゼロ、ただし毎日費用がかかる</li>
+          <li><strong>ノンファーム型接続</strong>（E-05）——ルールと手続きの対策。設備工事なしで枠の使い方を変える</li>
+          <li><strong>移相器・直列補償・HVDC</strong>（本ユニット）——機器の計画・設置に数年。一度の投資で毎日の混雑費用を減らす</li>
+          <li><strong>送電線の新設・増強</strong>（B-03）——計画から運開まで10年規模。もっとも重く、もっとも根本的</li>
+        </ul>
+        <p>
+          どこまで機器や増強に投資すべきかの物差しは、E-12で見た天秤と同じです——
+          <strong>累積する再給電費用</strong>と<strong>一度の設備投資</strong>の比較。
+          そして機器には限界もあります。振り替え先に空きがなければ（図1の乙に余裕がなければ）、
+          押しても引いても行き場がありません。<strong>枠そのものを増やせるのは増強だけ</strong>です。
+        </p>
+        <p>
+          これでB領域は完結です。混雑が<strong>どこで</strong>起きるか（B-01〜B-06：基幹からローカル・配電まで）、
+          そして<strong>どう打つか</strong>（B-03の3層＋本ユニットの機器の軸）。
+          この地図を持って、C領域のモデル化、D領域の計算、E領域の市場、F領域の実システムを眺め直すと、
+          それぞれの持ち場がくっきり見えるはずです。
+        </p>
+      </section>
+
+      <!-- ===================== 演習セクション ===================== -->
+      <section class="exercises-section" id="exercises">
+        <h2>演習</h2>
+
+        <!-- 演習1: choice（移相器の仕組み） -->
+        <div class="exercise" data-exercise-id="b-07-ex01" data-type="choice">
+          <h3>演習 1: 移相器は何をいじるのか</h3>
+          <div class="exercise-problem">
+            <p>移相器（PST）が潮流を動かす仕組みとして、最も適切なものはどれか。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="radio" name="b-07-ex01" value="1">
+              <span>変圧比を変えて電圧の大きさを調整し、無効電力の流れを変える</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-07-ex01" value="2">
+              <span>通過する電圧の位相を進み・遅れ側にずらし、ルート間の「見かけの角度差」を変えて潮流を押し引きする</span>
+            </label>
+            <label class="choice-option">
+              <input type="radio" name="b-07-ex01" value="3">
+              <span>交流を直流に変換し、変換器の制御で潮流を指令値どおりに流す</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-07-ex01",
+          "type": "choice",
+          "correct": "2",
+          "explanation": "潮流は P＝(θの差)/X で決まるので、移相器は分子＝角度差への介入です。巻線の工夫で通過する電圧の位相を数度ずらし、そのルートを「通りにくく」（押し出し）または「通りやすく」（引き込み）します。1の電圧の大きさの調整は主に無効電力・電圧の世界の道具（変圧器のタップや調相設備、A-04）、3は直流連系（HVDC）の説明です。"
+        }
+        </script>
+
+        <!-- 演習2: numeric（直列補償の分流計算・バリアント付き） -->
+        <div class="exercise" data-exercise-id="b-07-ex02" data-type="numeric">
+          <h3>演習 2: 直列補償で分かれ方はどう変わるか</h3>
+          <div class="exercise-problem">
+            <p>
+              母線Sから母線Rへ、並行する2ルートで合計 <span class="var" data-var="total">300</span> MW を送っている。
+              ルート甲のリアクタンスは <span class="var" data-var="xko">0.2</span> pu、ルート乙は <span class="var" data-var="xotsu1">0.4</span> pu で、
+              甲は容量 <span class="var" data-var="cap">190</span> MW を超えて混雑している。
+              そこでルート乙に直列コンデンサを入れ、乙のリアクタンスを <span class="var" data-var="xotsu2">0.2</span> pu まで縮めた。
+              補償後のルート甲の潮流は何MWか（流れは 1/X の比で分かれる）。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <label>
+              補償後のルート甲の潮流:
+              <input type="number" class="numeric-input" step="any" inputmode="decimal"> MW
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-07-ex02",
+          "type": "numeric",
+          "correct": 150,
+          "tolerance": 0,
+          "unit": "MW",
+          "explanation": "補償後は甲も乙もX=0.2で流れやすさが同じなので、300MWは1:1に分かれ直し、甲＝150MW。補償前の200MW（1/0.2:1/0.4＝2:1）から50MW軽くなり、容量190MW以下に収まって混雑解消です。乙は100→150MWに増えますが容量200MWの範囲内。「送る量は変えず、分け方を変える」が機器の対策の本質です。",
+          "variants": [
+            {
+              "vars": { "total": "400", "xko": "0.2", "xotsu1": "0.6", "cap": "190", "xotsu2": "0.3" },
+              "correct": 240,
+              "explanation": "流れやすさは1/X。補償後は 1/0.2 : 1/0.3 ＝ 3:2 なので、甲＝400×3/5＝240MW（補償前は 1/0.2:1/0.6＝3:1 で甲300MW）。60MW軽くなりましたが、容量190MWにはまだ届かず混雑は残ります——機器で動かせる量には限りがあり、足りない分は再給電や増強との併用になります。"
+            },
+            {
+              "vars": { "total": "250", "xko": "0.3", "xotsu1": "0.6", "cap": "150", "xotsu2": "0.2" },
+              "correct": 100,
+              "explanation": "補償後の流れやすさは 1/0.3 : 1/0.2 ＝ 2:3 なので、甲＝250×2/5＝100MW（補償前は 1/0.3:1/0.6＝2:1 で甲は約167MWと容量150MW超過）。今度は乙（X=0.2）のほうが甲（X=0.3）より流れやすい道になったため、配分が逆転して乙＝150MWが多数側です。Xを縮めるほど、その道は流れを呼び込みます。"
+            }
+          ]
+        }
+        </script>
+
+        <!-- 演習3: multi-choice（HVDCの性質） -->
+        <div class="exercise" data-exercise-id="b-07-ex03" data-type="multi-choice">
+          <h3>演習 3: 直流連系にできること</h3>
+          <div class="exercise-problem">
+            <p>直流連系（HVDC）について、正しいものを<strong>すべて</strong>選べ。</p>
+          </div>
+          <div class="exercise-input">
+            <label class="choice-option">
+              <input type="checkbox" name="b-07-ex03" value="1">
+              <span>直流区間には交流の分流則（Xの逆数比）が働かず、潮流を変換器への指令値どおりに決められる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-07-ex03" value="2">
+              <span>周波数の異なる系統同士（50Hzと60Hz）を結べる。東西の周波数変換所（FC）が代表例</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-07-ex03" value="3">
+              <span>直流連系の潮流も、両端の電圧位相角の差とリアクタンスで自然に決まる</span>
+            </label>
+            <label class="choice-option">
+              <input type="checkbox" name="b-07-ex03" value="4">
+              <span>送電線を挟まず変換所どうしを背中合わせにした構成をBTBと呼び、佐久間などのFCがこの構成</span>
+            </label>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-07-ex03",
+          "type": "multi-choice",
+          "correct": ["1", "2", "4"],
+          "explanation": "直流区間には位相角差×リアクタンスの分流則が働かないため、潮流は変換器への指令値で決まります（1が正しく、3は誤り——「自然に決まる」のは交流の性質です）。だからこそ周波数の違う東西の系統も結べます（2）。FCのうち佐久間・新信濃・東清水は送電線を挟まず変換所を背中合わせにしたBTB構成です（4。2021年運開の飛騨信濃は約90kmの直流送電線を挟むタイプ）。"
+        }
+        </script>
+
+        <!-- 演習4: ordering（打ち手の時間軸） -->
+        <div class="exercise" data-exercise-id="b-07-ex04" data-type="ordering">
+          <h3>演習 4: 打ち手を時間軸に並べる</h3>
+          <div class="exercise-problem">
+            <p>混雑への4つの打ち手を、<strong>「使えるようになるまでの時間」が短い順</strong>（上から）に並べよ。</p>
+          </div>
+          <div class="exercise-input">
+            <ul class="ordering-list" aria-label="打ち手の並べ替え">
+              <li class="ordering-item" data-item-id="c">移相器・直列コンデンサの設置（機器で潮流を再配分）</li>
+              <li class="ordering-item" data-item-id="a">送電線の新設・増強（設備を増やす）</li>
+              <li class="ordering-item" data-item-id="b">再給電（きょうの運用で発電の分担を変える）</li>
+              <li class="ordering-item" data-item-id="d">ノンファーム型接続の適用（ルールで枠を賢く使う）</li>
+            </ul>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "b-07-ex04",
+          "type": "ordering",
+          "correct": ["b", "d", "c", "a"],
+          "explanation": "再給電はきょうの運用でできる打ち手です（そのかわり毎日費用がかかる）。ノンファーム型接続はルールと手続きの対策で、設備工事なしに枠の使い方を変えられます。移相器・直列コンデンサなどの機器は計画・設置に数年単位。送電線の新設・増強は計画から運開まで10年規模の、もっとも重くもっとも根本的な打ち手です。上（速い・軽い・毎日かかる）から下（遅い・重い・根本解決）へのグラデーションの中間を機器が埋める——これがB-03の地図に本ユニットが足した1マスです。"
+        }
+        </script>
+
+      </section>
+
+      <!-- ===================== 参考資料 ===================== -->
+      <section class="references" id="references" aria-label="参考資料">
+        <h2>参考資料</h2>
+        <p class="ref-note">本ユニットが参考にした公開資料（外部サイト。内容・URLは更新される場合があります）。</p>
+        <ul>
+          <li>
+            <a href="https://www.occto.or.jp/news/kouikikeitou_chokihoushin_230329_choukihoushin_sakutei.html"
+               target="_blank" rel="noopener noreferrer">電力広域的運営推進機関（OCCTO）「広域系統長期方針（広域連系系統のマスタープラン）」（連系線・周波数変換設備・海底直流送電の増強計画）</a>
+          </li>
+          <li>
+            <a href="https://www.enecho.meti.go.jp/about/special/tokushu/saiene/keitouseiyaku.html"
+               target="_blank" rel="noopener noreferrer">資源エネルギー庁「再エネの大量導入に向けて〜『系統制約』問題と対策」</a>
+          </li>
+        </ul>
+      </section>
+    </article>
+
+    <!-- 前後ナビゲーション -->
+    <nav class="unit-nav">
+      <a href="06-local-and-distribution-congestion.html" class="unit-nav-prev">&larr; 基幹の外の混雑──ローカル系統・配電とDER</a>
+      <a href="../c-grid-model/index.html" class="unit-nav-next">次の領域へ: C 系統モデル &rarr;</a>
+    </nav>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>&copy; 系統混雑ラボ（Grid Congestion Lab）</p>
+  </footer>
+
+  <script defer src="../../js/common.js"></script>
+  <script defer src="../../js/exercise-engine.js"></script>
+  <script defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js" integrity="sha384-AtrdNsnxl/75rvBneBVH7DtOvCxSVahR2zWqle1coBKd8DEmLoviqNeJSx64gNAs"
+          crossorigin="anonymous"></script>
+</body>
+</html>
