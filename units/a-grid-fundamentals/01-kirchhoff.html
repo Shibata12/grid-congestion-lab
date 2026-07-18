@@ -385,6 +385,64 @@
         }
         </script>
 
+        <!-- 演習6: diagram-label（節点の収支に名前をつける） -->
+        <div class="exercise" data-exercise-id="a-01-ex06" data-type="diagram-label">
+          <h3>演習 6: 節点の収支に名前をつける</h3>
+          <div class="exercise-problem">
+            <p>
+              節点Qに4本の導線がつながっている。矢印の向きと書かれた値を読み取り、各導線に正しいラベル（流入か流出か、と電流の大きさ）を配置せよ。
+              導線④の値は電流則（KCL）で計算すること。
+              ラベルをドラッグするか、ラベルを選んでから空欄をクリックして配置できます。使わないラベルが1つあります。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <div class="diagram-exercise">
+              <svg class="diagram-base" viewBox="0 0 440 240" role="img"
+                   aria-label="節点Qに4本の導線が接続する図。導線①は左上から節点へ向かう矢印で6アンペア、導線②は節点から右上へ向かう矢印で3アンペア、導線③は左下から節点へ向かう矢印で4アンペア、導線④は節点から右下へ向かう破線の矢印で値は不明。各導線の近くに、ラベルを置く空欄がある。"
+                   xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <marker id="a01ex6-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"></path>
+                  </marker>
+                </defs>
+                <circle cx="220" cy="110" r="6" fill="#1a1a2e"></circle>
+                <text x="232" y="98" font-size="13" font-weight="700" fill="#1a1a2e">Q</text>
+                <line x1="60" y1="40" x2="214" y2="106" stroke="#4a5568" stroke-width="2" marker-end="url(#a01ex6-ah)"></line>
+                <text x="60" y="32" font-size="12" fill="#1a1a2e">① 6 A</text>
+                <line x1="226" y1="106" x2="380" y2="40" stroke="#4a5568" stroke-width="2" marker-end="url(#a01ex6-ah)"></line>
+                <text x="330" y="32" font-size="12" fill="#1a1a2e">② 3 A</text>
+                <line x1="60" y1="180" x2="214" y2="114" stroke="#4a5568" stroke-width="2" marker-end="url(#a01ex6-ah)"></line>
+                <text x="60" y="204" font-size="12" fill="#1a1a2e">③ 4 A</text>
+                <line x1="226" y1="114" x2="380" y2="180" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a01ex6-ah)"></line>
+                <text x="330" y="204" font-size="12" fill="#4a5568">④ ? A</text>
+              </svg>
+              <div class="label-targets">
+                <div class="drop-zone" data-slot="1" style="left:28%; top:33%;" aria-label="導線①のラベルを置く"></div>
+                <div class="drop-zone" data-slot="2" style="left:72%; top:33%;" aria-label="導線②のラベルを置く"></div>
+                <div class="drop-zone" data-slot="3" style="left:28%; top:58%;" aria-label="導線③のラベルを置く"></div>
+                <div class="drop-zone" data-slot="4" style="left:72%; top:58%;" aria-label="導線④のラベルを置く"></div>
+              </div>
+              <div class="label-choices">
+                <span class="draggable-label" data-label-id="b">流出 3 A</span>
+                <span class="draggable-label" data-label-id="c">流入 4 A</span>
+                <span class="draggable-label" data-label-id="e">流出 13 A</span>
+                <span class="draggable-label" data-label-id="a">流入 6 A</span>
+                <span class="draggable-label" data-label-id="d">流出 7 A</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-01-ex06",
+          "type": "diagram-label",
+          "correct": {"1": "a", "2": "b", "3": "c", "4": "d"},
+          "explanation": "矢印が節点Qへ向かう①と③が流入（6 Aと4 A）、節点から離れる②と④が流出です。④の値はKCLで求めます：流入の合計は 6 + 4 = 10 A、分かっている流出は 3 A なので、④は 10 − 3 = 7 A の流出。「流出 13 A」は見えている3本の値を全部足した誤りで、電流則は流入と流出を分けて釣り合わせるのがポイントです。母線上で発電の注入と負荷・送電線への流出が釣り合う電力収支（A-02）も、この考え方がそのまま土台になります。"
+        }
+        </script>
+
       </section>
     </article>
 

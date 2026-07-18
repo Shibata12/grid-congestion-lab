@@ -66,7 +66,7 @@ const SITE_STRUCTURE = {
     folder: 'a-grid-fundamentals',
     summary: '電力系統を理解するための物理法則。オームの法則、キルヒホッフの法則、潮流の基礎を扱う。',
     units: [
-      { id: 'a-01', title: 'オームの法則とキルヒホッフの法則', file: '01-kirchhoff.html', exerciseCount: 5,
+      { id: 'a-01', title: 'オームの法則とキルヒホッフの法則', file: '01-kirchhoff.html', exerciseCount: 6,
         summary: 'オームの法則(V=R·I)と、キルヒホッフの電流則(KCL)・電圧則(KVL)を、系統解析の出発点として理解する。' },
       { id: 'a-02', title: '潮流計算の基礎', file: '02-power-flow-basics.html', exerciseCount: 5,
         summary: '母線への注入と、放射状・ループ系統での潮流の決まり方を学ぶ。発電計画値が潮流計算の入力になる。' },
@@ -76,7 +76,7 @@ const SITE_STRUCTURE = {
         summary: '有効・無効・皮相電力の関係（電力の三角形）と力率を押さえ、無効電力が電圧を支えること、電圧・無効電力の制約が熱容量とは別の混雑要因になることを学ぶ。A-03で預けた無効電力の回収。' },
       { id: 'a-05', title: '三相交流と単位法（per-unit）', file: '05-three-phase-and-per-unit.html', exerciseCount: 3,
         summary: '送電線が3本1組（1回線）である理由と、電圧は線間・電力は3相合計という表記の約束、実務データを読むための単位法（pu＝値÷基準値）・%インピーダンスを学ぶ。A領域本編の締めくくり。' },
-      { id: 'a-06', title: '発電機のきほん──種類・特性・SCUCに現れる制約', file: '06-generator-basics.html', exerciseCount: 4,
+      { id: 'a-06', title: '発電機のきほん──種類・特性・SCUCに現れる制約', file: '06-generator-basics.html', exerciseCount: 5,
         summary: '発展編。電源の種類（役割分担）、同期発電機とインバータ電源、運転の3制約（起動時間・最低出力・ランプ）、メリットオーダーの出所を学び、SCUC/SCEDの制約の物理的な出所を回収する。D-03・D-08の土台。' },
       { id: 'a-07', title: '周波数と慣性──なぜ50Hzに保てるのか', file: '07-frequency-and-inertia.html', exerciseCount: 4,
         summary: '発展編。需給のずれが周波数に出るからくり（回転エネルギーの貯金箱）と、慣性＝時間を稼ぐ第0走者、RoCoF、インバータ電源の増加による慣性低下と対策（グリッドフォーミング等）を学ぶ。F-05・B-04の物理的裏付け。' },

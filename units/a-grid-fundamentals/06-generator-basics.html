@@ -369,6 +369,58 @@
         }
         </script>
 
+        <!-- 演習5: diagram-label（出力カーブに名前をつける） -->
+        <div class="exercise" data-exercise-id="a-06-ex05" data-type="diagram-label">
+          <h3>演習 5: 出力カーブに名前をつける</h3>
+          <div class="exercise-problem">
+            <p>
+              発電機の出力カーブ（横軸=時間、縦軸=出力）の4つの部分に、正しい名前を配置せよ。
+              ラベルをドラッグするか、ラベルを選んでから空欄をクリックして配置できます。使わないラベルが1つあります。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <div class="diagram-exercise">
+              <svg class="diagram-base" viewBox="0 0 460 210" role="img"
+                   aria-label="横軸に時間、縦軸に出力をとった発電機の出力カーブ。起動指令からしばらく出力ゼロの区間が続き、その後ある高さまで一気に立ち上がり、一定の傾きで上昇して、最後は上限の高さで一定になる。ゼロ区間・立ち上がり後の高さ・傾き・上限のそれぞれの近くに、名前を置く空欄がある。"
+                   xmlns="http://www.w3.org/2000/svg">
+                <line x1="50" y1="175" x2="440" y2="175" stroke="#cbd5e1" stroke-width="1"></line>
+                <line x1="50" y1="30" x2="50" y2="175" stroke="#cbd5e1" stroke-width="1"></line>
+                <text x="245" y="198" font-size="10" text-anchor="middle" fill="#4a5568">時間 →</text>
+                <text x="42" y="102" font-size="10" text-anchor="middle" fill="#4a5568" transform="rotate(-90 42 102)">出力</text>
+                <line x1="50" y1="175" x2="170" y2="175" stroke="#dc2626" stroke-width="3"></line>
+                <line x1="170" y1="175" x2="170" y2="128" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"></line>
+                <line x1="50" y1="128" x2="440" y2="128" stroke="#d97706" stroke-width="1" stroke-dasharray="6 4"></line>
+                <line x1="170" y1="128" x2="330" y2="52" stroke="#1a1a2e" stroke-width="2.5"></line>
+                <line x1="330" y1="52" x2="440" y2="52" stroke="#1a1a2e" stroke-width="2.5"></line>
+                <line x1="50" y1="52" x2="330" y2="52" stroke="#94a3b8" stroke-width="1" stroke-dasharray="6 4"></line>
+              </svg>
+              <div class="label-targets">
+                <div class="drop-zone" data-slot="1" style="left:24%; top:66%;" aria-label="出力ゼロのまま続く区間の名前を置く"></div>
+                <div class="drop-zone" data-slot="2" style="left:84%; top:56%;" aria-label="立ち上がり直後の高さ（破線の水平線）の名前を置く"></div>
+                <div class="drop-zone" data-slot="3" style="left:47%; top:38%;" aria-label="一定の傾きで上昇する区間の名前を置く"></div>
+                <div class="drop-zone" data-slot="4" style="left:84%; top:15%;" aria-label="上限の高さの名前を置く"></div>
+              </div>
+              <div class="label-choices">
+                <span class="draggable-label" data-label-id="c">ランプ（出力変化速度）</span>
+                <span class="draggable-label" data-label-id="e">起動費</span>
+                <span class="draggable-label" data-label-id="a">起動時間</span>
+                <span class="draggable-label" data-label-id="d">定格出力</span>
+                <span class="draggable-label" data-label-id="b">最低出力</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-06-ex05",
+          "type": "diagram-label",
+          "correct": {"1": "a", "2": "b", "3": "c", "4": "d"},
+          "explanation": "起動指令からしばらくは出力ゼロのまま＝①起動時間。並列するといきなり②最低出力の高さから始まります（ゼロと最低出力の間では運転できない）。そこから上げるときは③ランプ（出力変化速度）の傾きでしか上げられず、上限が④定格出力です。「起動費」は起動のたびにかかるお金（F-06の三部制入札に登場する費用項目）であって、カーブ上の区間ではありません。この4つの形が、そのままSCUC/SCED（D-03）の制約になります。"
+        }
+        </script>
+
       </section>
     </article>
 
