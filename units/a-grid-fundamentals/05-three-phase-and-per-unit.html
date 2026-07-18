@@ -348,6 +348,67 @@
         }
         </script>
 
+        <!-- 演習4: diagram-label（鉄塔の電線に名前をつける） -->
+        <div class="exercise" data-exercise-id="a-05-ex04" data-type="diagram-label">
+          <h3>演習 4: 鉄塔の電線に名前をつける</h3>
+          <div class="exercise-problem">
+            <p>
+              送電鉄塔の図の4か所に、正しい名前を配置せよ。
+              ラベルをドラッグするか、ラベルを選んでから空欄をクリックして配置できます。使わないラベルが1つあります。
+            </p>
+          </div>
+          <div class="exercise-input">
+            <div class="diagram-exercise">
+              <svg class="diagram-base" viewBox="0 0 460 200" role="img"
+                   aria-label="送電鉄塔の図。左右の腕に3本ずつ、合計6本の電線（丸印）が張られている。右側の上2本の電線の間には両矢印が描かれている。左上の電線1本・左の3本のまとまり・鉄塔全体・右の両矢印のそれぞれの近くに、名前を置く空欄がある。"
+                   xmlns="http://www.w3.org/2000/svg">
+                <line x1="230" y1="35" x2="230" y2="170" stroke="#4a5568" stroke-width="5"></line>
+                <line x1="160" y1="65" x2="300" y2="65" stroke="#4a5568" stroke-width="3"></line>
+                <line x1="160" y1="100" x2="300" y2="100" stroke="#4a5568" stroke-width="3"></line>
+                <line x1="160" y1="135" x2="300" y2="135" stroke="#4a5568" stroke-width="3"></line>
+                <line x1="140" y1="170" x2="320" y2="170" stroke="#cbd5e1" stroke-width="1"></line>
+                <circle cx="170" cy="65" r="5" fill="#2563eb"></circle>
+                <circle cx="170" cy="100" r="5" fill="#16a34a"></circle>
+                <circle cx="170" cy="135" r="5" fill="#d97706"></circle>
+                <circle cx="290" cy="65" r="5" fill="#2563eb"></circle>
+                <circle cx="290" cy="100" r="5" fill="#16a34a"></circle>
+                <circle cx="290" cy="135" r="5" fill="#d97706"></circle>
+                <!-- 線間電圧の両矢印（右の上2本の間） -->
+                <line x1="305" y1="70" x2="305" y2="95" stroke="#4a5568" stroke-width="1.5"></line>
+                <path d="M301,71 L305,65 L309,71 z" fill="#4a5568"></path>
+                <path d="M301,89 L305,95 L309,89 z" fill="#4a5568"></path>
+                <!-- ゾーンへのポインタ破線 -->
+                <line x1="172" y1="62" x2="156" y2="48" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4 3"></line>
+                <line x1="163" y1="100" x2="122" y2="102" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4 3"></line>
+                <line x1="309" y1="82" x2="323" y2="81" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4 3"></line>
+              </svg>
+              <div class="label-targets">
+                <div class="drop-zone" data-slot="1" style="left:33%; top:18%;" aria-label="左上の電線1本の名前を置く"></div>
+                <div class="drop-zone" data-slot="2" style="left:18%; top:39%;" aria-label="左側の3本のまとまりの名前を置く"></div>
+                <div class="drop-zone" data-slot="3" style="left:50%; top:68%;" aria-label="この鉄塔全体の構成の名前を置く"></div>
+                <div class="drop-zone" data-slot="4" style="left:77%; top:34%;" aria-label="右側の2本の電線の間の両矢印の名前を置く"></div>
+              </div>
+              <div class="label-choices">
+                <span class="draggable-label" data-label-id="c">並列2回線（電線6本）</span>
+                <span class="draggable-label" data-label-id="a">電線1本（1相ぶん）</span>
+                <span class="draggable-label" data-label-id="e">帰りの線（中性線）</span>
+                <span class="draggable-label" data-label-id="d">線間電圧（2本の線の間）</span>
+                <span class="draggable-label" data-label-id="b">1回線（3本で1組）</span>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="btn-check">解答を確認</button>
+          <div class="exercise-feedback" hidden></div>
+        </div>
+        <script type="application/json" class="answer-data">
+        {
+          "exerciseId": "a-05-ex04",
+          "type": "diagram-label",
+          "correct": {"1": "a", "2": "b", "3": "c", "4": "d"},
+          "explanation": "電線1本が三相のうちの1相ぶん。三相交流は120°ずらした3本で1組＝1回線として働き、この鉄塔は左右に1回線ずつの並列2回線＝電線6本です（B-01の「1回線停止」は3本まとめて停止の意味）。500 kVのような電圧の呼び名は、2本の電線の間で測る線間電圧でした（§2の読み方ルール①）。「帰りの線（中性線）」が余ります——三相は3本の瞬時値の合計が常にゼロになるので帰りの線を省略でき、この鉄塔に中性線の置き場はありません（§1）。"
+        }
+        </script>
+
       </section>
     </article>
 
